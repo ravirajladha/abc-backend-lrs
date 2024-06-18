@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Models\ReadableCourse;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\Api\BaseController;
+
+class ReadableCoursesController extends BaseController
+{
+    /**
+     * Store the readable courses
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeReadableCourse(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'class' => 'required',
+            'subject' => 'required',
+            'ebook' => 'required|exists:ebooks,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            $readableCourses = new ReadableCourse();
+            $readableCourses->class_id = $request->class;
+            $readableCourses->subject_id = $request->subject;
+            $readableCourses->ebook_id = $request->ebook;
+            $readableCourses->project_report_id = $request->project_report;
+            $readableCourses->case_study_id = $request->case_study;
+            $readableCourses->save();
+            return $this->sendResponse(['readableCourses' => $readableCourses], 'Readable Course Created Successfully.');
+        }
+    }
+
+    /**
+     * Fetch all the ebooks, project reprot, case study for class
+     *
+     * @param  Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllReadableCourses()
+    {
+        $readableCourses = ReadableCourse::select(
+            'readable_courses.*',
+            'ebooks.title as ebook_title',
+            'project_reports.title as project_report_title',
+            'case_studies.title as case_study_title',
+            'classes.name as class_name',
+            'subjects.name as subject_name',
+        )
+        ->leftJoin('ebooks', 'readable_courses.ebook_id', '=', 'ebooks.id')
+        ->leftJoin('project_reports', 'readable_courses.project_report_id', '=', 'project_reports.id')
+        ->leftJoin('case_studies', 'readable_courses.case_study_id', '=', 'case_studies.id')
+        ->leftJoin('classes', 'readable_courses.class_id', '=', 'classes.id')
+        ->leftJoin('subjects', 'readable_courses.subject_id', '=', 'subjects.id')
+        ->get();
+        return $this->sendResponse(['readableCourses' => $readableCourses], 'All Readable Courses Retrieved Successfully.');
+    }
+
+
+    /**
+     * Fetch all the ebooks, project reprot, case study for class
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getReadableCoursesByClass($calssId)
+    {
+        $validator = Validator::make(['calssId' => $calssId], [
+            'calssId' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            $readableCourses = ReadableCourse::select(
+                'readable_courses.*',
+                'ebooks.title as ebook_title',
+                'ebooks.image as ebook_image',
+                'project_reports.title as project_report_title',
+                'case_studies.title as case_study_title',
+                'classes.name as class_name',
+                'subjects.name as subject_name',
+            )
+            ->leftJoin('ebooks', 'readable_courses.ebook_id', '=', 'ebooks.id')
+            ->leftJoin('project_reports', 'readable_courses.project_report_id', '=', 'project_reports.id')
+            ->leftJoin('case_studies', 'readable_courses.case_study_id', '=', 'case_studies.id')
+            ->leftJoin('classes', 'readable_courses.class_id', '=', 'classes.id')
+            ->leftJoin('subjects', 'readable_courses.subject_id', '=', 'subjects.id')
+            ->where('readable_courses.class_id',$calssId)
+            ->get();
+            return $this->sendResponse(['readableCourses' => $readableCourses], 'All Readable Courses Retrieved Successfully.');
+        }
+    }
+}
