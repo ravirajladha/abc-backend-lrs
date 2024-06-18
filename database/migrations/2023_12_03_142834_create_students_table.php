@@ -16,8 +16,10 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
-            $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
+            // $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
+            $table->string('class_id', 32)->nullable();
+            // $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
+            $table->string('section_id', 32)->nullable();
             $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
             $table->foreignId('parent_id')->nullable()->constrained('parents', 'id');
             $table->tinyInteger('student_type')->default(0)->comment('0=>Student, 1=>Outsider');

@@ -66,14 +66,14 @@ class BaseController extends Controller
         ];
         if ($auth->type === AuthConstants::TYPE_STUDENT) {
             $student = DB::table('students as s')
-                ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-                ->leftJoin('sections as sec', 's.section_id', '=', 'sec.id')
+                // ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
+                // ->leftJoin('sections as sec', 's.section_id', '=', 'sec.id')
                 ->leftJoin('schools as sch', 's.school_id', '=', 'sch.id')
                 ->leftJoin('parents as par', 's.parent_id', '=', 'par.id')
                 ->select(
                     's.*',
-                    'c.name as class_name',
-                    'sec.name as section_name',
+                    // 'c.name as class_name',
+                    // 'sec.name as section_name',
                     'sch.name as school_name',
                     'par.name as parent_name',
                     'par.parent_code'
@@ -104,10 +104,14 @@ class BaseController extends Controller
                     'student_auth_id' => $student->auth_id,
                     'student_name' => $student->name,
                     'student_type' => $student->student_type,
-                    'class_id' => $student->class_id !== null ? $student->class_id : null,
-                    'class_name' => $student->class_name ? $student->class_name : null,
-                    'section_id' => $student->section_id !== null ? $student->section_id : null,
-                    'section_name' => $student->section_name ? $student->section_name : null,
+                    // 'class_id' => $student->class_id !== null ? $student->class_id : null,
+                    'class_id' => null,
+                    // 'class_name' => $student->class_name ? $student->class_name : null,
+                    'class_name' => null,
+                    // 'section_id' => $student->section_id !== null ? $student->section_id : null,
+                    'section_id' => null,
+                    // 'section_name' => $student->section_name ? $student->section_name : null,
+                    'section_name' => null,
                     'school_id' => $student->school_id,
                     'school_name' => $student->school_name,
                     'subjects' => $subjects !== null ? $subjects : null,
