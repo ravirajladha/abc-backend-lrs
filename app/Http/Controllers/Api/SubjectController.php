@@ -135,7 +135,7 @@ class SubjectController extends BaseController
         } else {
             $subjects = DB::table('subjects as s')
                 ->select('s.id', 's.name', 's.image','s.subject_type', 's.super_subject_id')
-                ->where('s.class_id', $classId)
+                // ->where('s.class_id', $classId)
                 ->whereIn('s.subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
                 ->get();
 

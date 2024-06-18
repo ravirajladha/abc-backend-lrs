@@ -85,7 +85,7 @@ class TeacherController extends BaseController
             $teachers = DB::table('teachers as t')
                 ->select('t.id', 't.auth_id', 't.school_id', 't.name', 't.emp_id', 't.profile_image', 't.phone_number', 't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
                 ->join('auth as a', 't.auth_id', '=', 'a.id')
-                ->where('t.school_id', $schoolId)
+                // ->where('t.school_id', $schoolId)
                 ->get();
 
             foreach ($teachers as $teacher) {
@@ -124,9 +124,9 @@ class TeacherController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+            // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
             $teacher = Teacher::where('auth_id', $teacherId)
-                ->where('school_id', $schoolId)
+                // ->where('school_id', $schoolId)
                 ->first();
 
 
@@ -154,7 +154,7 @@ class TeacherController extends BaseController
                 $res = [
                     'id' => $teacher->id,
                     'auth_id' => $teacherId,
-                    'school_id' => $teacher->school_id,
+                    // 'school_id' => $teacher->school_id,
                     'name' => $teacher->name,
                     'email' => $auth->email,
                     'username' => $auth->username,
@@ -171,7 +171,7 @@ class TeacherController extends BaseController
                 ];
                 return $this->sendResponse(['teacher' => $res, 'teacher_classes' => $teacher_classes, 'teacher_subjects' => $teacher_subjects]);
             } else {
-                return $this->sendResponse([], 'Failed to fetch teacher details.');
+                return $this->sendResponse([], 'Failed to fetch trainer details.');
             }
         }
     }
@@ -203,12 +203,12 @@ class TeacherController extends BaseController
                 'status' => AuthConstants::STATUS_ACTIVE,
             ]);
 
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+            // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
             if ($auth) {
                 $teacher = Teacher::create([
                     'auth_id' => $auth->id,
-                    'school_id' => $schoolId,
+                    'school_id' => 1,
                     'name' => $request->name,
                     'emp_id' => $request->emp_id,
                     'profile_image' => $request->profile_image,
@@ -222,10 +222,10 @@ class TeacherController extends BaseController
                 ]);
             }
             if ($auth && $teacher) {
-                return $this->sendResponse([], 'Teacher added successfully');
+                return $this->sendResponse([], 'Trainer added successfully');
             }
         }
-        return $this->sendError('Failed to add teacher');
+        return $this->sendError('Failed to add Trainer');
     }
 
 
@@ -245,14 +245,14 @@ class TeacherController extends BaseController
             ->first();
 
         if (!$teacher) {
-            return $this->sendError('Teacher not found');
+            return $this->sendError('Trainer not found');
         }
 
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
         $teacherSubjects = TeacherSubject::where([
             'teacher_id' => $teacher->id,
-            'school_id' => $schoolId,
+            // 'school_id' => $schoolId,
         ])->get(['subject_id']);
 
         foreach ($teacherSubjects as $subject) {
@@ -295,19 +295,19 @@ class TeacherController extends BaseController
             ->select('*')
             ->where('auth_id', $teacherId)
             ->first();
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
         foreach ($request->input('teacher_data') as $data) {
             TeacherClasses::updateOrCreate(
                 [
                     'class_id' => $data['class_id'],
                     'teacher_id' => $teacher->id,
-                    'school_id' => $schoolId,
+                    // 'school_id' => $schoolId,
                 ],
                 [
                     'class_id' => $data['class_id'],
                     'teacher_id' => $teacher->id,
-                    'school_id' => $schoolId,
+                    // 'school_id' => $schoolId,
                 ]
             );
 
@@ -315,12 +315,12 @@ class TeacherController extends BaseController
                 [
                     'subject_id' => $data['subject_id'],
                     'teacher_id' =>  $teacher->id,
-                    'school_id' => $schoolId,
+                    // 'school_id' => $schoolId,
                 ],
                 [
                     'subject_id' => $data['subject_id'],
                     'teacher_id' =>  $teacher->id,
-                    'school_id' => $schoolId,
+                    // 'school_id' => $schoolId,
                 ]
             );
         }
@@ -349,9 +349,10 @@ class TeacherController extends BaseController
         }
 
         $auth = AuthModel::find($teacherId);
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
-        $teacher = Teacher::where('auth_id', $teacherId)->where('school_id', $schoolId)->first();
+        // $teacher = Teacher::where('auth_id', $teacherId)->where('school_id', $schoolId)->first();
+        $teacher = Teacher::where('auth_id', $teacherId)->first();
 
         if ($auth && $teacher) {
             $authData = [
@@ -402,10 +403,10 @@ class TeacherController extends BaseController
                 'type' => $teacher->type,
             ];
 
-            return $this->sendResponse(['teacher' => $res], 'Teacher updated successfully');
+            return $this->sendResponse(['teacher' => $res], 'Trainer updated successfully');
         }
 
-        return $this->sendError('Failed to update teacher details.');
+        return $this->sendError('Failed to update trainer details.');
     }
 
 
@@ -418,7 +419,7 @@ class TeacherController extends BaseController
     public function deleteTeacherDetails(Request $request, $teacherId)
     {
         $userType = $request->attributes->get('type');
-        if ($userType = 'school') {
+        if ($userType = 'admin') {
             $validator = Validator::make(['teacher_id' => $teacherId], [
                 'teacher_id' => 'required',
             ]);
