@@ -81,15 +81,15 @@ class StudentController extends BaseController
                 ->leftJoin('sections as sec', 'sec.id', '=', 's.section_id')
                 ->where('s.student_type', true);
                 // ->where('school_id', $schoolId)
-  
+
                 if ($classId) {
                     $query->where('s.class_id', $classId);
                 }
-        
+
                 if ($sectionId) {
                     $query->where('s.section_id', $sectionId);
                 }
-        
+
                 $students = $query->paginate(10);
             return $this->sendResponse(['students' => $students]);
         } else {
@@ -122,11 +122,11 @@ class StudentController extends BaseController
                 if ($classId) {
                     $query->where('s.class_id', $classId);
                 }
-        
+
                 if ($sectionId) {
                     $query->where('s.section_id', $sectionId);
                 }
-        
+
                 $students = $query->paginate(10);
             return $this->sendResponse(['students' => $students]);
         } else {
@@ -181,11 +181,11 @@ class StudentController extends BaseController
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             } else {
-                $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+                // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
                 $student = DB::table('students as s')
                     ->select('s.*', 'c.name as class', 'sec.name as section', 'p.name as parent', 'p.parent_code')
                     ->where('s.auth_id', $studentId)
-                    ->where('s.school_id', $schoolId)
+                    // ->where('s.school_id', $schoolId)
                     ->leftJoin('classes as c', 'c.id', 's.class_id')
                     ->leftJoin('sections as sec', 'sec.id', 's.section_id')
                     ->leftJoin('parents as p', 'p.id', 's.parent_id')
@@ -475,8 +475,8 @@ class StudentController extends BaseController
             'password' => 'nullable|min:6',
             'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
-            'class_id' => 'required|numeric',
-            'section_id' => 'required|numeric',
+            // 'class_id' => 'required|numeric',
+            // 'section_id' => 'required|numeric',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'dob' => 'required',
             'pincode' => 'required',
@@ -487,7 +487,8 @@ class StudentController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        $schoolId = 1;
         $student = Student::where('auth_id', $studentId)
             ->where('school_id', $schoolId)
             ->first();
