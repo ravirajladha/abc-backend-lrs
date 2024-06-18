@@ -2,123 +2,298 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Classes;
 use App\Models\Subject;
+use App\Models\TermTest;
+use Illuminate\Support\Str;
 
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+
+use App\Models\TermTestResult;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+
+use App\Services\Admin\ResultService;
 use Illuminate\Support\Facades\Validator;
 
 use App\Http\Controllers\Api\BaseController;
-use App\Services\Admin\ResultService;
+use App\Services\Student\ResultService as StudentResultService;
+
+use App\Http\Constants\SubjectTypeConstants;
 
 class SubjectController extends BaseController
 {
     /**
-     * Display a listing of the Subjects.
+     * Display a listing of the subjects.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getSubjectsList()
     {
-        $subjects = Subject::orderBy('created_at')->get();
+        $subjects = Subject::get();
         return $this->sendResponse(['subjects' => $subjects]);
     }
 
     /**
-     * Store a newly created subject in storage.
+     * Display the student report card.
      *
-     * @param  \Illuminate\Http\Request  $request
-     *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function storeSubjectDetails(Request $request)
+    public function getStudentReportCard(Request $request)
     {
+        $studentId = $request->studentId; //StudentId from students table
+        $classId = $request->classId;
+        $sectionId = $request->sectionId;
+        $report_card = [];
+
+        if (!($studentId && $classId && $sectionId)) {
+            return $this->sendError('Failed to fetch student results.');
+        }
+
+        $resultsService = new StudentResultService();
+
+        $report_card['subject_results'] = $resultsService->getSubjectResults($studentId, $classId);
+        $report_card['total_marks'] = $resultsService->getTotalMarks($studentId);
+        $report_card['base_total_marks'] = $resultsService->getTermTestTotalMarks($classId);
+        $report_card['class_rank'] = $resultsService->getClassRank($studentId, $classId);
+        $report_card['section_rank'] = $resultsService->getSectionRank($studentId, $sectionId);
+        $report_card['assessment_results'] = $resultsService->getAverageAssessmentScore($studentId);
+
+        return $this->sendResponse(['report_card' => $report_card], 'Report card fetched successfully.');
+    }
+
+    /**
+     * Display a listing of the subjects with ClassId.
+     *
+     * @param $classId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSubjectListByClassId($classId)
+    {
+        $res = [];
+
+        $validator = Validator::make(['classId' => $classId], [
+            'classId' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            $class = Classes::where('id', $classId)->first();
+            $subjects = DB::table('subjects as s')
+                ->select('s.id', 's.name', 's.image', 'subject_type', 'super_subject_id')
+                ->where('s.class_id', $classId)
+                ->whereIn('s.subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
+                ->get();
+
+            // Fetch super subject name
+            foreach ($subjects as $subject) {
+                if ($subject->subject_type == 3 && $subject->super_subject_id) {
+                    $superSubject = Subject::select('name')->find($subject->super_subject_id);
+                    $subject->super_subject_name = $superSubject ? $superSubject->name : null;
+                } else {
+                    $subject->super_subject_name = null;
+                }
+            }
+            if ($class) {
+                $res = [
+                    'class_id' => $classId,
+                    'class' => $class->name,
+                    'subjects' => $subjects,
+                ];
+            } else {
+                return $this->sendError('Subject not found!');
+            }
+        }
+
+        return $this->sendResponse($res);
+    }
+
+    /**
+     * Display a listing of the subjects with results for students by classId.
+     *
+     * @param $classId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStudentSubjectsWithResults(Request $request)
+    {
+        $res = [];
+
+        $classId = $request->classId;
+
+        $studentId = $request->studentId;
 
         $validator = Validator::make($request->all(), [
-            'subject_name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('subjects', 'name'),
-            ],
+            'classId' => 'required',
+            'studentId' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            $subjects = DB::table('subjects as s')
+                ->select('s.id', 's.name', 's.image','s.subject_type', 's.super_subject_id')
+                ->where('s.class_id', $classId)
+                ->whereIn('s.subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
+                ->get();
+
+            foreach ($subjects as $subject) {
+
+                if ($subject->subject_type == 3 && $subject->super_subject_id) {
+                    $superSubject = Subject::select('name')->find($subject->super_subject_id);
+                    $subject->super_subject_name = $superSubject ? $superSubject->name : null;
+                } else {
+                    $subject->super_subject_name = null;
+                }
+
+                $latestTest = DB::table('term_tests')
+                    ->where('subject_id', $subject->id)
+                    ->select('id', 'term_type', 'description')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                // Log::info('Subjects data:', ['subjects' => $latestTest]);
+                if ($latestTest) {
+                    $latestTestId = $latestTest->id;
+                    $testDescription = $latestTest->description;
+                    $latestTerm = $latestTest->term_type;
+
+                    $latestTestResults = DB::table('term_test_results as results')
+                        ->where('results.student_id', $studentId)
+                        ->where('results.test_id', $latestTestId)
+                        ->exists();
+
+                    if (!$latestTestResults) {
+                        $subject->latest_test_id = $latestTestId;
+                        $subject->latest_term = $latestTerm;
+                        $subject->testDescription = $testDescription;
+                    } else {
+                        $subject->latest_test_id = false;
+                        $subject->latest_term = false;
+                        $subject->testDescription = false;
+                    }
+                }
+
+                $studentResult = [];
+
+                $studentResult = DB::table('term_test_results as results')
+                    ->select('results.*', 'test.term_type')
+                    ->leftJoin('term_tests as test', 'test.id', 'results.test_id')
+                    ->where('results.student_id', $studentId)
+                    ->where('test.subject_id', $subject->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $subject->results = $studentResult;
+            }
+
+            if ($subjects) {
+                return $this->sendResponse(['subjects' => $subjects]);
+            } else {
+                return $this->sendError('Subject not found!');
+            }
+        }
+    }
+
+    public function storeSubjectDetails(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'class_id' => 'required',
+            'subject_name' => 'required|max:75|unique:subjects,name',
+            'subject_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'subject_type' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
             $subject = new Subject();
             $subject->name = $request->subject_name;
-            $subject->save();
+            $subject->class_id = $request->class_id;
+            $subject->subject_type = $request->subject_type;
+            if ($request->subject_type == 3) {
+                $subject->super_subject_id = $request->super_subject_id;
+            }
+            if (!empty($request->file('subject_image'))) {
+                $extension = $request->file('subject_image')->extension();
+                $filename = Str::random(4) . time() . '.' . $extension;
+                $subject->image = $request->file('subject_image')->move(('uploads/images/subject'), $filename);
+            } else {
+                $subject->image = null;
+            }
+            if ($subject->save()) {
+                return $this->sendResponse([], 'Subject created successfully.');
+            } else {
+                return $this->sendResponse([], 'Failed to create subject.');
+            }
         }
-        return $this->sendResponse([], 'Subject added successfully');
     }
 
-
-
-
-    /**
-     * Display the specified subject.
-     *
-     */
     public function getSubjectDetails($subjectId)
     {
-        $validator = Validator::make(['subject_id' => $subjectId], [
-            'subject_id' => 'required',
+        $validator = Validator::make(['subjectId' => $subjectId], [
+            'subjectId' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $subject = Subject::find($subjectId);
+            $subject = Subject::where('id', $subjectId)->first();
+            return $this->sendResponse(['subject' => $subject]);
         }
-
-        return $this->sendResponse(['subject' => $subject]);
     }
-
-    /**
-     * Update the specified subject in storage.
-     *
-     */
     public function updateSubjectDetails(Request $request, $subjectId)
     {
-        $validator = Validator::make(
-            array_merge($request->all(), ['subjectId' => $subjectId]),
-            [
-                'subjectId' => 'required|exists:subjects,id',
-                'subject_name' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::unique('subjects', 'name')->ignore($subjectId),
-                ],
-                'status' => 'required|boolean',
-            ]
-        );
+        $validator = Validator::make($request->all(), [
+            'subject_name' => 'required|max:75|unique:subjects,name',
+
+            'subject_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
-        } else {
-            $subject = Subject::find($subjectId);
-            $subject->update([
-                'name' => $request->subject_name,
-                'status' => $request->status,
-            ]);
         }
 
-        return $this->sendResponse(['subject' => $subject], 'subject updated successfully');
+        $subject = Subject::find($subjectId);
+
+        if (!$request->has('subject_name')) {
+            return $this->sendError('Subject name is required.');
+        }
+
+        $subject->name = $request->subject_name;
+
+        if ($request->hasFile('subject_image')) {
+            $formData = $request->all();
+            // $formData['image'] = $request->file('subject_image');
+
+            if ($request->hasFile('subject_image')) {
+                if ($subject->logo) {
+                    File::delete(public_path($subject->logo));
+                }
+                $extension = $request->file('subject_image')->extension();
+                $filename = Str::random(4) . time() . '.' . $extension;
+                $subject->image = $request->file('subject_image')->move(('uploads/images/subject'), $filename);
+            }
+
+            // $image = $formData['image'];
+            // $imageName = time() . '.' . $image->getClientOriginalExtension();
+            // $image->move(public_path('uploads/images/subject'), $imageName);
+
+            // $subject->image = 'uploads/images/subject/' . $imageName;
+        }
+
+        $subject->save();
+
+        return $this->sendResponse(['subject' => $subject], 'Subject updated successfully');
     }
 
 
-    /**
-     * Remove the specified subject from storage.
-     *
-     */
+
+
     public function deleteSubjectDetails(Request $request, $subjectId)
     {
-        $validator = Validator::make(
-            array_merge($request->all(), ['subjectId' => $subjectId]),
-            [
-                'subjectId' => 'required',
-            ]
-        );
+        $validator = Validator::make(array_merge($request->all(), ['subjectId' => $subjectId]), [
+            'subjectId' => 'required',
+        ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
@@ -126,16 +301,26 @@ class SubjectController extends BaseController
             $subject->delete();
         }
 
-        return $this->sendResponse([], 'subject deleted successfully');
+        return $this->sendResponse([], 'Subject deleted successfully');
     }
-
 
     public function getSubjectResults(Request $request, $subjectId)
     {
         $resultService = new ResultService();
 
-        $results = $resultService->getClassResults($subjectId, $request->term);
+        $results = $resultService->getSubjectResults($subjectId, $request->term);
 
         return $this->sendResponse(['results' => $results], '');
     }
+
+    public function getSuperSubjects()
+    {
+        $superSubjects = Subject::where('subject_type', 2)->get(['id', 'name']);
+        if($superSubjects) {
+            return $this->sendResponse(['superSubjects' => $superSubjects], '');
+        } else {
+            return $this->sendError('Failed to fetch super subjects.');
+        }
+    }
+
 }

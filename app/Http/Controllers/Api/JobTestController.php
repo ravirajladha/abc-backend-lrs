@@ -382,6 +382,75 @@ class JobTestController extends BaseController
             return $this->sendResponse(['test_result' => $testResult], 'Test completed successfully');
         }
     }
+    public function storeJobTestResponseWithoutToken(Request $request)
+    {
+        Log::info("jobs without token", $request->all());
+        $validator = Validator::make($request->all(), [
+            'studentId' => 'required',
+            'schoolId' => 'required',
+            'testId' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            //Get Test and Test Questions Data
+            $testResult = JobApplication::where('token', $request->token)->first();
+
+            if (!$testResult) {
+                return $this->sendError('Test result not found or token is invalid.', [], 404);
+            }
+            $test = JobTest::find($request->testId);
+            $test_questions = explode(',', $test->question_ids);
+            $test_question_answers = JobQuestion::whereIn('id', $test_questions)->get();
+
+            //Process Student Answers
+            $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
+            $selectedAnswers = explode(',', $request->selectedAnswers);
+
+            $studentResponse = array_map(function ($q, $a) {
+                return ['qns' => $q, 'ans' => $a];
+            }, $selectedQuestionIds, $selectedAnswers);
+
+            $score = 0;
+
+            //Calculating the score
+            foreach ($test_question_answers as $question) {
+                foreach ($studentResponse as $response) {
+                    if ($question->id == $response['qns']) {
+                        if ($question->answer_key == $response['ans']) {
+                            $score = $score + 1;
+                        }
+                    }
+                }
+            }
+
+            // Log::info("request", $request->all());
+
+            //Calculating the percentage
+            $totalScore = count($test_questions) * 1;
+
+            if ($score !== 0) {
+                $score_percentage = ($score / $totalScore) * 100;
+            } else {
+                $score_percentage = 0;
+            }
+            if ($score_percentage >= $request->passingPercentage) {
+                // log::info("percentage",$score_percentage, $request->passingPercentage);
+                $testResult->is_pass = true;
+            }
+            $testResult->score = $score;
+            $testResult->percentage = $score_percentage;
+            $testResult->response_answers = implode(',', $selectedAnswers);
+            $testResult->response_questions = implode(',', $selectedQuestionIds);
+            $testResult->is_completed = true; // Assuming there's a field to mark completion
+            $testResult->save();
+            // Log::info("request", $testResult);
+
+
+            return $this->sendResponse(['test_result' => $testResult], 'Test completed successfully');
+        }
+    }
 
     /**
      * Check if term test is created for that subject

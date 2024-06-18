@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Course extends Model
+class Classes extends Model
 {
     use HasFactory;
 
@@ -13,7 +13,7 @@ class Course extends Model
 
     protected $guarded = ['id'];
 
-    protected $table = 'courses';
+    protected $table = 'classes';
 
     public static function getTableName()
     {

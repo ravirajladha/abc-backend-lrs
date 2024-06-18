@@ -13,16 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('chapters', function (Blueprint $table) {
+        Schema::create('teacher_classes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers', 'id');
             $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
             $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->string('image')->nullable();
-            $table->tinyInteger('lock_status')->default(0)->comment('0=>Locked, 1=>Unlocked');
-            $table->foreignId('status_updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }
@@ -34,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('chapters');
+        //
     }
 };

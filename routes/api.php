@@ -23,7 +23,7 @@ use App\Http\Controllers\Api\ParentController;
 //Content Controllers
 use App\Http\Controllers\Api\SchoolController;
 use App\Http\Controllers\Api\ChapterController;
-use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\ClassesController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\StudentImageController;
@@ -138,15 +138,16 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::post('/schools/store', [AdminController::class, 'storeSchoolDetails']);
         Route::put('/schools/{schoolId}/update', [SchoolController::class, 'updateSchoolDetails']);
 
-        //subject Routes
-        Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
-        Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
-        Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
+        //Classes Routes
+        Route::post('/class/store', [ClassesController::class, 'storeClassDetails']);
+        Route::put('/class/{classId}/update', [ClassesController::class, 'updateClassDetails']);
+        Route::delete('/class/{classId}/delete', [ClassesController::class, 'deleteClassDetails']);
 
-        //Course Routes
-        Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
-        Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
-        Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
+        //Subject Routes
+        Route::post('/subjects/store', [SubjectController::class, 'storeSubjectDetails']);
+        Route::put('/subjects/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
+        Route::delete('/subjects/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
+        Route::get('/super-subjects', [SubjectController::class, 'getSuperSubjects']);
 
         //Subject Routes
         Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
@@ -498,8 +499,8 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::post('/mini-project-tasks/complete-status-for-student', [MiniProjectController::class, 'completeStatusForStudent']);
         Route::post('/internship/generate-certificate', [InternshipController::class, 'generateCertificate']);
 
-        Route::get('/subjects', [CourseController::class, 'getStudentSubjectsWithResults']);
-        Route::get('/get-report-card', [CourseController::class, 'getStudentReportCard']);
+        Route::get('/subjects', [SubjectController::class, 'getStudentSubjectsWithResults']);
+        Route::get('/get-report-card', [SubjectController::class, 'getStudentReportCard']);
         Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
 
         //Job Routes
@@ -552,6 +553,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::get('/get-details-by-token/{token}/{jobId}', [JobController::class, 'getJobTestDetailsByToken']);
             Route::post('/', [JobController::class, 'storeJobTestResponse']);
             Route::post('/token', [JobTestController::class, 'storeJobTestResponseWithToken']);
+            Route::post('/withoutToken', [JobTestController::class, 'storeJobTestResponseWithoutToken']);
             Route::post('/start', [JobController::class, 'startTest']);
         });
 
@@ -623,7 +625,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
 
         Route::get('/get-children', [ParentController::class, 'getChildren']);
         Route::get('/get-student-info', [ParentController::class, 'getStudentDetails']);
-        Route::get('/get-report-card', [CourseController::class, 'getStudentReportCard']);
+        Route::get('/get-report-card', [SubjectController::class, 'getStudentReportCard']);
 
         Route::get('/{parentId}', [ParentController::class, 'getParentDetails']);
         Route::put('/{parentId}/update', [ParentController::class, 'updateParentDetails']);
@@ -668,20 +670,19 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     });
 
 
-    //subject Routes
-    Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
-    
-    Route::get('/subjects/{subjectId}', [SubjectController::class, 'getClassDetails']);
-    Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getClassResults']);
+    //Classes Routes
+    Route::get('/classes', [ClassesController::class, 'getClassesList']);
+    Route::get('/classes/{classId}', [ClassesController::class, 'getClassDetails']);
+    Route::get('/classes/{classId}/results', [ClassesController::class, 'getClassResults']);
 
     //Section Routes
-    // Route::get('/sections', [SectionController::class, 'getSectionList']);
+    Route::get('/sections', [SectionController::class, 'getSectionList']);
 
-    //Course Routes
-    Route::get('/courses', [CourseController::class, 'getCoursesList']);
-    Route::get('/subjects/{subjectId}/courses', [CourseController::class, 'getCourseListBySubjectId']);
-    Route::get('/courses/{courseId}', [CourseController::class, 'getSubjectDetails']);
-    Route::get('/courses/{courseId}/results', [CourseController::class, 'getSubjectResults']);
+    //Subject Routes
+    Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
+    Route::get('/classes/{classId}/subjects', [SubjectController::class, 'getSubjectListByClassId']);
+    Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
+    Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
 
     //Chapter Routes
     Route::get('/classes/{classId}/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListByClass']);

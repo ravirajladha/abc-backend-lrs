@@ -13,16 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('chapters', function (Blueprint $table) {
+        Schema::create('assessments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
-            $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->foreignId('chapter_id')->nullable()->constrained('chapters', 'id');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('image')->nullable();
-            $table->tinyInteger('lock_status')->default(0)->comment('0=>Locked, 1=>Unlocked');
-            $table->foreignId('status_updated_by')->nullable()->constrained('auth', 'id');
+            $table->text('instruction')->nullable();
+            $table->string('question_ids', 255)->nullable();
+            $table->integer('no_of_questions')->nullable();
+            $table->decimal('total_score', 10, 2)->nullable();
+            $table->decimal('time_limit', 10, 2)->nullable();
+            $table->decimal('passing_percentage', 10, 2)->nullable();
             $table->timestamps();
         });
     }
@@ -34,6 +37,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('chapters');
+        Schema::dropIfExists('assessments');
     }
 };

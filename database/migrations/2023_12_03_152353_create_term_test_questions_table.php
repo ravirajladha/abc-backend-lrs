@@ -13,16 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('chapters', function (Blueprint $table) {
+        Schema::create('term_test_questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
-            $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->string('title');
-            $table->text('description')->nullable();
+            $table->text('question');
+            $table->text('explanation')->nullable();
             $table->string('image')->nullable();
-            $table->tinyInteger('lock_status')->default(0)->comment('0=>Locked, 1=>Unlocked');
-            $table->foreignId('status_updated_by')->nullable()->constrained('auth', 'id');
+            $table->text('code')->nullable();
+            $table->string('option_one')->nullable();
+            $table->string('option_two')->nullable();
+            $table->string('option_three')->nullable();
+            $table->string('option_four')->nullable();
+            $table->string('answer_key')->nullable();
             $table->timestamps();
         });
     }
@@ -34,6 +37,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('chapters');
+        Schema::dropIfExists('term_tests_questions');
     }
 };
