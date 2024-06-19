@@ -105,6 +105,10 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     Route::post('/refresh-token', [RefreshController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
 
+    Route::post('/update-payment-status/{studentId}', [StudentController::class, 'updatePaymentStatus']);
+
+
+
     //Drop down routes
     Route::prefix('minimal')->group(function () {
         Route::get('/classes', \App\Http\Controllers\Api\Dropdown\ClassesController::class);
@@ -395,8 +399,10 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         });
 
         Route::post('/fees/store', [FeesController::class, 'storeFeeDetails']);
+        Route::get('/fee', [FeesController::class, 'getFee']);
         Route::get('/fees', [FeesController::class, 'getFeesList']);
         Route::post('/fees/{feeId}/update', [FeesController::class, 'updateFeeDetails']);
+        Route::post('/fees/update', [FeesController::class, 'updateFee']);
         Route::get('/fees/{feeId}', [FeesController::class, 'getFeeDetailsById']);
 
         Route::prefix('recruiters')->group(function () {

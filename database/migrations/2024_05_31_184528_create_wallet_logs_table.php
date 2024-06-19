@@ -11,15 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fees', function (Blueprint $table) {
+        Schema::create('wallet_logs', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('wallet_id')->constrained('wallets');
             $table->decimal('amount', 10, 2);
-            $table->decimal('slash_amount', 10, 2);
-            $table->decimal('total_amount', 10, 2);
-            $table->decimal('referral_amount', 10, 2);
-            $table->decimal('referrer_amount', 10, 2);
-            $table->text('benefits');
-            $table->text('description');
+            $table->enum('type', ['referral', 'referrer', 'payment'])->default('payment');
             $table->timestamps();
         });
     }
@@ -29,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fees');
+        Schema::dropIfExists('dynamic_jobs');
     }
 };

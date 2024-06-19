@@ -129,7 +129,6 @@ class TeacherController extends BaseController
                 // ->where('school_id', $schoolId)
                 ->first();
 
-
             if ($teacher) {
                 $auth = AuthModel::where('id', $teacherId)
                     ->where('type', AuthConstants::TYPE_TEACHER)
@@ -148,7 +147,6 @@ class TeacherController extends BaseController
                     ->where('ts.teacher_id', $teacher->id)
                     ->get();
             }
-
 
             if ($teacher && $auth) {
                 $res = [

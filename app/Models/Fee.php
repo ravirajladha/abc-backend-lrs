@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Fee extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'amount',
+        'slash_amount',
+        'total_amount',
+        'referral_amount',
+        'referrer_amount',
+        'benefits',
+        'description'
+    ];
 }

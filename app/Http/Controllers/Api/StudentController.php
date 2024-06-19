@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Ebook;
 use App\Models\School;
+use App\Models\Wallet;
+use App\Models\WalletLog;
 use App\Models\Student;
 use App\Models\CaseStudy;
+use App\Models\AuthToken;
+use App\Models\Auth;
 
 use App\Models\ParentModel;
 use Illuminate\Support\Str;
@@ -624,6 +628,80 @@ class StudentController extends BaseController
                 ->first();
             return $this->sendResponse(['parent' => $parent], '');
         }
+    }
+    public function updatePaymentStatus(Request $request, $studentId)
+    {
+        \Log::error('Failed to update payment status.', ['request' => $request->all()]);
+
+        DB::beginTransaction();
+    
+        try {
+            $student = DB::table('students')->where('id', $studentId)->first();
+            
+            if (!$student) {
+                return $this->sendError('Student not found.');
+            }
+    
+            DB::table('students')
+                ->where('id', $studentId)
+                ->update(['is_paid' => true]);
+    
+            $auth = Auth::find($student->auth_id);
+    
+            // Retrieve the existing token
+            $existingToken = AuthToken::where('auth_id', $auth->id)->latest()->first();
+    
+            // Ensure referral_amount and referrer_amount are set
+            $referralAmount = $request->input('referral_amount', 0);
+            $referrerAmount = $request->input('referrer_amount', 0);
+    
+            // Update or create wallet entry for the student
+            $wallet = Wallet::updateOrCreate(
+                ['auth_id' => $auth->id],
+                ['balance' => DB::raw('balance + '.$referralAmount)]
+            );
+    
+            // Log the referral amount
+            if ($referralAmount > 0) {
+                WalletLog::create([
+                    'wallet_id' => $wallet->id,
+                    'amount' => $referralAmount,
+                    'type' => 'referral',
+                ]);
+            }
+            $referrerName = null;
+            // Handle referral code logic
+            if ($request->filled('referral_code')) {
+                $referrerAuth = Student::where('student_unique_code', $request->referral_code)->first();
+                if ($referrerAuth) {
+                    $referrerWallet = Wallet::firstOrCreate(['auth_id' => $referrerAuth->auth_id]);
+                    $referrerWallet->increment('balance', $referrerAmount);
+    
+                    // Log the referrer amount
+                    if ($referrerAmount > 0) {
+                        WalletLog::create([
+                            'wallet_id' => $referrerWallet->id,
+                            'amount' => $referrerAmount,
+                            'type' => 'referrer',
+                        ]);
+                    }
+                    $referrerName = $referrerAuth->name;
+                }
+            }
+    //referrename is pending to send in the response to show in the toast
+    //but , need to reload the window, so no toastr will be shown\
+    //suucess toast is pending
+            DB::commit();
+            $ip_address = $request->ip();
+            $browser = $request->header('User-Agent');
+            return $this->sendResponseWithToken($existingToken->token, $auth,$ip_address,$browser);
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to update payment status.', ['error' => $e->getMessage()]);
+            return $this->sendError('Failed to update payment status.', [$e->getMessage()]);
+        }
+  
     }
 
 }

@@ -20,9 +20,11 @@ return new class extends Migration
             $table->string('class_id', 32)->nullable();
             // $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
             $table->string('section_id', 32)->nullable();
+            $table->string('student_unique_code', 32)->nullable();
             $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
             $table->foreignId('parent_id')->nullable()->constrained('parents', 'id');
             $table->tinyInteger('student_type')->default(0)->comment('0=>Student, 1=>Outsider');
+            $table->tinyInteger('is_paid')->default(0)->comment('0=>not paid, 1=>paid');
             $table->string('name');
             $table->string('roll_number', 32)->nullable();
             $table->string('profile_image')->nullable();

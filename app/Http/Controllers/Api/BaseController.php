@@ -118,6 +118,7 @@ class BaseController extends Controller
                     'profile_image' => $student->profile_image,
                     'dob' => $student->dob,
                     'address' => $student->address,
+                    'is_paid' => $student->is_paid,
                     'city' => $student->city,
                     'state' => $student->state,
                     'pincode' => $student->pincode,

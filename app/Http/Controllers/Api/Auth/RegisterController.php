@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Models\Auth as AuthModel;
 use App\Models\ParentModel;
+use App\Models\Wallet;
 use App\Models\Student;
 
 use App\Services\Core\AuthService;
@@ -130,7 +131,11 @@ class RegisterController extends BaseController
                     'description' => $request->description,
                 ]);
             }
-
+            // Create wallet for the parent
+            Wallet::create([
+                'auth_id' => $auth->id,
+                'balance' => 0, // Initial balance
+            ]);
             $authService = new AuthService();
 
             if ($auth && $student) {

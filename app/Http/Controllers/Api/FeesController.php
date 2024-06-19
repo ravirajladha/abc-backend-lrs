@@ -50,6 +50,13 @@ class FeesController extends BaseController
         }
     }
 
+    public function getFee()
+    {
+        $fee = Fee::first();
+  
+        return $this->sendResponse(['fee' => $fee], 'Fees fetched successfully.');
+    }
+
     public function getFeesList()
     {
         $fees = DB::table('fees')
@@ -58,6 +65,41 @@ class FeesController extends BaseController
         ->get();
 
         return $this->sendResponse(['fees' => $fees], 'Fees fetched successfully.');
+    }
+
+    public function updateFee(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric',
+            'slashAmount' => 'required|numeric',
+            'totalAmount' => 'required|numeric',
+            'referralAmount' => 'required|numeric',
+            'referrerAmount' => 'required|numeric',
+            'benefits' => 'required|string',
+            'description' => 'required|string',
+        ]);
+
+        $fee = Fee::first();
+        if (!$fee) {
+            $fee = new Fee();
+        }
+
+        $fee->amount = $request->amount;
+        $fee->slash_amount = $request->slashAmount;
+        $fee->total_amount = $request->totalAmount;
+        $fee->referral_amount = $request->referralAmount;
+        $fee->referrer_amount = $request->referrerAmount;
+        $fee->benefits = $request->benefits;
+        $fee->description = $request->description;
+
+        $fee->save();
+
+      
+        if ($fee->save()) {
+            return $this->sendResponse(['fee' => $fee], 'Fee updated successfully.');
+        } else {
+            return $this->sendError('Failed to update fee.', [], 500);
+        }
     }
 
     /**
