@@ -464,9 +464,9 @@ class TeacherController extends BaseController
             ])->get(['subject_id']);
 
             $students_query = DB::table('students as s')
-                ->select('s.*', 'c.name as class_name')
-                ->join('classes as c', 's.class_id', '=', 'c.id')
-                ->whereIn('s.class_id', $teacherClasses)
+                // ->select('s.*', 'c.name as class_name')
+                // ->join('classes as c', 's.class_id', '=', 'c.id')
+                // ->whereIn('s.class_id', $teacherClasses)
                 ->get();
 
             $students =  $students_query;
