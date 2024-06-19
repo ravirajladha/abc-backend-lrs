@@ -481,6 +481,8 @@ class StudentController extends BaseController
             'dob' => 'required',
             'pincode' => 'required',
             'address' => 'required|string',
+            'password' => 'required|string|min:6',
+            'confirmPassword' => 'required|string|min:6',
         ]);
 
         if ($validator->fails()) {
@@ -503,10 +505,10 @@ class StudentController extends BaseController
         $email = $request->input('email') ?: $auth->username . '@gmail.com';
 
          // Ensure the generated email is unique
-         while (AuthModel::where('email', $email)->exists()) {
-            $rand_number = mt_rand(1000, 9999);
-            $email = $auth->username . $rand_number . '@gmail.com';
-        }
+        //  while (AuthModel::where('email', $email)->exists()) {
+        //     $rand_number = mt_rand(1000, 9999);
+        //     $email = $auth->username . $rand_number . '@gmail.com';
+        // }
             $authData = [
                 // 'email' => $request->input('email', $auth->email),
                 'email' => $email,
