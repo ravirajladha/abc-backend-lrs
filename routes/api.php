@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\TermTestController;
 use App\Http\Controllers\Api\CaseStudyController;
 use App\Http\Controllers\Api\AssessmentController;
 use App\Http\Controllers\Api\Auth\LoginController;
+use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\ApplicationController;
 
 //Test Controllers
@@ -86,6 +87,9 @@ use App\Http\Controllers\Api\{ElabController, MiniProjectController, InternshipC
 */
 
 Route::post('/login', [LoginController::class, 'login']);
+Route::post('/verify-email-and-send-otp', [ForgotPasswordController::class, 'verifyEmailAndSendOtp']);
+Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 Route::post('/signup', [RegisterController::class, 'registerParent'])->middleware('cors');
 Route::get('/mobile/ebooks/{ebookId}/get-ebook-mobile', [EbookController::class, 'getEbook']);
 Route::get('/mobile/project-reports/{ProjectReportId}/get-project-report-mobile', [ProjectReportController::class, 'getProjectReport']);
