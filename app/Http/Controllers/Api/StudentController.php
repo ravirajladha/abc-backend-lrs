@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Validation\Rule;
 
 use App\Models\Ebook;
 use App\Models\School;
