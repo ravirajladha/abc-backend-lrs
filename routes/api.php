@@ -478,7 +478,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::put('/{studentId}/update', [StudentController::class, 'updateStudentDetails']);
             Route::delete('/{studentId}/delete', [StudentController::class, 'deleteStudentDetails']);
             Route::get('/get-student-details/{studentId}', [StudentController::class, 'getStudentDetailsFromStudent']);
-          
+
             // Route::put('/{studentId}/status', [StudentController::class, 'updateStudentDetails']);
         });
 
@@ -512,6 +512,8 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('/subjects', [SubjectController::class, 'getStudentSubjectsWithResults']);
         Route::get('/get-report-card', [SubjectController::class, 'getStudentReportCard']);
         Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
+
+        Route::get('/courses-all', [SubjectController::class, 'getSubjectsWithClass']);
 
         //Job Routes
         Route::prefix('jobs')->group(function () {

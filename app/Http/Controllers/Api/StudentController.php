@@ -179,7 +179,7 @@ class StudentController extends BaseController
             ->select('w.*')
             ->where('w.auth_id', $studentAuthId)
             ->first();
-    
+
         if ($walletDetails) {
             // Fetch the wallet logs in descending order using the wallet_id
             $walletLogs = DB::table('wallet_logs as wl')
@@ -187,7 +187,7 @@ class StudentController extends BaseController
                 ->where('wl.wallet_id', $walletDetails->id)
                 ->orderBy('wl.created_at', 'desc')
                 ->get();
-    
+
             return $this->sendResponse([
                 'wallet_details' => $walletDetails,
                 'wallet_logs' => $walletLogs
@@ -664,33 +664,40 @@ class StudentController extends BaseController
         \Log::error('Failed to update payment status.', ['request' => $request->all()]);
 
         DB::beginTransaction();
-    
+
+        $validator = Validator::make($request->all(), [
+            'referral_code' => 'required|string|exists:students,student_unique_code',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        }
+
         try {
             $student = DB::table('students')->where('id', $studentId)->first();
-            
+
             if (!$student) {
                 return $this->sendError('Student not found.');
             }
-    
+
             DB::table('students')
                 ->where('id', $studentId)
                 ->update(['is_paid' => true]);
-    
+
             $auth = Auth::find($student->auth_id);
-    
+
             // Retrieve the existing token
             $existingToken = AuthToken::where('auth_id', $auth->id)->latest()->first();
-    
+
             // Ensure referral_amount and referrer_amount are set
             $referralAmount = $request->input('referral_amount', 0);
             $referrerAmount = $request->input('referrer_amount', 0);
-    
+
             // Update or create wallet entry for the student
             $wallet = Wallet::updateOrCreate(
                 ['auth_id' => $auth->id],
                 ['balance' => DB::raw('balance + '.$referralAmount)]
             );
-    
+
             // Log the referral amount
             if ($referralAmount > 0) {
                 WalletLog::create([
@@ -706,7 +713,7 @@ class StudentController extends BaseController
                 if ($referrerAuth) {
                     $referrerWallet = Wallet::firstOrCreate(['auth_id' => $referrerAuth->auth_id]);
                     $referrerWallet->increment('balance', $referrerAmount);
-    
+
                     // Log the referrer amount
                     if ($referrerAmount > 0) {
                         WalletLog::create([
@@ -725,13 +732,13 @@ class StudentController extends BaseController
             $ip_address = $request->ip();
             $browser = $request->header('User-Agent');
             return $this->sendResponseWithToken($existingToken->token, $auth,$ip_address,$browser);
-    
+
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Failed to update payment status.', ['error' => $e->getMessage()]);
             return $this->sendError('Failed to update payment status.', [$e->getMessage()]);
         }
-  
+
     }
 
 }

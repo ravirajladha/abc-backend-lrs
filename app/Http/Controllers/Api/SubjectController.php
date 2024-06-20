@@ -38,6 +38,15 @@ class SubjectController extends BaseController
         return $this->sendResponse(['subjects' => $subjects]);
     }
 
+    public function getSubjectsWithClass()
+    {
+        $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
+                           ->select('subjects.*', 'classes.name as class_name')
+                           ->get();
+
+        return $this->sendResponse(['subjects' => $subjects]);
+    }
+
     /**
      * Display the student report card.
      *
@@ -259,7 +268,7 @@ class SubjectController extends BaseController
             ],
             'subject_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-    
+
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
