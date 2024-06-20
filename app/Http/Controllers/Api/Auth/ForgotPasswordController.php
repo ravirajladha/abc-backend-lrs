@@ -35,7 +35,7 @@ class ForgotPasswordController extends BaseController
      */
     private function maskMobileNumber($phoneNumber)
     {
-        return substr($phoneNumber, 0, -4) . str_repeat('x', strlen($phoneNumber) - 4);
+        return str_repeat('x', strlen($phoneNumber) - 4) . substr($phoneNumber, -4);
     }
     public function verifyEmailAndSendOtp(Request $request)
     {
@@ -58,7 +58,7 @@ class ForgotPasswordController extends BaseController
             $maskedNumber = $this->maskMobileNumber($auth->phone_number);
 
             // Call the function for sending OTP to user's mobile number
-            $sent = $this->otpService->sendOtp($auth->phone_number, $otp);
+            $sent = $this->otpService->sendOtp($auth->phone_number,$auth->username, $otp);
             if ($sent) {
                 return $this->sendResponse([], "Email verified and OTP sent to mobile number {$maskedNumber}");
             } else {

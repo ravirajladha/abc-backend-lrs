@@ -17,11 +17,11 @@ class OtpService
         $this->password = 'CmcMUhZyVnw3qcFp7owhuEnBJQdwva0ofgwsrJIZ'; // Replace with your actual password
     }
 
-    public function sendOtp($phoneNumber, $otp)
+    public function sendOtp($phoneNumber,$username, $otp)
     {
         $response = Http::withBasicAuth($this->username, $this->password)
             ->post($this->apiUrl, [
-                'Text' => "Dear Parents,Your One-Time Password (OTP) for password recovery is: ".$otp."Please use this OTP to reset your password. This OTP is valid for the next 10 minutes.Thank you,SHREE ARADHYA EDUCATIONAL AND CHARITABLE TRUST",
+                'Text' => "Dear $username,Your One-Time Password (OTP) for password recovery is: ".$otp."Please use this OTP to reset your password. This OTP is valid for the next 10 minutes.Thank you,SHREE ARADHYA EDUCATIONAL AND CHARITABLE TRUST",
                 'Number' => '91'.$phoneNumber,
                 'SenderId' => 'SHRARA',
                 'DRNotifyUrl' => 'https://www.domainname.com/notifyurl',
