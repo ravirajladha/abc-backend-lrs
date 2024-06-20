@@ -11,7 +11,7 @@ class Fee extends Model
     protected $fillable = [
         'amount',
         'slash_amount',
-        'total_amount',
+
         'referral_amount',
         'referrer_amount',
         'benefits',

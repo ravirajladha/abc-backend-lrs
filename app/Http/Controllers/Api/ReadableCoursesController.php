@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\ReadableCourse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\ReadableCourse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 
@@ -61,6 +62,7 @@ class ReadableCoursesController extends BaseController
         ->leftJoin('classes', 'readable_courses.class_id', '=', 'classes.id')
         ->leftJoin('subjects', 'readable_courses.subject_id', '=', 'subjects.id')
         ->get();
+        Log::info('Course' ,['Course1' => $readableCourses]);
         return $this->sendResponse(['readableCourses' => $readableCourses], 'All Readable Courses Retrieved Successfully.');
     }
 
@@ -70,14 +72,15 @@ class ReadableCoursesController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getReadableCoursesByClass($calssId)
+    public function getReadableCoursesByClass()
     {
-        $validator = Validator::make(['calssId' => $calssId], [
-            'calssId' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return $this->sendValidationError($validator);
-        } else {
+        // $validator = Validator::make(['calssId' => $calssId], [
+        //     'calssId' => 'required',
+        // ]);
+        // if ($validator->fails()) {
+        //     return $this->sendValidationError($validator);
+        // } else {
+        
             $readableCourses = ReadableCourse::select(
                 'readable_courses.*',
                 'ebooks.title as ebook_title',
@@ -92,9 +95,10 @@ class ReadableCoursesController extends BaseController
             ->leftJoin('case_studies', 'readable_courses.case_study_id', '=', 'case_studies.id')
             ->leftJoin('classes', 'readable_courses.class_id', '=', 'classes.id')
             ->leftJoin('subjects', 'readable_courses.subject_id', '=', 'subjects.id')
-            ->where('readable_courses.class_id',$calssId)
             ->get();
+        Log::info('Course' ,['Course' => $readableCourses]);
+
             return $this->sendResponse(['readableCourses' => $readableCourses], 'All Readable Courses Retrieved Successfully.');
-        }
+        // }
     }
 }

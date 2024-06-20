@@ -577,6 +577,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
 
         Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
+        Route::get('/readable-courses', [ReadableCoursesController::class, 'getReadableCoursesByClass']);
         Route::get('/{studentId}', [StudentController::class, 'getStudentDetails']);
         Route::put('/{studentId}/update', [StudentController::class, 'updateStudentPassword']);
 
@@ -590,7 +591,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
 
         Route::get('/subjects/{subjectId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
 
-        Route::get('/readable-courses/{classId}', [ReadableCoursesController::class, 'getReadableCoursesByClass']);
+     
     });
 
     //Teacher Login Routes

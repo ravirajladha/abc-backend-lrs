@@ -51,7 +51,6 @@ class JobController extends BaseController
                 ->select('j.*', 'r.name as recruiter_name','t.instruction as test_instruction')
                 ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
                 ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id')
-                ->whereRaw("FIND_IN_SET(?, j.class_id)", [$student_class_id])
                 ->where('status', true)
                 ->get();
 

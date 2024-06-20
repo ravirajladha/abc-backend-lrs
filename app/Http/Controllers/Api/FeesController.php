@@ -72,7 +72,7 @@ class FeesController extends BaseController
         $request->validate([
             'amount' => 'required|numeric',
             'slashAmount' => 'required|numeric',
-            'totalAmount' => 'required|numeric',
+     
             'referralAmount' => 'required|numeric',
             'referrerAmount' => 'required|numeric',
             'benefits' => 'required|string',
@@ -86,7 +86,7 @@ class FeesController extends BaseController
 
         $fee->amount = $request->amount;
         $fee->slash_amount = $request->slashAmount;
-        $fee->total_amount = $request->totalAmount;
+     
         $fee->referral_amount = $request->referralAmount;
         $fee->referrer_amount = $request->referrerAmount;
         $fee->benefits = $request->benefits;
