@@ -42,5 +42,6 @@ class DatabaseSeeder extends Seeder
         $this->call(SectionSeeder::class);
         $this->call(EbookElementTypeSeeder::class);
         $this->call(SchoolSeeder::class);
+        $this->call(FeeSeeder::class);
     }
 }
