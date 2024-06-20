@@ -84,7 +84,7 @@ class RegisterController extends BaseController
     //         }
     //     }
     // }
-
+//registration of student, need to change the name
     public function registerParent(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -112,6 +112,15 @@ class RegisterController extends BaseController
             $parentId = null;
             $calssId = null;
             $sectionId = null;
+            function generateUniqueStudentCode() {
+                do {
+                    // Generate a random 8-digit number
+                    $code = 'S' . sprintf('%08d', mt_rand(1, 99999999));
+                } while (Student::where('student_unique_code', $code)->exists());
+                
+                return $code;
+            }
+            // $student_unique_code
             if ($auth) {
                 $student = Student::create([
                     'auth_id' => $auth->id,
@@ -129,6 +138,7 @@ class RegisterController extends BaseController
                     'state' => $request->state,
                     'pincode' => $request->pincode,
                     'description' => $request->description,
+                    'student_unique_code' => generateUniqueStudentCode(),
                 ]);
             }
             // Create wallet for the parent
@@ -158,4 +168,5 @@ class RegisterController extends BaseController
             }
         }
     }
+   
 }
