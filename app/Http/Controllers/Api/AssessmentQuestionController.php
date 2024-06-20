@@ -64,11 +64,11 @@ class AssessmentQuestionController extends BaseController
     public function storeAssessmentQuestionDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'question' => 'required|string|max:255',
-            'option_one' => 'required|string|max:255',
-            'option_two' => 'required|string|max:255',
-            'option_three' => 'required|string|max:255',
-            'option_four' => 'required|string|max:255',
+            'question' => 'required|string',
+            'option_one' => 'required|string',
+            'option_two' => 'required|string',
+            'option_three' => 'required|string',
+            'option_four' => 'required|string',
             'answer_key' => 'required|in:option_one,option_two,option_three,option_four',
             'selectedClass' => 'required|exists:classes,id',
             'selectedSubject' => 'required|exists:subjects,id',

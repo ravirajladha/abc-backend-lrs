@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Fee;
+use App\Models\Student;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 
 class FeesController extends BaseController
@@ -50,12 +52,12 @@ class FeesController extends BaseController
         }
     }
 
-    public function getFee()
-    {
-        $fee = Fee::first();
-  
-        return $this->sendResponse(['fee' => $fee], 'Fees fetched successfully.');
-    }
+        public function getFee()
+        {
+            $fee = Fee::first();
+    
+            return $this->sendResponse(['fee' => $fee], 'Fees fetched successfully.');
+        }
 
     public function getFeesList()
     {
@@ -69,6 +71,7 @@ class FeesController extends BaseController
 
     public function updateFee(Request $request)
     {
+        Log::info(['fees' => $request->all()]);
         $request->validate([
             'amount' => 'required|numeric',
             'slashAmount' => 'required|numeric',
@@ -158,5 +161,46 @@ class FeesController extends BaseController
         return $this->sendResponse(['fee' => $fee], 'Fee fetched successfully.');
     }
 
-
+    public function validateReferralName(Request $request)
+    {
+        Log::info(['$request' => $request->all()]);
+        $request->validate([
+            'referral_code' => 'required|string|exists:students,student_unique_code',
+        ]);
+    
+        $student = Student::where('student_unique_code', $request->referral_code)->first();
+    
+      
+    
+        if ($request->filled('referral_code') && $student->student_unique_code === $request->referral_code) {
+            return $this->sendError('You cannot use your own unique code as a referral.', [], 400);
+        }
+        if ($student) {
+            return $this->sendResponse(['referrer_name' => $student->name], 'Referral code validated successfully.');
+        }
+        return $this->sendError('Invalid referral code.', [], 400);
+    }
+    
+    
 }
+
+
+// public function validateReferralName(Request $request)
+// {
+//     Log::info(['$request' => $request->all()]);
+//     $request->validate([
+//         'referral_code' => 'required|string|exists:students,student_unique_code',
+//     ]);
+
+//     $student = Student::where('student_unique_code', $request->referral_code)->first();
+
+//     if ($student) {
+//         return $this->sendResponse(['referrer_name' => $student->name], 'Referral code validated successfully.');
+//     }else{
+        
+//     }
+
+//     return $this->sendError('Invalid referral code.', [], 400);
+// }
+
+// thi should not validate , if the user uses its own referal code

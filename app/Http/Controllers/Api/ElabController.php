@@ -324,6 +324,7 @@ class ElabController extends BaseController
     }
     public function elabSubmission(Request $request)
     {
+        // Log::info('ElabSubmission',['request' => $request->all()]);
         // Validate the request data
         $validator = Validator::make($request->all(), [
             // 'elab_id' => 'required|exists:elabs,id',
@@ -369,15 +370,18 @@ class ElabController extends BaseController
                 ->where('type', 2)
                 ->where('mini_project_id', $mini_project_id)
                 ->where('mini_project_task_id', $miniProjectTaskId)
+                ->where('student_id', $request->user_id)
                 ->first();
         } elseif ($request->type == 3) {
             $submission = ElabSubmission::where('type', 3)
                 ->where('internship_id', $internshipId)
                 ->where('internship_task_id', $internshipTaskId)
+                ->where('student_id', $request->user_id)
                 ->first();
         }
 
         if ($submission) {
+            // Log::info("same task");
             // Submission already exists, update the record
             $submission->update([
                 'code' => $request->code,
@@ -424,7 +428,7 @@ class ElabController extends BaseController
             $miniProjectTaskId = $redirectingIds[2];
 
             // Update Mini Project Submission
-            $miniProjectSubmission = MiniProjectSubmission::where('mini_project_task_id', $miniProjectTaskId)->first();
+            $miniProjectSubmission = MiniProjectSubmission::where('mini_project_task_id', $miniProjectTaskId)->where('mini_project_id', $mini_project_id)->where('student_id', $request->user_id)->first();
 
             if ($miniProjectSubmission) {
                 $miniProjectSubmission->elab_submission_id = $submission->id; // New Elab Submission ID
@@ -437,7 +441,7 @@ class ElabController extends BaseController
         }
         if ($request->type == 3) {
             // Update Mini Project Submission
-            $internshipSubmission = InternshipSubmission::where('internship_task_id', $internshipTaskId)->first();
+            $internshipSubmission = InternshipSubmission::where('internship_task_id', $internshipTaskId)->where('internship_id', $internshipId)->where('student_id', $request->user_id)->first();
             if ($internshipSubmission) {
                 $internshipSubmission->elab_submission_id = $submission->id; // New Elab Submission ID
                 $internshipSubmission->status = 2; // New status // Update any other fields as needed

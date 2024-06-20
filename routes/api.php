@@ -398,6 +398,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::get('/{jobId}/applications', [JobController::class, 'getStudentJobApplications']);
         });
 
+        Route::post('/fee/validate-referral-name', [FeesController::class, 'validateReferralName']);
         Route::post('/fees/store', [FeesController::class, 'storeFeeDetails']);
         Route::get('/fee', [FeesController::class, 'getFee']);
         Route::get('/fees', [FeesController::class, 'getFeesList']);

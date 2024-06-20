@@ -662,11 +662,13 @@ class StudentController extends BaseController
     public function updatePaymentStatus(Request $request, $studentId)
     {
         \Log::error('Failed to update payment status.', ['request' => $request->all()]);
+        $referrerAuth = Student::where('student_unique_code', $request->referral_code)->first();
+        \Log::error('Failed referrer auth.', ['request' => $referrerAuth]);
 
         DB::beginTransaction();
 
         $validator = Validator::make($request->all(), [
-            'referral_code' => 'required|string|exists:students,student_unique_code',
+            'referral_code' => 'nullable|string',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
@@ -678,7 +680,10 @@ class StudentController extends BaseController
             if (!$student) {
                 return $this->sendError('Student not found.');
             }
-
+            // if ($request->filled('referral_code') && $student->student_unique_code === $request->referral_code) {
+            //     return $this->sendError('You cannot use your own unique code as a referral.', [], 400);
+            // }
+    
             DB::table('students')
                 ->where('id', $studentId)
                 ->update(['is_paid' => true]);
@@ -692,30 +697,32 @@ class StudentController extends BaseController
             $referralAmount = $request->input('referral_amount', 0);
             $referrerAmount = $request->input('referrer_amount', 0);
 
-            // Update or create wallet entry for the student
-            $wallet = Wallet::updateOrCreate(
-                ['auth_id' => $auth->id],
-                ['balance' => DB::raw('balance + '.$referralAmount)]
-            );
-
-            // Log the referral amount
-            if ($referralAmount > 0) {
-                WalletLog::create([
-                    'wallet_id' => $wallet->id,
-                    'amount' => $referralAmount,
-                    'type' => 'referral',
-                ]);
-            }
+           
             $referrerName = null;
-            // Handle referral code logic
-            if ($request->filled('referral_code')) {
+            // Handle referral code logic only if it's valid and not the user's own code
+            if ($request->filled('referral_code') && $student->student_unique_code !== $request->referral_code) {
                 $referrerAuth = Student::where('student_unique_code', $request->referral_code)->first();
                 if ($referrerAuth) {
+                    // Update or create wallet entry for the student
+                    if ($referralAmount > 0) {
+                        $wallet = Wallet::updateOrCreate(
+                            ['auth_id' => $auth->id],
+                            ['balance' => DB::raw('balance + ' . $referralAmount)]
+                        );
+    
+                        // Log the referral amount
+                        WalletLog::create([
+                            'wallet_id' => $wallet->id,
+                            'amount' => $referralAmount,
+                            'type' => 'referral',
+                        ]);
+                    }
+    
                     $referrerWallet = Wallet::firstOrCreate(['auth_id' => $referrerAuth->auth_id]);
-                    $referrerWallet->increment('balance', $referrerAmount);
-
-                    // Log the referrer amount
                     if ($referrerAmount > 0) {
+                        $referrerWallet->increment('balance', $referrerAmount);
+    
+                        // Log the referrer amount
                         WalletLog::create([
                             'wallet_id' => $referrerWallet->id,
                             'amount' => $referrerAmount,
@@ -725,6 +732,7 @@ class StudentController extends BaseController
                     $referrerName = $referrerAuth->name;
                 }
             }
+    
     //referrename is pending to send in the response to show in the toast
     //but , need to reload the window, so no toastr will be shown\
     //suucess toast is pending
