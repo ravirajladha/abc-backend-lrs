@@ -478,7 +478,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::put('/{studentId}/update', [StudentController::class, 'updateStudentDetails']);
             Route::delete('/{studentId}/delete', [StudentController::class, 'deleteStudentDetails']);
             Route::get('/get-student-details/{studentId}', [StudentController::class, 'getStudentDetailsFromStudent']);
-
+          
             // Route::put('/{studentId}/status', [StudentController::class, 'updateStudentDetails']);
         });
 
@@ -574,6 +574,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         });
 
         Route::get('/dashboard', [StudentController::class, 'getDashboard']);
+        Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
 
         Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
         Route::get('/{studentId}', [StudentController::class, 'getStudentDetails']);

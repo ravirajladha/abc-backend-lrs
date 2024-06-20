@@ -168,6 +168,35 @@ class StudentController extends BaseController
             return $this->sendAuthError("Not authorized fetch schools list.");
         }
     }
+
+    // get wallet and wallet logs detail from the student auth id
+    public function getWalletDetailsAndLogs( $studentAuthId)
+    {
+
+        // Fetch the wallet details using the student's auth_id
+        $walletDetails = DB::table('wallets as w')
+            ->select('w.*')
+            ->where('w.auth_id', $studentAuthId)
+            ->first();
+    
+        if ($walletDetails) {
+            // Fetch the wallet logs in descending order using the wallet_id
+            $walletLogs = DB::table('wallet_logs as wl')
+                ->select('wl.*')
+                ->where('wl.wallet_id', $walletDetails->id)
+                ->orderBy('wl.created_at', 'desc')
+                ->get();
+    
+            return $this->sendResponse([
+                'wallet_details' => $walletDetails,
+                'wallet_logs' => $walletLogs
+            ]);
+        } else {
+            return $this->sendError("No wallet details found for the specified student.");
+        }
+    }
+
+
     /**
      * Display the specified student.
      *

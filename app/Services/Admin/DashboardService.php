@@ -23,6 +23,9 @@ class DashboardService
         $recruiters = DB::table('recruiters')->count();
         $jobs = DB::table('jobs')->count();
         $job_tests = DB::table('job_tests')->count();
+        $subscribed_students = DB::table('students')->where('is_paid', true)->count();
+        $unsubscribed_students = DB::table('students')->where('is_paid', false)->count();
+        $trainers = DB::table('teachers')->count();
 
 
         $res = [
@@ -41,6 +44,9 @@ class DashboardService
             'recruiters' => $recruiters,
             'jobs' => $jobs,
             'job_tests' => $job_tests,
+            'subscribed_students' => $subscribed_students,
+            'unsubscribed_students' => $unsubscribed_students,
+            'trainers' => $trainers,
         ];
 
         return $res;
