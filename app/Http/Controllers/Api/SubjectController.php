@@ -8,6 +8,7 @@ use App\Models\TermTest;
 use Illuminate\Support\Str;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Models\TermTestResult;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +16,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 
 use App\Services\Admin\ResultService;
+// use Illuminate\Validation\Rule as Enter;
+
+// use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
+use App\Http\Constants\SubjectTypeConstants;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
-
-use App\Http\Constants\SubjectTypeConstants;
 
 class SubjectController extends BaseController
 {
@@ -243,11 +246,20 @@ class SubjectController extends BaseController
     }
     public function updateSubjectDetails(Request $request, $subjectId)
     {
-        $validator = Validator::make($request->all(), [
-            'subject_name' => 'required|max:75|unique:subjects,name',
+        $subject = Subject::find($subjectId);
 
+        if (!$subject) {
+            return $this->sendError('Subject not found.');
+        }
+        $validator = Validator::make($request->all(), [
+            'subject_name' => [
+                'required',
+                'max:75',
+                Rule::unique('subjects', 'name')->ignore($subjectId),
+            ],
             'subject_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+    
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
