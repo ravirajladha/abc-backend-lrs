@@ -112,6 +112,7 @@ class BaseController extends Controller
                     'section_id' => null,
                     // 'section_name' => $student->section_name ? $student->section_name : null,
                     'section_name' => null,
+                    'student_unique_code' => $student->student_unique_code,
                     'school_id' => $student->school_id,
                     'school_name' => $student->school_name,
                     'subjects' => $subjects !== null ? $subjects : null,
