@@ -15,9 +15,18 @@ use Illuminate\Support\Facades\Hash;
 
 use App\Http\Controllers\Api\BaseController;
 use Illuminate\Support\Facades\Cache;
+use App\Services\Otp\OtpService;
 
 class ForgotPasswordController extends BaseController
 {
+
+    protected $otpService;
+
+    public function __construct(OtpService $otpService)
+    {
+        $this->otpService = $otpService;
+    }
+
     /**
      * Mask the mobile number to show only the last 4 digits.
      *
@@ -38,9 +47,9 @@ class ForgotPasswordController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $auth = Auth::where('email', $request->email)->first();
-            // for now otp is 5555
-            // $otp = rand(100000, 999999);
-            $otp = 5555;
+            // for now otp is 555555
+            $otp = rand(100000, 999999);
+            // $otp = 555555;
 
             // Store OTP in cache with a 10-minute expiration
             Cache::put('otp_' . $auth->id, $otp, now()->addMinutes(10));
@@ -49,9 +58,13 @@ class ForgotPasswordController extends BaseController
             $maskedNumber = $this->maskMobileNumber($auth->phone_number);
 
             // Call the function for sending OTP to user's mobile number
-            // $this->sendOtp($auth->phone_number, $otp);
-
-            return $this->sendResponse([], "Email verified and OTP sent to mobile number {$maskedNumber}");
+            $sent = $this->otpService->sendOtp($auth->phone_number, $otp);
+            if ($sent) {
+                return $this->sendResponse([], "Email verified and OTP sent to mobile number {$maskedNumber}");
+            } else {
+                return $this->sendError('Failed to send OTP. Please try again.', [], 500);
+            }
+            // return $this->sendResponse([], "Email verified and OTP sent to mobile number {$maskedNumber}");
         }
     }
 
