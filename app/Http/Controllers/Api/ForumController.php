@@ -239,4 +239,64 @@ class ForumController extends BaseController
         return $this->sendResponse(['forumAnswer'=> $forumAnswer], 'Vote recorded successfully');
     }
 
+      /**
+     * Display a listing of the Forum questions.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getForumQuestionsList()
+    {
+        $forumQuestions = DB::table('forum_questions as f')
+            ->select('f.id','f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+            ->leftJoin('students as s', 's.id', 'f.student_id')
+            ->get();
+        // $forumQuestions = ForumQuestion::get();
+        return $this->sendResponse(['forumQuestions' => $forumQuestions],'Forum questions fetched successfully.');
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getForumQuestionAnswers(Request $request, $forumId)
+    {
+        $forum = [];
+        $question = DB::table('forum_questions as f')
+            ->select('f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+            ->leftJoin('students as s', 's.id', 'f.student_id')
+            ->where('f.id', $forumId)
+            ->first();
+
+        $loggedUserId = $this->getLoggedUserId();
+        $student = Student::where('auth_id', $loggedUserId)->first();
+        $answers = DB::table('forum_answers as f')
+            ->select(
+                'f.id',
+                'f.answer',
+                'f.vote_count',
+                'f.student_id',
+                's.name as student_name',
+                's.profile_image',
+                'f.created_at',
+                DB::raw('IFNULL(v.vote_type, 0) as vote_type')
+            )
+            ->leftJoin('students as s', 's.id', 'f.student_id')
+            ->leftJoin('forum_answer_votes as v','v.answer_id', 'f.id')
+            ->where('f.status', ForumConstants::STATUS_ACTIVE)
+            ->where('f.question_id', $forumId)
+            ->orderBy('f.vote_count', 'desc')
+            ->get();
+
+        $forum = [
+            'question' => $question,
+            'answers' => $answers,
+        ];
+
+        if ($question !== null) {
+            return $this->sendResponse(['forum' => $forum], 'Forum fetched successfully');
+        }
+
+        return $this->sendError('Failed to fetch forum');
+    }
+
 }

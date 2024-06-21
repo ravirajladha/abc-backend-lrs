@@ -430,6 +430,11 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::post('/store', [ZoomCallController::class, 'storeZoomCall']);
             Route::post('/{zoomCallId}/edit', [ZoomCallController::class, 'updateZoomCall']);
         });
+
+        Route::prefix('forums')->group(function () {
+            Route::get('/questions', [ForumController::class, 'getForumQuestionsList']);
+            Route::get('/questions/{questionId}/answers', [ForumController::class, 'getForumQuestionAnswers']);
+        });
     });
 
     //School Login Routes
@@ -594,7 +599,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
 
         Route::get('/subjects/{subjectId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
 
-     
+
     });
 
     //Teacher Login Routes

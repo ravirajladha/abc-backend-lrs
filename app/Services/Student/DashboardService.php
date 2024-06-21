@@ -61,7 +61,7 @@ class DashboardService
             )
             ->leftJoin('chapters as c', 'c.id', 'v.chapter_id')
             ->leftJoin('subjects as sub', 'sub.id', 'c.subject_id')
-            ->where('c.class_id', $student->class_id)
+            // ->where('c.class_id', $student->class_id)
             ->groupBy('c.subject_id')
             ->get();
 
