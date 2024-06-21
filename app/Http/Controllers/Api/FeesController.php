@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Fee;
 use App\Models\Student;
+use App\Models\Transaction;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -55,7 +56,7 @@ class FeesController extends BaseController
         public function getFee()
         {
             $fee = Fee::first();
-    
+
             return $this->sendResponse(['fee' => $fee], 'Fees fetched successfully.');
         }
 
@@ -75,7 +76,7 @@ class FeesController extends BaseController
         $request->validate([
             'amount' => 'required|numeric',
             'slashAmount' => 'required|numeric',
-     
+
             'referralAmount' => 'required|numeric',
             'referrerAmount' => 'required|numeric',
             'benefits' => 'required|string',
@@ -89,7 +90,7 @@ class FeesController extends BaseController
 
         $fee->amount = $request->amount;
         $fee->slash_amount = $request->slashAmount;
-     
+
         $fee->referral_amount = $request->referralAmount;
         $fee->referrer_amount = $request->referrerAmount;
         $fee->benefits = $request->benefits;
@@ -97,7 +98,7 @@ class FeesController extends BaseController
 
         $fee->save();
 
-      
+
         if ($fee->save()) {
             return $this->sendResponse(['fee' => $fee], 'Fee updated successfully.');
         } else {
@@ -164,36 +165,57 @@ class FeesController extends BaseController
     public function validateReferralName(Request $request)
     {
         \Log::info(['$request' => $request->all()]);
-        
+
         // Validate the request
         $request->validate([
             'referral_code' => 'required|string|exists:students,student_unique_code',
         ]);
-    
+
         // Get the current logged-in user's ID
         $currentStudentId = $this->getLoggedUserId();
         \Log::info(['currentStudentId' => $currentStudentId]);
-    
+
         // Find the student with the provided referral code
         $student = Student::where('student_unique_code', $request->referral_code)->first();
         \Log::info(['$student' => $student, 'currentStudentId' => $currentStudentId]);
-    
+
         // Check if the referral code belongs to the current logged-in user
         if ($student && $student->auth_id === $currentStudentId) {
             return $this->sendError('You cannot use your own unique code as a referral.', [], 400);
         }
-    
+
         // If the student exists, return their name
         if ($student) {
             return $this->sendResponse(['referrer_name' => $student->name], 'Referral code validated successfully.');
         }
-    
+
         // If no student is found, return an error
         return $this->sendError('Invalid referral code.', [], 400);
     }
-    
-    
-    
+
+    // public function getTransactions()
+    // {
+    //     $transactions = Transaction::get();
+    //     if (!$transactions) {
+    //         return $this->sendError('transactions not found.', [], 404);
+    //     }
+
+    //     return $this->sendResponse(['transactions' => $transactions], 'Transactions fetched successfully.');
+    // }
+    public function getTransactions()
+    {
+        $transactions = Transaction::select('transactions.*', 'auth.username as student_name', 'auth.email', 'auth.phone_number')
+            ->join('auth', 'transactions.student_id', '=', 'auth.id')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return $this->sendError('Transactions not found.', [], 404);
+        }
+
+        return $this->sendResponse(['transactions' => $transactions], 'Transactions fetched successfully.');
+    }
+
+
 }
 
 
@@ -209,7 +231,7 @@ class FeesController extends BaseController
 //     if ($student) {
 //         return $this->sendResponse(['referrer_name' => $student->name], 'Referral code validated successfully.');
 //     }else{
-        
+
 //     }
 
 //     return $this->sendError('Invalid referral code.', [], 400);

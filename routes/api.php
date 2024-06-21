@@ -435,6 +435,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::get('/questions', [ForumController::class, 'getForumQuestionsList']);
             Route::get('/questions/{questionId}/answers', [ForumController::class, 'getForumQuestionAnswers']);
         });
+        Route::get('/transactions', [FeesController::class, 'getTransactions']);
     });
 
     //School Login Routes
