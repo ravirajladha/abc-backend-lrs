@@ -163,23 +163,35 @@ class FeesController extends BaseController
 
     public function validateReferralName(Request $request)
     {
-        Log::info(['$request' => $request->all()]);
+        \Log::info(['$request' => $request->all()]);
+        
+        // Validate the request
         $request->validate([
             'referral_code' => 'required|string|exists:students,student_unique_code',
         ]);
     
+        // Get the current logged-in user's ID
+        $currentStudentId = $this->getLoggedUserId();
+        \Log::info(['currentStudentId' => $currentStudentId]);
+    
+        // Find the student with the provided referral code
         $student = Student::where('student_unique_code', $request->referral_code)->first();
+        \Log::info(['$student' => $student, 'currentStudentId' => $currentStudentId]);
     
-      
-    
-        if ($request->filled('referral_code') && $student->student_unique_code === $request->referral_code) {
+        // Check if the referral code belongs to the current logged-in user
+        if ($student && $student->auth_id === $currentStudentId) {
             return $this->sendError('You cannot use your own unique code as a referral.', [], 400);
         }
+    
+        // If the student exists, return their name
         if ($student) {
             return $this->sendResponse(['referrer_name' => $student->name], 'Referral code validated successfully.');
         }
+    
+        // If no student is found, return an error
         return $this->sendError('Invalid referral code.', [], 400);
     }
+    
     
     
 }

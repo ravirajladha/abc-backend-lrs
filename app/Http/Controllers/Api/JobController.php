@@ -235,8 +235,7 @@ class JobController extends BaseController
         $validator = Validator::make($request->all(), [
             'jobId' => 'required',
             'studentId' => 'required',
-            'schoolId' => 'required',
-            'classId' => 'required',
+       
             'testId' => 'nullable', // testId is optional
         ]);
 
@@ -261,9 +260,9 @@ class JobController extends BaseController
             // Create a new test session
             $testSession = JobApplication::create([
                 'student_id' => $data['studentId'],
-                'school_id' => $data['schoolId'],
+               
                 'test_id' => $data['testId'],
-                'class_id' => $data['classId'],
+           
                 'job_id' => $data['jobId'],
                 'token' => $token,
             ]);
@@ -274,8 +273,8 @@ class JobController extends BaseController
             // Create a job application without test
             $jobApplication = JobApplication::create([
                 'student_id' => $data['studentId'],
-                'school_id' => $data['schoolId'],
-                'class_id' => $data['classId'],
+              
+            
                 'job_id' => $data['jobId'],
                 'is_completed' => true,
                 'is_pass' => true,
