@@ -88,6 +88,7 @@ use App\Http\Controllers\Api\{ElabController, MiniProjectController, InternshipC
 
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/verify-email-and-send-otp', [ForgotPasswordController::class, 'verifyEmailAndSendOtp']);
+Route::post('/verify-phone-and-send-otp', [ForgotPasswordController::class, 'verifyPhoneAndSendOtp']);
 Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 Route::post('/signup', [RegisterController::class, 'registerParent'])->middleware('cors');
