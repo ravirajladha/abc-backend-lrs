@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Auth;
 use App\Models\AuthToken;
+use App\Models\Subject;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -81,11 +82,13 @@ class BaseController extends Controller
                 ->where('s.auth_id', $auth->id)
                 ->first();
 
-            $subjects = DB::table('subjects as s')
-                ->select('s.id', 's.name', 's.image')
-                ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-                ->where('s.class_id', $student->class_id)
-                ->whereIn('subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
+            $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
+                ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
+                ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
+                ->select('subjects.id', 'subjects.name','subjects.image', 'classes.name as class_name')
+                ->where('chapter_logs.video_complete_status', 1)
+                ->where('chapter_logs.student_id', $student->auth_id)
+                ->groupBy('subjects.id', 'subjects.name','subjects.image', 'classes.name')
                 ->get();
 
             if ($student) {

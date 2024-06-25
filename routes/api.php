@@ -549,7 +549,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('/get-report-card', [SubjectController::class, 'getStudentReportCard']);
         Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
 
-        Route::get('/courses-all', [SubjectController::class, 'getSubjectsWithClass']);
+        Route::get('/my-courses', [SubjectController::class, 'getMyCourses']);
 
         //Job Routes
         Route::prefix('jobs')->group(function () {

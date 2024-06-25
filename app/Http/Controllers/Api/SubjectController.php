@@ -38,12 +38,16 @@ class SubjectController extends BaseController
         return $this->sendResponse(['subjects' => $subjects]);
     }
 
-    public function getSubjectsWithClass()
+    public function getMyCourses()
     {
         $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
-                           ->select('subjects.*', 'classes.name as class_name')
-                           ->get();
-
+            ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
+            ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
+            ->select('subjects.id', 'subjects.name','subjects.image', 'classes.name as class_name')
+            ->where('chapter_logs.video_complete_status', 1)
+            ->where('chapter_logs.student_id', $this->getLoggedUserId())
+            ->groupBy('subjects.id', 'subjects.name','subjects.image', 'classes.name')
+            ->get();
         return $this->sendResponse(['subjects' => $subjects]);
     }
 
