@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\TermTest;
-use App\Models\TermTestQuestion;
-use App\Models\TermTestResult;
-
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+
+use App\Models\TermTestResult;
+use App\Models\TermTestQuestion;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -61,62 +62,110 @@ class TermTestController extends BaseController
         }
     }
 
-    public function storeTermTestDetails(Request $request)
+    public function storeTermTestDetails1(Request $request)
     {
         $validator = Validator::make(
             $request->all(),
             [
                 'testTitle' => 'required',
+                // 'testTerm' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
                 'selectedClass' => 'required|string|max:255',
                 'selectedSubject' => 'required|string|max:255',
                 'instruction' => 'required|string',
-                'status' => 'required|boolean', // Add validation for status
             ]
         );
-    
+
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
-        }
-    
-        // Check if there is an existing active term test for the selected subject
-        $existingActiveTest = TermTest::where('subject_id', $request->selectedSubject)
-            ->where('status', 1)
-            ->first();
-    
-        if ($existingActiveTest) {
-            return $this->sendError('An active term test already exists for the selected subject.');
-        }
-    
-        $test = new TermTest;
-        $test->title = $request->testTitle;
-        $test->class_id = $request->selectedClass;
-        $test->subject_id = $request->selectedSubject;
-        $test->description = $request->description;
-        $test->question_ids = implode(',', $request->selectedQuestions);
-        $test->no_of_questions = $request->no_of_questions;
-        $test->total_score = $request->totalMarks;
-        $test->time_limit = $request->duration;
-        $test->description = $request->description;
-        $test->start_date = $request->start_date;
-        $test->end_date = $request->end_date;
-        $test->instruction = $request->instruction;
-        $test->status = $request->status; // Save the status
-    
-        if (!empty($request->file('image'))) {
-            $extension1 = $request->file('image')->extension();
-            $filename = Str::random(4) . time() . '.' . $extension1;
-            $test->image = $request->file('image')->move(('uploads/images/test'), $filename);
         } else {
-            $test->image = null;
+            $test = new TermTest;
+            $test->title = $request->testTitle;
+            $test->class_id = $request->selectedClass;
+            $test->subject_id = $request->selectedSubject;
+            // $test->term_type = $request->testTerm;
+            $test->description = $request->description;
+            $test->question_ids = implode(',', $request->selectedQuestions);
+            $test->no_of_questions = $request->no_of_questions;
+            $test->total_score = $request->totalMarks;
+            $test->time_limit = $request->duration;
+            $test->description = $request->description;
+            $test->start_date = $request->start_date;
+            $test->end_date = $request->end_date;
+            $test->instruction = $request->instruction;
+
+            if (!empty($request->file('image'))) {
+                $extension1 = $request->file('image')->extension();
+                $filename = Str::random(4) . time() . '.' . $extension1;
+                $test->image = $request->file('image')->move(('uploads/images/test'), $filename);
+            } else {
+                $test->image = null;
+            }
+            $test->save();
+            return $this->sendResponse(['test' => $test],  "Test created successfully!");
         }
-    
-        $test->save();
-    
-        return $this->sendResponse(['test' => $test], "Test created successfully!");
     }
-    
+
+    public function storeTermTestDetails(Request $request)
+{
+    Log::info(['test' => $request->all()]);
+    $validator = Validator::make(
+        $request->all(),
+        [
+            'testTitle' => 'required',
+            'duration' => 'required',
+            'selectedQuestions' => 'required',
+            'selectedClass' => 'required|string|max:255',
+            'selectedSubject' => 'required|string|max:255',
+            'instruction' => 'required|string',
+            // 'status' => 'required|boolean', // Add validation for status
+        ]
+    );
+
+    if ($validator->fails()) {
+        return $this->sendValidationError($validator);
+    }
+
+    // Check if there is an existing active term test for the selected subject
+    $existingActiveTest = TermTest::where('subject_id', $request->selectedSubject)
+        ->where('status', 1)
+        ->first();
+
+    if ($existingActiveTest) {
+        // return $this->sendError('Already test assigned with same subject, need to disable the test first.', [], 404);
+    return $this->sendResponse([], "Test created Already test assigned with same subject, need to disable the test first.!", false);
+
+    }
+
+    $test = new TermTest;
+    $test->title = $request->testTitle;
+    $test->class_id = $request->selectedClass;
+    $test->subject_id = $request->selectedSubject;
+    $test->description = $request->description;
+    $test->question_ids = implode(',', $request->selectedQuestions);
+    $test->no_of_questions = $request->no_of_questions;
+    $test->total_score = $request->totalMarks;
+    $test->time_limit = $request->duration;
+    $test->description = $request->description;
+    $test->start_date = $request->start_date;
+    $test->end_date = $request->end_date;
+    $test->instruction = $request->instruction;
+    // $test->status = $request->status; // Save the status
+
+    if (!empty($request->file('image'))) {
+        $extension1 = $request->file('image')->extension();
+        $filename = Str::random(4) . time() . '.' . $extension1;
+        $test->image = $request->file('image')->move(('uploads/images/test'), $filename);
+    } else {
+        $test->image = null;
+    }
+
+    $test->save();
+
+    return $this->sendResponse(['test' => $test], "Test created successfully!");
+}
+
 
     public function getTermTestDetails(Request $request, $testId)
     {
