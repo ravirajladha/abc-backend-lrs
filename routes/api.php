@@ -141,6 +141,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     Route::prefix('minimal')->group(function () {
         Route::get('/classes', \App\Http\Controllers\Api\Dropdown\ClassesController::class);
         Route::get('/classes/{classId}/subjects', \App\Http\Controllers\Api\Dropdown\SubjectController::class);
+        Route::get('/tests/classes/{classId}/subjects', \App\Http\Controllers\Api\Dropdown\SubjectTestController::class);
         Route::get('/assessments', \App\Http\Controllers\Api\Dropdown\AssessmentController::class);
         Route::get('/elabs', \App\Http\Controllers\Api\Dropdown\ElabController::class);
         Route::get('/ebooks', \App\Http\Controllers\Api\Dropdown\EbookController::class);

@@ -29,6 +29,8 @@ return new class extends Migration
             $table->decimal('time_limit', 10, 2)->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
+            $table->boolean('status')->default(1)->nullable();
+
             $table->timestamps();
         });
     }
