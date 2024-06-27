@@ -99,34 +99,33 @@ Route::get('/mobile/case-study/{caseStudyId}/get-case-study-mobile', [CaseStudyC
 // Route::get('/video', 'AdminController@play');
 Route::get('/video', [AdminController::class, 'play']);
 
-    // video encryption
-    Route::post("/upload_video_file",[Admin::class,'upload_video_file']);
+// video encryption
+Route::post("/upload_video_file", [Admin::class, 'upload_video_file']);
 
-    Route::get('/video/key/{key}', function ($key) {
+Route::get('/video/key/{key}', function ($key) {
 
-        return Storage::disk('secrets')->download($key);
-    })->name('video.key');
+    return Storage::disk('secrets')->download($key);
+})->name('video.key');
 
-    Route::get('/video/ts/{filename}', function ($filename) {
-        // Assuming your .ts files are stored in the "public/videos" directory
-        return Storage::disk('public')->download("videos/{$filename}");
-    })->name('video.ts');
+Route::get('/video/ts/{filename}', function ($filename) {
+    // Assuming your .ts files are stored in the "public/videos" directory
+    return Storage::disk('public')->download("videos/{$filename}");
+})->name('video.ts');
 
-    Route::get('/video/playlist/{playlist}', function ($playlist) {
-        return FFMpeg::dynamicHLSPlaylist()
-            ->fromDisk('public')
-            ->open("videos/{$playlist}")
-            ->setKeyUrlResolver(function ($key) {
+Route::get('/video/playlist/{playlist}', function ($playlist) {
+    return FFMpeg::dynamicHLSPlaylist()
+        ->fromDisk('public')
+        ->open("videos/{$playlist}")
+        ->setKeyUrlResolver(function ($key) {
             return route('video.key', ['key' => $key]);
-            })
-            ->setMediaUrlResolver(function ($mediaFilename) {
+        })
+        ->setMediaUrlResolver(function ($mediaFilename) {
             return route('video.ts', ['filename' => $mediaFilename]);
-            })
-            ->setPlaylistUrlResolver(function ($playlist) {
+        })
+        ->setPlaylistUrlResolver(function ($playlist) {
             return route('video.playlist', ['playlist' => $playlist]);
-            });
-
-    })->name('video.playlist');
+        });
+})->name('video.playlist');
 
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {
 
@@ -164,7 +163,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
 
         Route::get('/get-dinacharya-logs', [DinacharyaController::class, 'getDinacharyaLogs']);
         Route::get('/send-dinacharya-messages', [DinacharyaController::class, 'sendDinacharyaMessages']);
-         //School Routes
+        //School Routes
         Route::get('/schools', [AdminController::class, 'getSchoolsList']);
         Route::get('/public-schools', [AdminController::class, 'getPublicSchoolsList']);
         Route::get('/private-schools', [AdminController::class, 'getPrivateSchoolsList']);
@@ -421,10 +420,14 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::prefix('jobs')->group(function () {
             Route::get('/', [JobController::class, 'getJobList']);
             Route::post('/', [JobController::class, 'storeJobDetails']);
+            Route::get('/get-job-test-results', [JobController::class, 'getStudentJobTestDetailsByJobApplicationId']);
             Route::get('/{jobId}', [JobController::class, 'getJobDetails']);
             Route::post('/{jobId}/update', [JobController::class, 'updateJobDetails']);
             Route::delete('/{jobId}', [JobController::class, 'deleteJobDetails']);
             Route::get('/{jobId}/applications', [JobController::class, 'getStudentJobApplications']);
+            // Route::get('/{jobId}/applications', [JobController::class, 'getStudentJobApplications']);
+
+            Route::get('/get-job-test-results', [JobController::class, 'getStudentJobTestDetailsByJobApplicationId']);
         });
 
         Route::post('/fee/validate-referral-name', [FeesController::class, 'validateReferralName']);
@@ -505,7 +508,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::get('/get-public-students', [StudentController::class, 'getPublicStudentDetailsFromStudent']);
             Route::get('/get-private-students', [StudentController::class, 'getPrivateStudentDetailsFromStudent']);
             Route::get('/{studentId}/get-images', [StudentImageController::class, 'getStudentImages']);
-        Route::delete('/{imageId}/delete', [StudentImageController::class, 'deleteImage']);
+            Route::delete('/{imageId}/delete', [StudentImageController::class, 'deleteImage']);
 
             Route::get('/', [StudentController::class, 'getStudentsList']);
             Route::get('/{studentId}', [StudentController::class, 'getStudentDetails']);
@@ -628,8 +631,6 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('/subjects/{subjectId}/contents', [VideoController::class, 'getContents']);
 
         Route::get('/subjects/{subjectId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
-
-
     });
 
     //Teacher Login Routes
@@ -659,7 +660,6 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResultsByStudentId']);
 
         Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updatechapterLockStatus']);
-
     });
 
     //Parent Login Routes
