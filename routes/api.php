@@ -99,34 +99,29 @@ Route::get('/mobile/case-study/{caseStudyId}/get-case-study-mobile', [CaseStudyC
 // Route::get('/video', 'AdminController@play');
 Route::get('/video', [AdminController::class, 'play']);
 
-    // video encryption
-    Route::post("/upload_video_file",[Admin::class,'upload_video_file']);
-
-    Route::get('/video/key/{key}', function ($key) {
-
-        return Storage::disk('secrets')->download($key);
+    Route::get('/video/key/{folder}/{key}', function ($folder, $key) {
+        return Storage::disk('secrets')->download("videos/{$folder}/{$key}");
     })->name('video.key');
 
-    Route::get('/video/ts/{filename}', function ($filename) {
-        // Assuming your .ts files are stored in the "public/videos" directory
-        return Storage::disk('public')->download("videos/{$filename}");
+    Route::get('/video/ts/{folder}/{filename}', function ($folder, $filename) {
+        return Storage::disk('public')->download("videos/{$folder}/{$filename}");
     })->name('video.ts');
 
-    Route::get('/video/playlist/{playlist}', function ($playlist) {
+    Route::get('/video/playlist/{folder}/{playlist}', function ($folder, $playlist) {
         return FFMpeg::dynamicHLSPlaylist()
             ->fromDisk('public')
-            ->open("videos/{$playlist}")
-            ->setKeyUrlResolver(function ($key) {
-            return route('video.key', ['key' => $key]);
+            ->open("videos/{$folder}/{$playlist}")
+            ->setKeyUrlResolver(function ($key) use ($folder) {
+                return route('video.key', ['folder' => $folder, 'key' => $key]);
             })
-            ->setMediaUrlResolver(function ($mediaFilename) {
-            return route('video.ts', ['filename' => $mediaFilename]);
+            ->setMediaUrlResolver(function ($mediaFilename) use ($folder) {
+                return route('video.ts', ['folder' => $folder, 'filename' => $mediaFilename]);
             })
-            ->setPlaylistUrlResolver(function ($playlist) {
-            return route('video.playlist', ['playlist' => $playlist]);
+            ->setPlaylistUrlResolver(function ($playlist) use ($folder) {
+                return route('video.playlist', ['folder' => $folder, 'playlist' => $playlist]);
             });
-
     })->name('video.playlist');
+
 
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {
 
