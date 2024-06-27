@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\{JobApplication, JobQuestion, JobTest};
+use App\Http\Helpers\DateTimeHelper;
 
 class JobController extends BaseController
 {
@@ -20,20 +21,51 @@ class JobController extends BaseController
         $loggedUserId = $this->getLoggedUserId(); // Assuming you have a method to get the logged user's ID
 
         if ($userType === 'admin' || $userType === 'recruiter') {
-            $jobs = DB::table('jobs as j')
-                ->select('j.*', 's.name as student_name', 'a.student_id', 'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
-                ->leftJoin('job_applications as a', 'a.job_id', '=', 'j.id')
-                ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
-                ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
-                ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id');
+            // $jobs = DB::table('jobs as j')
+            //     ->select('j.*', 's.name as student_name', 'a.student_id', 'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
+            //     ->leftJoin('job_applications as a', 'a.job_id', '=', 'j.id')
+            //     ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
+            //     ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
+            //     ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id');
 
-            if ($userType === 'recruiter') {
-                $jobs->where('j.recruiter_id', '=', $loggedUserId);
-            }
+            // if ($userType === 'recruiter') {
+            //     $jobs->where('j.recruiter_id', '=', $loggedUserId);
+            // }
 
             // Log::info("Getting jobs query: ", ['query' => $jobs->toSql(), 'bindings' => $jobs->getBindings()]);
-            $jobs = $jobs->get();
+            // $jobs = $jobs->get();
             // Log::info("getting jobs", $jobs);
+
+                // Step 1: Get unique job IDs
+                $jobIdsQuery = DB::table('jobs as j')
+                    ->select('j.id');
+            
+                if ($userType === 'recruiter') {
+                    $jobIdsQuery->where('j.recruiter_id', '=', $loggedUserId);
+                }
+            
+                $jobIds = $jobIdsQuery->distinct()->pluck('j.id');
+                Log::info("getting jobs", ['jobIds' => $jobIds]);
+            
+                // Check if job IDs are not empty
+                if ($jobIds->isEmpty()) {
+                    return $this->sendResponse(['jobs' => []], 'No jobs found');
+                }
+            
+                // Step 2: Get detailed job information using the unique job IDs
+                $jobsQuery = DB::table('jobs as j')
+                    ->select('j.*',  'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
+                    // ->leftJoin('job_applications as a', 'a.job_id', '=', 'j.id')
+                    // ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
+                    ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
+                    ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id')
+                    ->whereIn('j.id', $jobIds);
+            
+                // Log the SQL query for debugging
+                Log::info("Detailed jobs query", ['query' => $jobsQuery->toSql(), 'bindings' => $jobsQuery->getBindings()]);
+            
+                $jobs = $jobsQuery->get();
+                Log::info("Retrieved jobs", ['jobs' => $jobs]);
             return $this->sendResponse(['jobs' => $jobs]);
         }
 
@@ -54,12 +86,18 @@ class JobController extends BaseController
                 ->where('status', true)
                 ->get();
 
-            foreach ($jobs as $job) {
-                $job->applied = DB::table('job_applications as a')
-                    ->where('a.student_id', $student_id)
-                    ->where('a.job_id', $job->id)
-                    ->exists();
-            }
+                foreach ($jobs as $job) {
+                    $application = DB::table('job_applications as a')
+                  
+                        ->select('a.test_id','a.percentage')
+                        ->where('a.student_id', $student_id)
+                        ->where('a.job_id', $job->id)
+                        ->first();
+            
+                    $job->applied = $application ? true : false;
+                    $job->percentage = $application ? $application->percentage : null;
+                    $job->participated_test_id = $application ? $application->test_id : null;
+                }
 
             return $this->sendResponse(['jobs' => $jobs]);
         }
@@ -289,17 +327,37 @@ class JobController extends BaseController
 
     public function getStudentJobApplications(Request $request, $jobId)
     {
-        $job_applications = DB::table('job_applications as a')
-            ->select('j.*', 's.name as student_name', 'a.student_id', 'c.name as class_name', 'a.is_pass')
+        Log::info('Received request parameters', ['params' => $request->all()]);
+        $query = DB::table('job_applications as a')
+            ->select('a.*', 'a.id as application_id','j.*', 's.name as student_name', 'a.student_id', 'c.name as class_name', 'a.is_pass')
             ->leftJoin('jobs as j', 'j.id', '=', 'a.job_id')
             ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
             ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
             ->where('a.job_id', $jobId)
-            ->where('is_completed', true)
-            ->get();
-
+            ->where('is_completed', true);
+    
+        // Apply filters
+        if ($request->has('studentName') && !empty($request->studentName)) {
+            $query->where('s.name', 'like', '%' . $request->studentName . '%');
+        }
+    
+        if ($request->has('minPercentage') && is_numeric($request->minPercentage)) {
+            $query->where('a.percentage', '>=', $request->minPercentage);
+        }
+    
+        if ($request->has('maxPercentage') && is_numeric($request->maxPercentage)) {
+            $query->where('a.percentage', '<=', $request->maxPercentage);
+        }
+    
+        if ($request->has('passFail') && $request->passFail !=null && in_array($request->passFail, [0, 1])) {
+            $query->where('a.is_pass', $request->passFail);
+        }
+    
+        $job_applications = $query->get();
+    
         return $this->sendResponse(['job_applications' => $job_applications]);
     }
+    
 
     public function updateJobApplicationStatus(Request $request, $jobApplicationId)
     {
@@ -361,5 +419,71 @@ class JobController extends BaseController
 
         // Return the test details along with the test_result_id
         return $this->sendResponse(['job_test' => $job_test, 'test_result' => $testResult, 'job' => $job], "Test details retrieved successfully", true);
+    }
+    
+    public function getStudentJobTestDetailsByJobApplicationId(Request $request)
+    {
+        Log::info(['request for student job details' => $request->all()]);
+        $results = DB::table('job_tests as test')
+            ->select('test.id as test_id', 'test.class_id as test_class', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
+            ->leftJoin('job_applications as result', 'result.test_id', 'test.id')
+  
+            ->where('result.id', $request->applicationId)
+            ->get();
+
+
+        foreach ($results as $result) {
+            if ($result && $result->test_question_ids) {
+                $questionIds = explode(',', $result->test_question_ids); //All Questions in the test
+                $question_bank = DB::table('job_questions')
+                    ->select('id', 'question', 'explanation', 'code', 'option_one', 'option_two', 'option_three', 'option_four', 'answer_key')
+                    ->whereIn('id', $questionIds)
+                    ->get();
+
+                $selectedQuestionIds = explode(',', $result->result_response_questions); //Selected Questions
+                $selectedAnswers = explode(',', $result->result_response_answers); //Answers Given by Students
+
+                $mergedArray = [];
+
+                foreach ($question_bank as $question) {
+                    $questionId = $question->id;
+                    if (in_array($questionId, $questionIds)) { //$selectedQuestionIds to display given questions
+                        $key = array_search($questionId, $questionIds);
+                        if (array_key_exists($key, $selectedAnswers)) {
+                            $answerKey = $selectedAnswers[$key];
+                        } else {
+                            $answerKey = null;
+                        }
+
+                        $mergedArray[] = [
+                            'question_id' => $questionId,
+                            'question' => $question->question,
+                            'explanation' => $question->explanation,
+                            'code' => $question->code,
+                            'option_one' => $question->option_one,
+                            'option_two' => $question->option_two,
+                            'option_three' => $question->option_three,
+                            'option_four' => $question->option_four,
+                            'answer_key' => $question->answer_key,
+                            'student_response' => $answerKey,
+                        ];
+                    }
+                }
+
+                $result->response =  $mergedArray;
+
+                //Show human friendly result date time
+                $result->result_date = DateTimeHelper::format($result->result_date, DateTimeHelper::SYSTEM_DATE_TIME_FORMAT, DateTimeHelper::CUSTOM_DATE_TIME_FORMAT);
+            }
+        }
+
+
+Log::info(['term_test_results' => $results]);
+
+        if (!$results) {
+            return $this->sendError('Term test results not found');
+        }
+
+        return $this->sendResponse(['term_test_results' => $results], '');
     }
 }

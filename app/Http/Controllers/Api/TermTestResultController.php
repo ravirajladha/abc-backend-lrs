@@ -21,14 +21,6 @@ class TermTestResultController extends BaseController
             ->where('result.student_id', $request->studentId)
             ->get();
 
-        // $results = TermTest::select('id', 'class_id', 'description', 'question_ids', 'subject_id', 'term_type', 'time_limit', 'title')
-        //     ->with(['results' => function ($query) use ($request) {
-        //         $query->select('id', 'percentage', 'test_id', 'student_id', 'score', 'response', 'created_at')
-        //             ->where('student_id', $request->studentId);
-        //     }])
-        //     ->where('subject_id', $request->subjectId)
-        //     ->get();
-        //change $result->test_question_ids to $result->question_ids
 
         foreach ($results as $result) {
             if ($result && $result->test_question_ids) {
