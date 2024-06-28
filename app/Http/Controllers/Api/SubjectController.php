@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Classes;
 use App\Models\Subject;
 use App\Models\TermTest;
+use App\Models\ChapterLog;
 use Illuminate\Support\Str;
 
 use Illuminate\Http\Request;
@@ -43,10 +44,10 @@ class SubjectController extends BaseController
         $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
             ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
             ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
-            ->select('subjects.id', 'subjects.name','subjects.image', 'classes.name as class_name')
+            ->select('subjects.id', 'subjects.name', 'subjects.image', 'classes.name as class_name')
             ->where('chapter_logs.video_complete_status', 1)
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
-            ->groupBy('subjects.id', 'subjects.name','subjects.image', 'classes.name')
+            ->groupBy('subjects.id', 'subjects.name', 'subjects.image', 'classes.name')
             ->get();
         return $this->sendResponse(['subjects' => $subjects]);
     }
@@ -150,9 +151,8 @@ class SubjectController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $subjects = DB::table('subjects as s')
-                ->select('s.id', 's.name', 's.image','s.subject_type', 's.super_subject_id')
+                ->select('s.id', 's.name', 's.image', 's.subject_type', 's.super_subject_id')
                 // ->where('s.class_id', $classId)
-                ->whereIn('s.subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
                 ->get();
 
             foreach ($subjects as $subject) {
@@ -162,6 +162,23 @@ class SubjectController extends BaseController
                     $subject->super_subject_name = $superSubject ? $superSubject->name : null;
                 } else {
                     $subject->super_subject_name = null;
+                }
+
+
+                $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)->pluck('id')->toArray();
+                $subject->chapterIds = $chapterIds;
+
+                if (!empty($chapterIds)) {
+                    $completedChaptersCount = ChapterLog::where('student_id', $studentId)
+                        ->whereIn('chapter_id', $chapterIds)
+                        ->where('video_complete_status', 1)
+                        ->where('assessment_complete_status', 1)
+                        ->count();
+
+                    $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
+                    $subject->chapter_completed = $allChaptersCompleted;
+                } else {
+                    $subject->chapter_completed = false;
                 }
 
                 $latestTest = DB::table('term_tests')
@@ -202,7 +219,9 @@ class SubjectController extends BaseController
                     ->get();
 
                 $subject->results = $studentResult;
+
             }
+
 
             if ($subjects) {
                 return $this->sendResponse(['subjects' => $subjects]);
