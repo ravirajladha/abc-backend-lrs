@@ -166,10 +166,9 @@ class SubjectController extends BaseController
 
 
                 $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)->pluck('id')->toArray();
-                $subject->chapterIds = $chapterIds;
 
                 if (!empty($chapterIds)) {
-                    $completedChaptersCount = ChapterLog::where('student_id', $studentId)
+                    $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
                         ->whereIn('chapter_id', $chapterIds)
                         ->where('video_complete_status', 1)
                         ->where('assessment_complete_status', 1)
@@ -183,6 +182,7 @@ class SubjectController extends BaseController
 
                 $latestTest = DB::table('term_tests')
                     ->where('subject_id', $subject->id)
+                    ->where('status', 1)
                     ->select('id', 'term_type', 'description')
                     ->orderBy('created_at', 'desc')
                     ->first();
