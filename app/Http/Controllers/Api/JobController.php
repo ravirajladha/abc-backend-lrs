@@ -88,7 +88,6 @@ class JobController extends BaseController
 
                 foreach ($jobs as $job) {
                     $application = DB::table('job_applications as a')
-                  
                         ->select('a.test_id','a.percentage')
                         ->where('a.student_id', $student_id)
                         ->where('a.job_id', $job->id)
