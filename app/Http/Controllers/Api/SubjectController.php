@@ -72,9 +72,11 @@ class SubjectController extends BaseController
         $resultsService = new StudentResultService();
 
         $report_card['subject_results'] = $resultsService->getSubjectResults($studentId, $classId);
+        
         $report_card['total_marks'] = $resultsService->getTotalMarks($studentId);
-        $report_card['base_total_marks'] = $resultsService->getTermTestTotalMarks($classId);
-        $report_card['class_rank'] = $resultsService->getClassRank($studentId, $classId);
+        $report_card['base_total_marks'] = $resultsService->getTermTestTotalMarks($studentId);
+        //class rank = subject rank
+        $report_card['class_rank'] = $resultsService->getClassRank($studentId);
         $report_card['section_rank'] = $resultsService->getSectionRank($studentId, $sectionId);
         $report_card['assessment_results'] = $resultsService->getAverageAssessmentScore($studentId);
 

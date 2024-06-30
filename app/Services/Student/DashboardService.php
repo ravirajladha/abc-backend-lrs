@@ -94,14 +94,14 @@ class DashboardService
 
         $resultService = new ResultService();
 
-        $firstTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::FIRST_TERM);
-        $secondTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::SECOND_TERM);
-        $thirdTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::THIRD_TERM);
+        $firstTermResult = $resultService->getTermTestTotalResult($studentId);
+        // $secondTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::SECOND_TERM);
+        // $thirdTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::THIRD_TERM);
 
         $termTestService = new TermTestService();
-        $firstTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::FIRST_TERM);
-        $secondTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::SECOND_TERM);
-        $thirdTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::THIRD_TERM);
+        $firstTermTotalMarks = $termTestService->getTermTestTotalMarks($studentId);
+        // $secondTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::SECOND_TERM);
+        // $thirdTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::THIRD_TERM);
 
         $dateTimeHelper = new DateTimeHelper();
 
@@ -118,10 +118,10 @@ class DashboardService
             'avg_assessment_score' => $avg_assessment_score !== null ? ($avg_assessment_score !== 0.00 ? number_format(round($avg_assessment_score, 2), 2) : '0.00') : null,
             'first_term_results' => $firstTermResult !== 0 ? $firstTermResult : 0,
             'first_term_total_marks' => $firstTermTotalMarks !== 0 ? $firstTermTotalMarks : null,
-            'second_term_results' => $secondTermResult !== 0 ? $secondTermResult : 0,
-            'second_term_total_marks' => $secondTermTotalMarks !== 0 ? $secondTermTotalMarks : null,
-            'third_term_results' => $thirdTermResult !== 0 ? $thirdTermResult : 0,
-            'third_term_total_marks' => $thirdTermTotalMarks !== 0 ? $thirdTermTotalMarks : null,
+            // 'second_term_results' => $secondTermResult !== 0 ? $secondTermResult : 0,
+            // 'second_term_total_marks' => $secondTermTotalMarks !== 0 ? $secondTermTotalMarks : null,
+            // 'third_term_results' => $thirdTermResult !== 0 ? $thirdTermResult : 0,
+            // 'third_term_total_marks' => $thirdTermTotalMarks !== 0 ? $thirdTermTotalMarks : null,
             'zoomCall' => $zoomCall,
         ];
 
