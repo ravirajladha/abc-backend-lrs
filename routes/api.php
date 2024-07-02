@@ -636,6 +636,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::prefix('qna')->group(function () {
             Route::get('/{teacherId}/{studentId}', [QnaController::class, 'getQnaBySubject']);
             Route::post('/', [QnaController::class, 'storeTeacherQnaResponse']);
+            Route::get('/get-unreplied-count', [TeacherController::class, 'countUnrepliedQnAsForTeacher']);
         });
 
         Route::prefix('results')->group(function () {

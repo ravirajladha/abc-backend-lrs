@@ -72,7 +72,7 @@ class SubjectController extends BaseController
         $resultsService = new StudentResultService();
 
         $report_card['subject_results'] = $resultsService->getSubjectResults($studentId, $classId);
-        
+
         $report_card['total_marks'] = $resultsService->getTotalMarks($studentId);
         $report_card['base_total_marks'] = $resultsService->getTermTestTotalMarks($studentId);
         //class rank = subject rank
@@ -153,7 +153,8 @@ class SubjectController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $subjects = DB::table('subjects as s')
-                ->select('s.id', 's.name', 's.image', 's.subject_type', 's.super_subject_id')
+                ->join('classes', 's.class_id', '=', 'classes.id')
+                ->select('s.id', 's.name', 's.image', 's.subject_type', 's.super_subject_id', 'classes.name as class_name')
                 // ->where('s.class_id', $classId)
                 ->get();
 
@@ -167,7 +168,13 @@ class SubjectController extends BaseController
                 }
 
 
-                $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)->pluck('id')->toArray();
+                $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)
+                        ->whereExists(function ($query) {
+                            $query->select(DB::raw(1))
+                          ->from('videos')
+                          ->whereRaw('videos.chapter_id = chapters.id');
+                        })
+                        ->pluck('id')->toArray();
 
                 if (!empty($chapterIds)) {
                     $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())

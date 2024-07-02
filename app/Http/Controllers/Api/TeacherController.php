@@ -469,14 +469,24 @@ class TeacherController extends BaseController
 
             $students =  $students_query;
 
-            foreach ($students as $student) {
+            $students = $students->map(function($student) use ($teacher) {
                 $qna = DB::table('qna as q')
                     ->where('q.student_id', $student->id)
                     ->where('q.teacher_id', $teacher->id)
                     ->whereNull('q.answer')
                     ->orderBy('created_at', 'desc')
-                    ->exists();
-                $student->read_status = $qna;
+                    ->first();
+
+                $student->read_status = $qna ? true : false;
+                $student->latest_qna_timestamp = $qna ? $qna->created_at : null;
+
+                return $student;
+            });
+
+            $students = $students->sortByDesc('latest_qna_timestamp')->values();
+
+            foreach ($students as $student) {
+                unset($student->latest_qna_timestamp);
             }
 
 
@@ -530,5 +540,14 @@ class TeacherController extends BaseController
         }
     }
 
+    // Define the function
+    public function countUnrepliedQnAsForTeacher() {
+        $teacherId = Teacher::where('auth_id', $this->getLoggedUserId())->value('id');
+        $qnaCount =  DB::table('qna')
+            ->where('teacher_id', $teacherId)
+            ->whereNull('answer')
+            ->count();
+        return $this->sendResponse(['qnaCount' => $qnaCount], '');
+    }
 
 }
