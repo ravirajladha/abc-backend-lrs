@@ -112,7 +112,7 @@ class MiniProjectController extends BaseController
             ->first();
 
         $miniProjectTasks = DB::table('mini_project_tasks as mpt')
-            ->select('mpt.id', 'mpt.name as mini_project_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status', 'mps.id as submission_id')
+            ->select('mpt.id', 'mpt.name as mini_project_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status', 'mps.id as submission_id' ,'mps.elab_submission_id','mps.created_at as code_submitted_at')
             ->leftJoin('elabs as elab', 'mpt.elab_id', 'elab.id')
             ->leftJoin('mini_project_submissions as mps', function ($join) use ($miniProjectId, $studentId) {
                 $join->on('mpt.id', '=', 'mps.mini_project_task_id')
@@ -122,7 +122,6 @@ class MiniProjectController extends BaseController
             ->where('mpt.mini_project_id', '=', $miniProjectId)
             ->where('mpt.is_active', 1) // Filter tasks where is_active is equal to 1
             ->get();
-
 
         $hasStartedMiniProject = MiniProjectStudent::where('student_id', $studentId)
             ->where('mini_project_id', $miniProjectId)
@@ -339,12 +338,22 @@ class MiniProjectController extends BaseController
             // Add more validation rules if needed
         ]);
 
-        $miniProjectStudent = MiniProjectStudent::firstOrCreate([
+        $miniProjectStudent = MiniProjectStudent::where('student_id', $validatedData['studentId'])
+        ->where('subject_id', $validatedData['subjectId'])
+        ->where('mini_project_id', $validatedData['miniProjectId'])
+        ->first();
+
+    if (!$miniProjectStudent) {
+        // Create a new MiniProjectStudent if it doesn't exist
+        $miniProjectStudent = MiniProjectStudent::create([
             'student_id' => $validatedData['studentId'],
             'subject_id' => $validatedData['subjectId'],
             'mini_project_id' => $validatedData['miniProjectId'],
             'start_datetime' => now(),
         ]);
+    }
+
+
 
         // Check if an existing MiniProjectSubmission record exists for the given criteria
         $existingSubmission = MiniProjectSubmission::where('student_id', $validatedData['studentId'])

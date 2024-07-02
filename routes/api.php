@@ -610,7 +610,16 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
             Route::get('/{assessmentId}', [AssessmentController::class, 'getAssessmentDetailsWithQuestions']);
             Route::post('/', [AssessmentController::class, 'storeAssessmentResponse']);
         });
+        Route::prefix('assessments')->group(function () {
+            Route::get('/{assessmentId}', [AssessmentController::class, 'getAssessmentDetailsWithQuestions']);
+            Route::post('/', [AssessmentController::class, 'storeAssessmentResponse']);
+        });
+        Route::prefix('internships')->group(function () {
+            Route::get('/', [InternshipController::class, 'getInternshipsForStudent']);
+        });
 
+
+        
         Route::get('/dashboard', [StudentController::class, 'getDashboard']);
         Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
 

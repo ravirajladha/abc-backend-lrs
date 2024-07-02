@@ -22,6 +22,7 @@ class InternshipController extends BaseController
      */
     public function getInternships()
 {
+    
     $internships = DB::table('internships as mp')
         ->select(
             'mp.id',
@@ -45,8 +46,67 @@ class InternshipController extends BaseController
 
     return $this->sendResponse(['internships' => $internships]);
 }
+//     public function getInternshipsForStudent(Request $request)
+// {
+//     // dd($request->all());
+//     Log::info(['student id', $request->studentId]);
+  
+//     $internships = DB::table('internships as mp')
+//         ->select(
+//             'mp.id',
+//             'mp.name',
+//             'mp.description',
+//             'mp.image',
+//             'mp.is_active',
+//             'mp.class_id',
+//             'class.name as class_name',
+//             // 'mp.subject_id',
+//             // 's.name as subject_name',
+//             DB::raw('IFNULL(mps.participant_count, 0) as participant_count'),
+//             DB::raw('COALESCE(COUNT(it.id), 0) as task_count') // Count of internship_tasks
+//         )
+//         // ->leftJoin('subjects as s', 'mp.subject_id', 's.id')
+//         ->leftJoin('classes as class', 'mp.class_id', 'class.id')
+//         ->leftJoin(DB::raw('(SELECT internship_id, COUNT(student_id) AS participant_count FROM internship_certificates GROUP BY internship_id) as mps'), 'mp.id', '=', 'mps.internship_id')
+//         ->leftJoin('internship_tasks as it', 'mp.id', '=', 'it.internship_id')
+//         ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.class_id', 'class.name','mps.participant_count') // Group by all non-aggregated columns
+//         ->get();
 
-    
+//     return $this->sendResponse(['internships' => $internships]);
+// }
+
+public function getInternshipsForStudent(Request $request)
+{
+
+    $studentId = $request->studentId;
+
+    $internships = DB::table('internships as mp')
+        ->select(
+            'mp.id',
+            'mp.name',
+            'mp.description',
+            'mp.image',
+            'mp.is_active',
+            'mp.class_id',
+            'class.name as class_name',
+            DB::raw('IFNULL(mps.participant_count, 0) as participant_count'),
+            DB::raw('COALESCE(COUNT(it.id), 0) as task_count'),
+            DB::raw('CASE WHEN ic.certificate IS NOT NULL THEN "completed" ELSE "incomplete" END as status') // Internship status based on certificate
+        )
+        ->leftJoin('classes as class', 'mp.class_id', 'class.id')
+        ->leftJoin(DB::raw('(SELECT internship_id, COUNT(student_id) AS participant_count FROM internship_certificates GROUP BY internship_id) as mps'), 'mp.id', '=', 'mps.internship_id')
+        ->leftJoin('internship_tasks as it', 'mp.id', '=', 'it.internship_id')
+        ->leftJoin('internship_certificates as ic', function($join) use ($studentId) {
+            $join->on('mp.id', '=', 'ic.internship_id')
+                 ->where('ic.student_id', '=', $studentId);
+        })
+        ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.class_id', 'class.name', 'mps.participant_count', 'ic.certificate')
+        ->get();
+        Log::info(['internshgip detail id', $internships]);
+
+    return $this->sendResponse(['internships' => $internships]);
+}
+
     
 
     public function getInternshipTasksTaskProcesses($projectId, $status)
@@ -119,7 +179,7 @@ class InternshipController extends BaseController
             ->first();
 
         $internshipTasks = DB::table('internship_tasks as mpt')
-            ->select('mpt.id', 'mpt.name as internship_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status', 'mps.id as submission_id')
+            ->select('mpt.id', 'mpt.name as internship_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status','mps.elab_submission_id','mps.created_at as code_submitted_at', 'mps.id as submission_id')
             ->leftJoin('elabs as elab', 'mpt.elab_id', 'elab.id')
             ->leftJoin('internship_submissions as mps', function ($join) use ($internshipId, $studentId) {
                 $join->on('mpt.id', '=', 'mps.internship_task_id')
@@ -237,11 +297,18 @@ class InternshipController extends BaseController
         ]);
     
         try {
-            $internshipStudent = InternshipCertificate::firstOrCreate([
+            $internshipStudent = InternshipCertificate::where('student_id', $validatedData['studentId'])
+            ->where('internship_id', $validatedData['internshipId'])
+            ->first();
+
+        if (!$internshipStudent) {
+            // Create a new InternshipCertificate if it doesn't exist
+            $internshipStudent = InternshipCertificate::create([
                 'student_id' => $validatedData['studentId'],
                 'internship_id' => $validatedData['internshipId'],
                 'start_datetime' => now(),
             ]);
+        }
 
             // Check if an existing InternshipSubmission record exists for the given criteria
             $existingSubmission = InternshipSubmission::where('student_id', $validatedData['studentId'])
