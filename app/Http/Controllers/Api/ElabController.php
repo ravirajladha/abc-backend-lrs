@@ -20,7 +20,7 @@ class ElabController extends BaseController
      */
     public function getElabList()
     {
-        $elabs = Elab::with('class', 'subject')->get();
+        $elabs = Elab::with('class', 'subject')->paginate(10);
         return $this->sendResponse(['elabs' => $elabs]);
     }
     /**
@@ -195,8 +195,8 @@ class ElabController extends BaseController
             // 'elab_id' => 'required|exists:elabs,id',
             'elabName' => 'required|string',
             // 'code' => 'required|string',
-            // 'selectedClass' => 'required', 
-            // 'selectedSubject' => 'required', 
+            // 'selectedClass' => 'required',
+            // 'selectedSubject' => 'required',
             'description' => 'required|string',
             'constraints' => 'required|string',
             'sampleIO' => 'required|string', // Assuming 'sampleIO' is required
@@ -436,7 +436,7 @@ class ElabController extends BaseController
                 // Update any other fields as needed
                 $miniProjectSubmission->save();
             }else{
-                
+
             }
         }
         if ($request->type == 3) {

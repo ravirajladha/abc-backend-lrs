@@ -249,7 +249,7 @@ class ForumController extends BaseController
         $forumQuestions = DB::table('forum_questions as f')
             ->select('f.id','f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
             ->leftJoin('students as s', 's.id', 'f.student_id')
-            ->get();
+            ->paginate(10);
         // $forumQuestions = ForumQuestion::get();
         return $this->sendResponse(['forumQuestions' => $forumQuestions],'Forum questions fetched successfully.');
     }

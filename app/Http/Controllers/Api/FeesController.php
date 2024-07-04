@@ -193,20 +193,11 @@ class FeesController extends BaseController
         return $this->sendError('Invalid referral code.', [], 400);
     }
 
-    // public function getTransactions()
-    // {
-    //     $transactions = Transaction::get();
-    //     if (!$transactions) {
-    //         return $this->sendError('transactions not found.', [], 404);
-    //     }
-
-    //     return $this->sendResponse(['transactions' => $transactions], 'Transactions fetched successfully.');
-    // }
-    public function getTransactions()
+    public function getTransactions(Request $request)
     {
         $transactions = Transaction::select('transactions.*', 'auth.username as student_name', 'auth.email', 'auth.phone_number')
             ->join('auth', 'transactions.student_id', '=', 'auth.id')
-            ->get();
+            ->paginate(10);
 
         if ($transactions->isEmpty()) {
             return $this->sendError('Transactions not found.', [], 404);

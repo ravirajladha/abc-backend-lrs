@@ -663,7 +663,7 @@ class StudentController extends BaseController
  public function updatePaymentStatus(Request $request, $studentId)
 {
     \Log::info('Starting updatePaymentStatus function.', ['request' => $request->all()]);
-    
+
     DB::beginTransaction();
 
     $validator = Validator::make($request->all(), [
@@ -680,7 +680,7 @@ class StudentController extends BaseController
         if (!$student) {
             return $this->sendError('Student not found.');
         }
-        
+
         $auth = Auth::find($student->auth_id);
         \Log::info('Auth retrieved.', ['auth' => $auth]);
 
