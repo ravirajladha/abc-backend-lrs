@@ -550,6 +550,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
 
         Route::get('/my-courses', [SubjectController::class, 'getMyCourses']);
+        Route::get('/course-preview/{subjectId}', [SubjectController::class, 'getCoursePreview']);
 
         //Job Routes
         Route::prefix('jobs')->group(function () {
@@ -619,7 +620,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         });
 
 
-        
+
         Route::get('/dashboard', [StudentController::class, 'getDashboard']);
         Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
 

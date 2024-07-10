@@ -720,7 +720,18 @@ class StudentController extends BaseController
                 ->where('id', $studentId)
                 ->update(['is_paid' => true]);
 
-            \Log::info('Student update result.', ['updateResult' => $updateResult]);
+            // \Log::info('Student update result.', ['updateResult' => $updateResult]);
+
+            // not required now as its one subscription not for individual course
+
+            // DB::table('purchased_courses')->insert([
+            //     'student_id' => $studentId,
+            //     'course_id' => $request->input('course_id'), // Assume course_id is provided in the request
+            //     'transaction_id' => $transactionTableId,
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ]);
+
 
             // Retrieve the existing token
             $existingToken = AuthToken::where('auth_id', $auth->id)->latest()->first();

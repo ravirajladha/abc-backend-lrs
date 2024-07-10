@@ -247,6 +247,8 @@ class SubjectController extends BaseController
             'subject_name' => 'required|max:75|unique:subjects,name',
             'subject_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'subject_type' => 'required',
+            'benefits' => 'required|string',
+            'description' => 'required|string',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
@@ -265,6 +267,9 @@ class SubjectController extends BaseController
             } else {
                 $subject->image = null;
             }
+            $subject->benefits = $request->benefits;
+            $subject->description = $request->description;
+
             if ($subject->save()) {
                 return $this->sendResponse([], 'Subject created successfully.');
             } else {
@@ -376,4 +381,30 @@ class SubjectController extends BaseController
         }
     }
 
+    public function getCoursePreview($subjectId)
+    {
+        $validator = Validator::make(['subjectId' => $subjectId], [
+            'subjectId' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
+        } else {
+            $subject = Subject::where('id', $subjectId)->first();
+            $chapters = DB::table('chapters as c')
+            ->select('c.id', 'c.title', 'c.image', 'c.lock_status')
+            ->where('c.subject_id', $subjectId)
+            ->get();
+            // List of Videos from the Subject for each Chapter
+            foreach ($chapters as $chapter) {
+                $chapter->videos = DB::table('videos as v')
+                    ->select('v.*')
+                    ->leftJoin('chapters as c', 'c.id', 'v.chapter_id')
+                    ->where('v.subject_id', $subjectId)
+                    ->where('v.chapter_id', $chapter->id)
+                    ->orderBy('v.id')
+                    ->get();
+            }
+            return $this->sendResponse(['subject' => $subject,'chapters' => $chapters]);
+        }
+    }
 }

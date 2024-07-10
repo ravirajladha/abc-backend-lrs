@@ -19,9 +19,10 @@ return new class extends Migration
             $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
             $table->string('name');
             $table->string('image')->nullable();
-            $table->text('description')->nullable();
+            $table->text('description');
             $table->tinyInteger('subject_type')->default(1)->comment('1=> Default Subject; 2 => Super Subject; 3=> Sub Subject');
             $table->foreignId('super_subject_id')->nullable()->constrained('subjects', 'id');
+            $table->text('benefits');
             $table->timestamps();
         });
     }
