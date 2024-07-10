@@ -224,6 +224,7 @@ class StudentController extends BaseController
                     ->leftJoin('sections as sec', 'sec.id', 's.section_id')
                     ->leftJoin('parents as p', 'p.id', 's.parent_id')
                     ->first();
+                    
                 Log::info('Fetched student details: ', ['student' => $student]);
                 if ($student) {
                     $auth = AuthModel::where('id', $studentId)
@@ -235,7 +236,6 @@ class StudentController extends BaseController
                     $res = [
                         'id' => $student->id,
                         'auth_id' => $student->auth_id,
-
                         'school_id' => $student->school_id,
                         'class_id' => $student->class_id,
                         'section_id' => $student->section_id,
@@ -256,6 +256,7 @@ class StudentController extends BaseController
                         'parent_name' => $student->parent,
                         'parent_id' => $student->parent_id,
                         'parent_code' => $student->parent_code,
+                        'student_status' => $student->status,
                         // 'parent_name' => $student->parent_name,
                     ];
 
@@ -502,6 +503,7 @@ class StudentController extends BaseController
      */
     public function updateStudentDetails(Request $request, $studentId)
     {
+        Log::info("studentd ata", $request->all());
         $res = [];
         $validator = Validator::make(array_merge($request->all(), ['studentId' => $studentId]), [
             'name' => 'required|string|max:255',
@@ -515,8 +517,8 @@ class StudentController extends BaseController
             'dob' => 'required',
             'pincode' => 'required',
             'address' => 'required|string',
-            'password' => 'required|string|min:6',
-            'confirmPassword' => 'required|string|min:6',
+            'status' => 'required',
+           'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
         ]);
 
         if ($validator->fails()) {
@@ -548,6 +550,7 @@ class StudentController extends BaseController
                 'email' => $email,
                 'password' => $request->input('password') ? Hash::make($request->password) : $auth->password,
                 'phone_number' => $request->input('phone_number', $auth->phone_number),
+                'status' => $request->input('status', $auth->status),
             ];
 
             $auth->update($authData);
@@ -576,6 +579,7 @@ class StudentController extends BaseController
                 'dob' => $request->input('dob', $student->dob),
                 'pincode' => $request->input('pincode', $student->pincode),
                 'address' => $request->input('address', $student->address),
+                'status' => $request->input('status', $student->status),
             ];
 
             $student->update($studentData);
@@ -597,6 +601,7 @@ class StudentController extends BaseController
                 'state' => $student->state,
                 'pincode' => $student->pincode,
                 'remarks' => $student->remarks,
+                'student_status' => $student->status,
             ];
         }
 

@@ -54,6 +54,11 @@ class LoginController extends BaseController
 
             if ($auth) {
                 Log::info("admin", $request->all());
+
+                if ($auth->status === 0) {
+                    return $this->sendError('Account inactive', ['status' => ['Your account is currently inactive. Please contact support for assistance.']], 400);
+                }
+
                 if (Hash::check($request->password, $auth->password)) {
                     auth()->login($auth);
                     $token = $authService->createToken($auth->id);
@@ -63,11 +68,13 @@ class LoginController extends BaseController
 
                     return $this->sendResponseWithToken($token, $auth, $ip_address, $browser);
                 } else {
-                    return $this->sendError('Invalid credentials', ['password' => ['Verify your password.']], 400);
+                    // here, you can give the messgae that verify the password
+                    return $this->sendError('Invalid credentials', ['password' => ['Invalid credentials.']], 400);
                 }
             } else {
                 Log::info("not admin", $request->all());
-                return $this->sendError('Invalid credentials', ['username' => ['Verify your username.']], 400);
+                // you can give the message that verify your username
+                return $this->sendError('Invalid credentials', ['username' => ['Invalid credentials.']], 400);
             }
         }
         return $this->sendError('Failed to login. Verify your credentials.', [], 400);

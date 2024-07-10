@@ -34,6 +34,8 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->integer('pincode')->nullable();
             $table->text('remarks')->nullable();
+            $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
+
             $table->timestamps();
         });
     }
