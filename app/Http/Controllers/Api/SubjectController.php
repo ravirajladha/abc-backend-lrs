@@ -389,7 +389,9 @@ class SubjectController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $subject = Subject::where('id', $subjectId)->first();
+            $subject = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
+            ->select('subjects.*','classes.name as class_name')
+            ->where('subjects.id', $subjectId)->first();
             $chapters = DB::table('chapters as c')
             ->select('c.id', 'c.title', 'c.image', 'c.lock_status')
             ->where('c.subject_id', $subjectId)
@@ -404,7 +406,11 @@ class SubjectController extends BaseController
                     ->orderBy('v.id')
                     ->get();
             }
-            return $this->sendResponse(['subject' => $subject,'chapters' => $chapters]);
+            $teacher = DB::table('teacher_subjects as ts')
+            ->where('ts.subject_id', $subjectId)
+            ->leftJoin('teachers as t', 't.id', 'ts.teacher_id')
+            ->first();
+            return $this->sendResponse(['subject' => $subject,'chapters' => $chapters,'teacher'=> $teacher]);
         }
     }
 }

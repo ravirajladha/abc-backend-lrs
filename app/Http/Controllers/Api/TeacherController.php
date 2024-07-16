@@ -531,7 +531,7 @@ class TeacherController extends BaseController
             $subjects = DB::table('subjects')
                 ->whereIn('id', $subjectIds)
                 ->where('class_id', $classId)
-                ->select('id','name')
+                ->select('id','name','image')
                 ->get();
 
             return $this->sendResponse(['subjects' => $subjects], '');
