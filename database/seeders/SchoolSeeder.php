@@ -21,12 +21,12 @@ class SchoolSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        School::create([
-            'auth_id' => $auth->id,
-            'name' => 'AV Public School',
-            'phone_number' => '1234567890',
-            'school_type'=> 0,
-            'type' => '1',
-        ]);
+        // School::create([
+        //     'auth_id' => $auth->id,
+        //     'name' => 'AV Public School',
+        //     'phone_number' => '1234567890',
+        //     'school_type'=> 0,
+        //     'type' => '1',
+        // ]);
     }
 }

@@ -153,8 +153,8 @@ class StudentController extends BaseController
             ->select('s.id as student_id', 's.*', 'a.*', 'c.name as class_name', 'sections.name as section_name')
             ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
             ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
-            ->leftJoin('sections', 'sections.id', '=', 's.section_id')
-            ->where('school_id', $schoolId);
+            ->leftJoin('sections', 'sections.id', '=', 's.section_id');
+            // ->where('school_id', $schoolId);
 
             if ($classId !== "null") {
                 $query->where('s.class_id', $classId);

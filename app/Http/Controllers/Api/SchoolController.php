@@ -263,7 +263,6 @@ class SchoolController extends BaseController
             ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
             ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
             ->leftJoin('sections as sec', 'sec.id', '=', 's.section_id')
-            ->where('s.school_id', $schoolId)
             ->get();
         return $this->sendResponse(['students' => $students]);
     }
