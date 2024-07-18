@@ -224,7 +224,7 @@ class StudentController extends BaseController
                     ->leftJoin('sections as sec', 'sec.id', 's.section_id')
                     ->leftJoin('parents as p', 'p.id', 's.parent_id')
                     ->first();
-                    
+
                 Log::info('Fetched student details: ', ['student' => $student]);
                 if ($student) {
                     $auth = AuthModel::where('id', $studentId)
@@ -369,24 +369,31 @@ class StudentController extends BaseController
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255|unique:auth,email',
             'phone_number' => 'required|string|min:10|max:10',
-            'class_id' => 'required|exists:classes,id',
+            // 'class_id' => 'required|exists:classes,id',
         ]);
 
         $loggedUser = $this->getLoggerUser();
-        if ($loggedUser->type === AuthConstants::TYPE_SCHOOL) {
-            $initials = School::where('auth_id', $this->getLoggedUserId())
-                ->selectRaw("CONCAT(LEFT(name, 1), IF(LOCATE(' ', name), LEFT(SUBSTRING_INDEX(name, ' ', -1), 1), '')) as starting_letters")
-                ->value('starting_letters');
-            $schoolId = School::where('auth_id', $loggedUser->id)->value('id');
-            $parentId = null; // assigining parent as null as student added by school
-            $studentType = 0;
-        } elseif ($loggedUser->type === AuthConstants::TYPE_PARENT) {
+        // if ($loggedUser->type === AuthConstants::TYPE_SCHOOL) {
+        //     $initials = School::where('auth_id', $this->getLoggedUserId())
+        //         ->selectRaw("CONCAT(LEFT(name, 1), IF(LOCATE(' ', name), LEFT(SUBSTRING_INDEX(name, ' ', -1), 1), '')) as starting_letters")
+        //         ->value('starting_letters');
+        //     $schoolId = School::where('auth_id', $loggedUser->id)->value('id');
+        //     $parentId = null; // assigining parent as null as student added by school
+        //     $studentType = 0;
+        // } elseif ($loggedUser->type === AuthConstants::TYPE_PARENT) {
+        //     $studentName = $request->name;
+        //     $initials = substr($studentName, 0, 1);
+        //     $schoolId = 1; // Assigning schoolId 1 if its parent. a default school added through seeder
+        //     $parentId = ParentModel::where('auth_id', $loggedUser->id)->value('id');
+        //     $studentType = 1;
+        // }
+
+        // added by admin
             $studentName = $request->name;
             $initials = substr($studentName, 0, 1);
-            $schoolId = 1; // Assigning schoolId 1 if its parent. a default school added through seeder
-            $parentId = ParentModel::where('auth_id', $loggedUser->id)->value('id');
+            $schoolId = 1;
+            $parentId = null;
             $studentType = 1;
-        }
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {

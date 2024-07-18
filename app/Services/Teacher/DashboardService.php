@@ -50,17 +50,20 @@ class DashboardService
                 ->select('stu.*')
                 ->get();
 
-            $class_id = DB::table('subjects')
+            $subject = DB::table('subjects')
                 ->where('id', $subjectId)
-                ->value('class_id');
+                ->first();
+            $class_name = DB::table('classes')->where('id',$subject->class_id)->value('name');
 
             $studentsCount = count($students);
 
             $subjects[] = [
-                'class_id' => $class_id,
+                'class_id' => $subject->class_id,
+                'class_name' => $class_name,
                 'subject_id' => $subjectId,
                 'students' => $studentsCount,
-                'subject_name' =>  DB::table('subjects')->where('id', $subjectId)->value('name'),
+                'subject_name' => $subject->name,
+                'subject_image' => $subject->image,
             ];
         }
 

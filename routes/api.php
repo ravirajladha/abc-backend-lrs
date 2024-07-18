@@ -76,6 +76,7 @@ use App\Http\Controllers\Api\ZoomCallController;
 use App\Http\Controllers\Api\ProjectReportSectionController;
 use App\Http\Controllers\Api\{ElabController, MiniProjectController, InternshipController};
 
+use Illuminate\Support\Facades\Response;
 /*
 |
 |
@@ -122,7 +123,16 @@ Route::get('/video', [AdminController::class, 'play']);
             });
     })->name('video.playlist');
 
+    Route::get('/download-zip', function () {
+        $filePath = public_path('uploads/zip/resources.zip');
 
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+
+        return Response::download($filePath, 'resources.zip');
+    });
+    
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {
 
     //General Routes
@@ -746,4 +756,6 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     Route::get('/classes/{classId}/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListByClass']);
     Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
     Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
+
+
 });
