@@ -132,6 +132,15 @@ Route::get('/video', [AdminController::class, 'play']);
 
         return Response::download($filePath, 'resources.zip');
     });
+    Route::get('/download-certificate', function () {
+        $filePath = public_path('uploads/zip/pass.zip');
+
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+
+        return Response::download($filePath, 'resources.zip');
+    });
     
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {
 
