@@ -70,6 +70,7 @@ class SubjectController extends BaseController
                         })
                         ->pluck('id')->toArray();
 
+                $completedChaptersCount = 0;
                 if (!empty($chapterIds)) {
                     $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
                         ->whereIn('chapter_id', $chapterIds)
@@ -82,6 +83,8 @@ class SubjectController extends BaseController
                 } else {
                     $subject->chapter_completed = false;
                 }
+
+                $subject->completePercentage = ($completedChaptersCount/count($chapterIds)) * 100;
 
                 $latestTest = DB::table('term_tests')
                     ->where('subject_id', $subject->id)
@@ -122,6 +125,13 @@ class SubjectController extends BaseController
                     ->get();
 
                 $subject->results = $studentResult;
+
+                // Teacher by subject
+                $teacher = DB::table('teacher_subjects as ts')
+                ->where('ts.subject_id', $subject->id)
+                ->leftJoin('teachers as t', 't.id', 'ts.teacher_id')
+                ->first();
+                $subject->teacher_name = $teacher->name;
 
             }
 
@@ -230,11 +240,10 @@ class SubjectController extends BaseController
         } else {
             $subjects = DB::table('subjects as s')
                 ->join('classes', 's.class_id', '=', 'classes.id')
-                ->select('s.id', 's.name', 's.image', 'classes.name as class_name')
-                // ->where('s.class_id', $classId)
+                ->leftJoin('teacher_subjects as ts', 's.id', '=', 'ts.subject_id')
+                ->leftJoin('teachers as t', 'ts.teacher_id', '=', 't.id')
+                ->select('s.id', 's.name', 's.image', 'classes.name as class_name', 't.name as teacher_name')
                 ->get();
-
-
             if ($subjects) {
                 return $this->sendResponse(['subjects' => $subjects]);
             } else {
