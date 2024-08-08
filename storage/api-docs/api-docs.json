@@ -1,0 +1,44 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "My API",
+        "description": "API documentation for my application",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/api",
+            "description": "Local API server"
+        }
+    ],
+    "paths": {
+        "/schools": {
+            "get": {
+                "summary": "Get schools list",
+                "operationId": "5038def39af1394fbf88b360570822f4",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/public-schools": {
+            "get": {
+                "summary": "Get public schools list",
+                "operationId": "55ee89b71544b8ce89ce4b6108fe97cc",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    }
+}
