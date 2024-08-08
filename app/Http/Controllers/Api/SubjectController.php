@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Constants\SubjectTypeConstants;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
+use App\Models\Student;
 
 class SubjectController extends BaseController
 {
@@ -41,6 +42,8 @@ class SubjectController extends BaseController
 
     public function getMyCourses()
     {
+        $studentId = Student::where('auth_id',$this->getLoggedUserId())->value('id');
+
         $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
             ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
             ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
@@ -49,6 +52,79 @@ class SubjectController extends BaseController
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
             ->groupBy('subjects.id', 'subjects.name', 'subjects.image', 'classes.name')
             ->get();
+            foreach ($subjects as $subject) {
+
+                if ($subject->subject_type == 3 && $subject->super_subject_id) {
+                    $superSubject = Subject::select('name')->find($subject->super_subject_id);
+                    $subject->super_subject_name = $superSubject ? $superSubject->name : null;
+                } else {
+                    $subject->super_subject_name = null;
+                }
+
+
+                $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)
+                        ->whereExists(function ($query) {
+                            $query->select(DB::raw(1))
+                          ->from('videos')
+                          ->whereRaw('videos.chapter_id = chapters.id');
+                        })
+                        ->pluck('id')->toArray();
+
+                if (!empty($chapterIds)) {
+                    $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
+                        ->whereIn('chapter_id', $chapterIds)
+                        ->where('video_complete_status', 1)
+                        ->where('assessment_complete_status', 1)
+                        ->count();
+
+                    $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
+                    $subject->chapter_completed = $allChaptersCompleted;
+                } else {
+                    $subject->chapter_completed = false;
+                }
+
+                $latestTest = DB::table('term_tests')
+                    ->where('subject_id', $subject->id)
+                    ->where('status', 1)
+                    ->select('id', 'term_type', 'description')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                // Log::info('Subjects data:', ['subjects' => $latestTest]);
+                if ($latestTest) {
+                    $latestTestId = $latestTest->id;
+                    $testDescription = $latestTest->description;
+                    $latestTerm = $latestTest->term_type;
+
+                    $latestTestResults = DB::table('term_test_results as results')
+                        ->where('results.student_id', $studentId)
+                        ->where('results.test_id', $latestTestId)
+                        ->exists();
+
+                    if (!$latestTestResults) {
+                        $subject->latest_test_id = $latestTestId;
+                        $subject->latest_term = $latestTerm;
+                        $subject->testDescription = $testDescription;
+                    } else {
+                        $subject->latest_test_id = false;
+                        $subject->latest_term = false;
+                        $subject->testDescription = false;
+                    }
+                }
+
+                $studentResult = [];
+
+                $studentResult = DB::table('term_test_results as results')
+                    ->select('results.*', 'test.term_type')
+                    ->leftJoin('term_tests as test', 'test.id', 'results.test_id')
+                    ->where('results.student_id', $studentId)
+                    ->where('test.subject_id', $subject->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $subject->results = $studentResult;
+
+            }
+
         return $this->sendResponse(['subjects' => $subjects]);
     }
 
@@ -154,82 +230,9 @@ class SubjectController extends BaseController
         } else {
             $subjects = DB::table('subjects as s')
                 ->join('classes', 's.class_id', '=', 'classes.id')
-                ->select('s.id', 's.name', 's.image', 's.subject_type', 's.super_subject_id', 'classes.name as class_name')
+                ->select('s.id', 's.name', 's.image', 'classes.name as class_name')
                 // ->where('s.class_id', $classId)
                 ->get();
-
-            foreach ($subjects as $subject) {
-
-                if ($subject->subject_type == 3 && $subject->super_subject_id) {
-                    $superSubject = Subject::select('name')->find($subject->super_subject_id);
-                    $subject->super_subject_name = $superSubject ? $superSubject->name : null;
-                } else {
-                    $subject->super_subject_name = null;
-                }
-
-
-                $chapterIds = DB::table('chapters')->where('subject_id', $subject->id)
-                        ->whereExists(function ($query) {
-                            $query->select(DB::raw(1))
-                          ->from('videos')
-                          ->whereRaw('videos.chapter_id = chapters.id');
-                        })
-                        ->pluck('id')->toArray();
-
-                if (!empty($chapterIds)) {
-                    $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
-                        ->whereIn('chapter_id', $chapterIds)
-                        ->where('video_complete_status', 1)
-                        ->where('assessment_complete_status', 1)
-                        ->count();
-
-                    $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
-                    $subject->chapter_completed = $allChaptersCompleted;
-                } else {
-                    $subject->chapter_completed = false;
-                }
-
-                $latestTest = DB::table('term_tests')
-                    ->where('subject_id', $subject->id)
-                    ->where('status', 1)
-                    ->select('id', 'term_type', 'description')
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-                // Log::info('Subjects data:', ['subjects' => $latestTest]);
-                if ($latestTest) {
-                    $latestTestId = $latestTest->id;
-                    $testDescription = $latestTest->description;
-                    $latestTerm = $latestTest->term_type;
-
-                    $latestTestResults = DB::table('term_test_results as results')
-                        ->where('results.student_id', $studentId)
-                        ->where('results.test_id', $latestTestId)
-                        ->exists();
-
-                    if (!$latestTestResults) {
-                        $subject->latest_test_id = $latestTestId;
-                        $subject->latest_term = $latestTerm;
-                        $subject->testDescription = $testDescription;
-                    } else {
-                        $subject->latest_test_id = false;
-                        $subject->latest_term = false;
-                        $subject->testDescription = false;
-                    }
-                }
-
-                $studentResult = [];
-
-                $studentResult = DB::table('term_test_results as results')
-                    ->select('results.*', 'test.term_type')
-                    ->leftJoin('term_tests as test', 'test.id', 'results.test_id')
-                    ->where('results.student_id', $studentId)
-                    ->where('test.subject_id', $subject->id)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $subject->results = $studentResult;
-
-            }
 
 
             if ($subjects) {

@@ -141,7 +141,7 @@ Route::get('/video', [AdminController::class, 'play']);
 
         return Response::download($filePath, 'resources.zip');
     });
-    
+
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {
 
     //General Routes
@@ -482,8 +482,13 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
         Route::prefix('forums')->group(function () {
             Route::get('/questions', [ForumController::class, 'getForumQuestionsList']);
             Route::get('/questions/{questionId}/answers', [ForumController::class, 'getForumQuestionAnswers']);
+            Route::post('/update-status', [ForumController::class, 'updateStatus']);
+            Route::post('/answer/update-status', [ForumController::class, 'updateAnswerStatus']);
         });
         Route::get('/transactions', [FeesController::class, 'getTransactions']);
+
+        Route::post('students/update-status', [StudentController::class, 'updateStatus']);
+
     });
 
     //School Login Routes

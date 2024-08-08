@@ -171,7 +171,7 @@ class ForumController extends BaseController
     {
         $keyword = $request->question;
 
-        $questions = ForumQuestion::where('question', 'like', '%' . $question . '%')->get();
+        $questions = ForumQuestion::where('question', 'like', '%' . $question . '%')->where('status',1)->get();
 
         if ($questions->isNotEmpty()) {
             return $this->sendResponse(['questions' => $questions], 'Questions found successfully');
@@ -236,10 +236,10 @@ class ForumController extends BaseController
         // }
         $forumAnswer->save();
 
-        return $this->sendResponse(['forumAnswer'=> $forumAnswer], 'Vote recorded successfully');
+        return $this->sendResponse(['forumAnswer' => $forumAnswer], 'Vote recorded successfully');
     }
 
-      /**
+    /**
      * Display a listing of the Forum questions.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -247,11 +247,11 @@ class ForumController extends BaseController
     public function getForumQuestionsList()
     {
         $forumQuestions = DB::table('forum_questions as f')
-            ->select('f.id','f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+            ->select('f.id', 'f.question', 'f.student_id', 'f.status', 's.profile_image', 's.name as student_name', 'f.created_at')
             ->leftJoin('students as s', 's.id', 'f.student_id')
             ->paginate(10);
         // $forumQuestions = ForumQuestion::get();
-        return $this->sendResponse(['forumQuestions' => $forumQuestions],'Forum questions fetched successfully.');
+        return $this->sendResponse(['forumQuestions' => $forumQuestions], 'Forum questions fetched successfully.');
     }
     /**
      * Display a listing of the resource.
@@ -278,11 +278,12 @@ class ForumController extends BaseController
                 's.name as student_name',
                 's.profile_image',
                 'f.created_at',
+                'f.status',
                 DB::raw('IFNULL(v.vote_type, 0) as vote_type')
             )
             ->leftJoin('students as s', 's.id', 'f.student_id')
-            ->leftJoin('forum_answer_votes as v','v.answer_id', 'f.id')
-            ->where('f.status', ForumConstants::STATUS_ACTIVE)
+            ->leftJoin('forum_answer_votes as v', 'v.answer_id', 'f.id')
+            // ->where('f.status', ForumConstants::STATUS_ACTIVE)
             ->where('f.question_id', $forumId)
             ->orderBy('f.vote_count', 'desc')
             ->get();
@@ -298,5 +299,22 @@ class ForumController extends BaseController
 
         return $this->sendError('Failed to fetch forum');
     }
-
+    public function updateStatus(Request $request)
+    {
+        // Find the forum post by ID
+        $forum = ForumQuestion::find($request->forum_id);
+        // Update the status
+        $forum->status = $request->status;
+        $forum->save();
+        return $this->sendResponse(['forum' => $forum], 'Forum status updated successfully');
+    }
+    public function updateAnswerStatus(Request $request)
+    {
+        // Find the forum post by ID
+        $forumAnswer = ForumAnswer::find($request->answer_id);
+        // Update the status
+        $forumAnswer->status = $request->status;
+        $forumAnswer->save();
+        return $this->sendResponse(['forumAnswer' => $forumAnswer], 'Forum Answer status updated successfully');
+    }
 }

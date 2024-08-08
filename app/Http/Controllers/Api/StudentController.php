@@ -672,133 +672,144 @@ class StudentController extends BaseController
         }
     }
 
- public function updatePaymentStatus(Request $request, $studentId)
-{
-    \Log::info('Starting updatePaymentStatus function.', ['request' => $request->all()]);
+    public function updatePaymentStatus(Request $request, $studentId)
+    {
+        \Log::info('Starting updatePaymentStatus function.', ['request' => $request->all()]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    $validator = Validator::make($request->all(), [
-        'referral_code' => 'nullable|string',
-    ]);
-    if ($validator->fails()) {
-        return $this->sendValidationError($validator);
-    }
-
-    try {
-        $student = DB::table('students')->where('id', $studentId)->first();
-        \Log::info('Student retrieved.', ['student' => $student]);
-
-        if (!$student) {
-            return $this->sendError('Student not found.');
+        $validator = Validator::make($request->all(), [
+            'referral_code' => 'nullable|string',
+        ]);
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator);
         }
 
-        $auth = Auth::find($student->auth_id);
-        \Log::info('Auth retrieved.', ['auth' => $auth]);
+        try {
+            $student = DB::table('students')->where('id', $studentId)->first();
+            \Log::info('Student retrieved.', ['student' => $student]);
 
-        // Assume these values are provided in the request
-        $transactionId = Str::uuid();
-        $amount = 5000;
-        $paymentMethod = 'Online';
-        $status = 'success';  // 'failed', 'pending', 'success'
-        $errorMessage = $request->input('error_message', null);
-        $ip_address = $request->ip();
-        $browser = $request->header('User-Agent');
-        $referralAmount = $request->input('referral_amount', 0);
-        $referrerAmount = $request->input('referrer_amount', 0);
-
-        // Insert transaction record
-        DB::table('transactions')->insert([
-            'student_id' => $student->auth_id,
-            'transaction_id' => $transactionId,
-            'amount' => $amount,
-            'status' => $status,
-            'payment_method' => $paymentMethod,
-            'error_message' => $errorMessage,
-            'referral_code' => $request->input('referral_code'),
-            'referral_amount' => $referralAmount,
-            'referrer_amount' => $referrerAmount,
-            'ip_address' => $ip_address,
-            'browser_info' => $browser,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        \Log::info('Transaction record inserted.', ['transaction_id' => $transactionId]);
-
-        if ($status == 'success') {
-            \Log::info('Status is success, updating student is_paid.');
-
-            $updateResult = DB::table('students')
-                ->where('id', $studentId)
-                ->update(['is_paid' => true]);
-
-            // \Log::info('Student update result.', ['updateResult' => $updateResult]);
-
-            // not required now as its one subscription not for individual course
-
-            // DB::table('purchased_courses')->insert([
-            //     'student_id' => $studentId,
-            //     'course_id' => $request->input('course_id'), // Assume course_id is provided in the request
-            //     'transaction_id' => $transactionTableId,
-            //     'created_at' => now(),
-            //     'updated_at' => now(),
-            // ]);
-
-
-            // Retrieve the existing token
-            $existingToken = AuthToken::where('auth_id', $auth->id)->latest()->first();
-
-            // Handle referral code logic only if it's valid and not the user's own code
-            if ($request->filled('referral_code') && $student->student_unique_code !== $request->referral_code) {
-                $referrerAuth = Student::where('student_unique_code', $request->referral_code)->first();
-                \Log::info('Referrer auth retrieved.', ['referrerAuth' => $referrerAuth]);
-
-                if ($referrerAuth) {
-                    if ($referralAmount > 0) {
-                        $wallet = Wallet::updateOrCreate(
-                            ['auth_id' => $auth->id],
-                            ['balance' => DB::raw('balance + ' . $referralAmount)]
-                        );
-                        \Log::info('Wallet updated or created for student.', ['wallet' => $wallet]);
-
-                        WalletLog::create([
-                            'wallet_id' => $wallet->id,
-                            'amount' => $referralAmount,
-                            'type' => 'referral',
-                        ]);
-                        \Log::info('Referral amount logged.');
-                    }
-
-                    $referrerWallet = Wallet::firstOrCreate(['auth_id' => $referrerAuth->auth_id]);
-                    \Log::info('Referrer wallet retrieved or created.', ['referrerWallet' => $referrerWallet]);
-
-                    if ($referrerAmount > 0) {
-                        $referrerWallet->increment('balance', $referrerAmount);
-
-                        WalletLog::create([
-                            'wallet_id' => $referrerWallet->id,
-                            'amount' => $referrerAmount,
-                            'type' => 'referrer',
-                        ]);
-                        \Log::info('Referrer amount logged.');
-                    }
-                }
+            if (!$student) {
+                return $this->sendError('Student not found.');
             }
 
-            DB::commit();
-            \Log::info('Transaction committed successfully.');
+            $auth = Auth::find($student->auth_id);
+            \Log::info('Auth retrieved.', ['auth' => $auth]);
 
-            return $this->sendResponseWithToken($existingToken->token, $auth, $ip_address, $browser);
-        } else {
-            DB::commit();
-            \Log::info('Payment status update failed.', ['status' => $status]);
-            return $this->sendError('Payment status update failed.', [], 400);
+            // Assume these values are provided in the request
+            $transactionId = Str::uuid();
+            $amount = 5000;
+            $paymentMethod = 'Online';
+            $status = 'success';  // 'failed', 'pending', 'success'
+            $errorMessage = $request->input('error_message', null);
+            $ip_address = $request->ip();
+            $browser = $request->header('User-Agent');
+            $referralAmount = $request->input('referral_amount', 0);
+            $referrerAmount = $request->input('referrer_amount', 0);
+
+            // Insert transaction record
+            DB::table('transactions')->insert([
+                'student_id' => $student->auth_id,
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'status' => $status,
+                'payment_method' => $paymentMethod,
+                'error_message' => $errorMessage,
+                'referral_code' => $request->input('referral_code'),
+                'referral_amount' => $referralAmount,
+                'referrer_amount' => $referrerAmount,
+                'ip_address' => $ip_address,
+                'browser_info' => $browser,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            \Log::info('Transaction record inserted.', ['transaction_id' => $transactionId]);
+
+            if ($status == 'success') {
+                \Log::info('Status is success, updating student is_paid.');
+
+                $updateResult = DB::table('students')
+                    ->where('id', $studentId)
+                    ->update(['is_paid' => true]);
+
+                // \Log::info('Student update result.', ['updateResult' => $updateResult]);
+
+                // not required now as its one subscription not for individual course
+
+                // DB::table('purchased_courses')->insert([
+                //     'student_id' => $studentId,
+                //     'course_id' => $request->input('course_id'), // Assume course_id is provided in the request
+                //     'transaction_id' => $transactionTableId,
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                // ]);
+
+
+                // Retrieve the existing token
+                $existingToken = AuthToken::where('auth_id', $auth->id)->latest()->first();
+
+                // Handle referral code logic only if it's valid and not the user's own code
+                if ($request->filled('referral_code') && $student->student_unique_code !== $request->referral_code) {
+                    $referrerAuth = Student::where('student_unique_code', $request->referral_code)->first();
+                    \Log::info('Referrer auth retrieved.', ['referrerAuth' => $referrerAuth]);
+
+                    if ($referrerAuth) {
+                        if ($referralAmount > 0) {
+                            $wallet = Wallet::updateOrCreate(
+                                ['auth_id' => $auth->id],
+                                ['balance' => DB::raw('balance + ' . $referralAmount)]
+                            );
+                            \Log::info('Wallet updated or created for student.', ['wallet' => $wallet]);
+
+                            WalletLog::create([
+                                'wallet_id' => $wallet->id,
+                                'amount' => $referralAmount,
+                                'type' => 'referral',
+                            ]);
+                            \Log::info('Referral amount logged.');
+                        }
+
+                        $referrerWallet = Wallet::firstOrCreate(['auth_id' => $referrerAuth->auth_id]);
+                        \Log::info('Referrer wallet retrieved or created.', ['referrerWallet' => $referrerWallet]);
+
+                        if ($referrerAmount > 0) {
+                            $referrerWallet->increment('balance', $referrerAmount);
+
+                            WalletLog::create([
+                                'wallet_id' => $referrerWallet->id,
+                                'amount' => $referrerAmount,
+                                'type' => 'referrer',
+                            ]);
+                            \Log::info('Referrer amount logged.');
+                        }
+                    }
+                }
+
+                DB::commit();
+                \Log::info('Transaction committed successfully.');
+
+                return $this->sendResponseWithToken($existingToken->token, $auth, $ip_address, $browser);
+            } else {
+                DB::commit();
+                \Log::info('Payment status update failed.', ['status' => $status]);
+                return $this->sendError('Payment status update failed.', [], 400);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to update payment status.', ['error' => $e->getMessage()]);
+            return $this->sendError('Failed to update payment status.', [$e->getMessage()]);
         }
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Failed to update payment status.', ['error' => $e->getMessage()]);
-        return $this->sendError('Failed to update payment status.', [$e->getMessage()]);
     }
-}
 
+
+    public function updateStatus(Request $request)
+    {
+        // Find the forum post by ID
+        $student = AuthModel::find($request->student_auth_id);
+
+        // Update the status
+        $student->status = $request->status;
+        $student->save();
+        return $this->sendResponse(['student' => $student], 'Student status updated successfully');
+    }
 }
