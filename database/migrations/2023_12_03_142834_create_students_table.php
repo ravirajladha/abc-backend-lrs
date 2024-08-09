@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
-            $table->string('class_id', 32)->nullable();
             $table->string('student_unique_code', 32)->nullable();
             $table->string('profile_image')->nullable();
             $table->date('dob')->nullable();

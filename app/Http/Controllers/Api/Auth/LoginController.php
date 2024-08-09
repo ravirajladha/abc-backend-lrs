@@ -40,18 +40,6 @@ class LoginController extends BaseController
             $field = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'id';
             $auth = Auth::where('email', $request->username)->first();
 
-            // if ($field === 'email') {
-            //     $auth = Auth::where('email', $request->username)->first();
-            //     if ($auth !== null && $auth->type === AuthConstants::TYPE_STUDENT) {
-            //         return $this->sendError('Invalid credentials', ['email' => ['Login with a valid student id.']], 400);
-            //     }
-            // } else {
-            //     $auth = Auth::where('username', $request->username)->first();
-            //     if ($auth !== null && $auth->type !== AuthConstants::TYPE_STUDENT) {
-            //         return $this->sendError('Invalid credentials', ['username' => ['We could not find a student registered with this student id.']], 400);
-            //     }
-            // }
-
             if ($auth) {
                 Log::info("admin", $request->all());
 

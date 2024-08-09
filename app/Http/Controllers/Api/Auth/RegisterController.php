@@ -85,7 +85,7 @@ class RegisterController extends BaseController
     //     }
     // }
 //registration of student, need to change the name
-    public function registerParent(Request $request)
+    public function registerStudent(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -107,37 +107,18 @@ class RegisterController extends BaseController
                 'status' => AuthConstants::STATUS_ACTIVE,
             ]);
 
-            $schoolId = 1;
-            $studentType = 1;
-            $parentId = null;
-            $calssId = null;
-            $sectionId = null;
             function generateUniqueStudentCode() {
                 do {
                     // Generate a random 8-digit number
                     $code = 'S' . sprintf('%08d', mt_rand(1, 99999999));
                 } while (Student::where('student_unique_code', $code)->exists());
-                
+
                 return $code;
             }
             // $student_unique_code
             if ($auth) {
                 $student = Student::create([
                     'auth_id' => $auth->id,
-                    'school_id' => $schoolId,
-                    'parent_id' => $parentId,
-                    'student_type' => $studentType,
-                    'class_id' => $calssId,
-                    'section_id' => $sectionId,
-                    'name' => $request->name,
-                    'profile_image' => $request->profile_image,
-                    'dob' => $request->doj,
-                    'phone_number' => $request->phone_number,
-                    'address' => $request->address,
-                    'city' => $request->city,
-                    'state' => $request->state,
-                    'pincode' => $request->pincode,
-                    'description' => $request->description,
                     'student_unique_code' => generateUniqueStudentCode(),
                 ]);
             }
@@ -168,5 +149,5 @@ class RegisterController extends BaseController
             }
         }
     }
-   
+
 }

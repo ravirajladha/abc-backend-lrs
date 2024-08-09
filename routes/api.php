@@ -30,7 +30,7 @@ Route::post('/verify-email-and-send-otp', [ForgotPasswordController::class, 'ver
 Route::post('/verify-phone-and-send-otp', [ForgotPasswordController::class, 'verifyPhoneAndSendOtp']);
 Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
-Route::post('/signup', [RegisterController::class, 'registerParent'])->middleware('cors');
+Route::post('/signup', [RegisterController::class, 'registerStudent'])->middleware('cors');
 Route::get('/mobile/ebooks/{ebookId}/get-ebook-mobile', [EbookController::class, 'getEbook']);
 Route::get('/mobile/project-reports/{ProjectReportId}/get-project-report-mobile', [ProjectReportController::class, 'getProjectReport']);
 Route::get('/mobile/case-study/{caseStudyId}/get-case-study-mobile', [CaseStudyController::class, 'getCaseStudy']);
