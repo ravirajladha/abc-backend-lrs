@@ -22,7 +22,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);
-            // $table->decimal('duration', 10, 6)->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
+         
             $table->timestamps();
         });
     }

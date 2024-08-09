@@ -16,8 +16,7 @@ return new class extends Migration
         Schema::create('notes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('video_id')->nullable()->constrained('videos', 'id');
-            $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
-            $table->foreignId('student_id')->nullable()->constrained('students', 'id');
+            $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
             $table->text('content');
             $table->decimal('timestamp', 10, 6);
             $table->timestamps();

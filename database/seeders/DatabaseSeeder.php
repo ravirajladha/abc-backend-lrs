@@ -39,9 +39,9 @@ class DatabaseSeeder extends Seeder
 
         Auth::insert($admin);
         
-        $this->call(SectionSeeder::class);
+  
         $this->call(EbookElementTypeSeeder::class);
-        $this->call(SchoolSeeder::class);
+      
         $this->call(FeeSeeder::class);
     }
 }

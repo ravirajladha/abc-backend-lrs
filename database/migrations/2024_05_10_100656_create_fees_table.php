@@ -20,6 +20,8 @@ return new class extends Migration
             $table->decimal('referrer_amount', 10, 2);
             $table->text('benefits');
             $table->text('description');
+          
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

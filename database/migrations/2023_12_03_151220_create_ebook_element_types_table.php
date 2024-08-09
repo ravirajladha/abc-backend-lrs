@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('ebook_element_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

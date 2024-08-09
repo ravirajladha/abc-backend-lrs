@@ -21,8 +21,7 @@ return new class extends Migration
             $table->foreignId('mini_project_id')->nullable()->constrained('mini_projects', 'id');
             $table->foreignId('mini_project_task_id')->nullable()->constrained('mini_project_tasks', 'id');
             $table->foreignId('elab_submission_id')->nullable()->constrained('elab_submissions', 'id');
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
             $table->tinyInteger('status')->default(0)->comment('0=> Pending; 1 => Started; 2=> Completed');
             $table->timestamps();

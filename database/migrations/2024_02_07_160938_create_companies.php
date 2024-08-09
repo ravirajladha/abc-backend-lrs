@@ -8,16 +8,17 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        Schema::create('internships', function (Blueprint $table) {
+        Schema::create('companies', function (Blueprint $table) {
             $table->id();
-        
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->string('name');
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_deleted')->default(false);
+            $table->string('title');
+            $table->string('subtitle')->nullable();
+            $table->string('location');
+         
             $table->string('image')->nullable();
             $table->text('description')->nullable();
             $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
@@ -29,9 +30,11 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('internships');
+        Schema::dropIfExists('recruiters');
     }
 };

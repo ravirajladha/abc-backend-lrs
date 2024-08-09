@@ -15,8 +15,8 @@ return new class extends Migration
     {
         Schema::create('forum_questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
-            $table->foreignId('student_id')->nullable()->constrained('students', 'id');
+          
+            $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
             $table->text('question')->nullable();
             $table->integer('likes_count')->default(0);
             $table->integer('dislikes_count')->default(0);

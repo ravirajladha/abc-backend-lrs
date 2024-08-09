@@ -15,6 +15,10 @@ return new class extends Migration
             $table->id();
             $table->date('date');
             $table->string('url');
+            $table->string('passcode');
+            $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

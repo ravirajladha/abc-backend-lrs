@@ -13,12 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('assessments', function (Blueprint $table) {
+        Schema::create('job_tests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
-            $table->foreignId('chapter_id')->nullable()->constrained('chapters', 'id');
-            $table->string('title');
+          
+            $table->string('subject_id', 255)->nullable();
+           
+            $table->string('title', 255);
+            $table->string('image')->nullable();
             $table->text('description')->nullable();
             $table->text('instruction')->nullable();
             $table->string('question_ids', 255)->nullable();
@@ -26,6 +27,8 @@ return new class extends Migration
             $table->decimal('total_score', 10, 2)->nullable();
             $table->decimal('time_limit', 10, 2)->nullable();
             $table->decimal('passing_percentage', 10, 2)->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
@@ -40,6 +43,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('assessments');
+        Schema::dropIfExists('job_tests');
     }
 };

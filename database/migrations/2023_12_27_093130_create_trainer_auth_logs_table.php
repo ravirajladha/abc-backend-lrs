@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('student_auth_logs', function (Blueprint $table) {
+        Schema::create('trainer_auth_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('student_id')->constrained('auth', 'id')->nullable();
+            $table->foreignId('trainer_id')->constrained('auth', 'id')->nullable();
             $table->timestamp('login_at')->nullable();
             $table->timestamp('logout_at')->nullable();
             $table->time('active_time')->nullable();
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('student_auth_logs');
+        Schema::dropIfExists('trainer_auth_logs');
     }
 };

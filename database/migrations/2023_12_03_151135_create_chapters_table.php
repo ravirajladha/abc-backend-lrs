@@ -21,6 +21,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->tinyInteger('lock_status')->default(0)->comment('0=>Locked, 1=>Unlocked');
+            $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('status_updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });

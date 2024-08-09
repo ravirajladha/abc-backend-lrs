@@ -16,10 +16,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('mini_project_id')->nullable()->constrained('mini_projects', 'id');
             $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->timestamp('start_datetime')->nullable();
             $table->timestamp('end_datetime')->nullable();
-            $table->boolean('status')->default(false);
+            $table->boolean('status')->default(1)->comment('0 => Inactive; 1 => Active');
 
             $table->string('certificate', 150)->nullable();
             $table->timestamps();

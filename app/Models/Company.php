@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Elab extends Model
+class Company extends Model
 {
     use HasFactory;
 
@@ -13,17 +13,7 @@ class Elab extends Model
 
     protected $guarded = ['id'];
 
-    protected $table = 'elabs';
-    public function course()
-    {
-        return $this->belongsTo(Course::class);
-    }
-
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class);
-    }
-
+    protected $table = 'companies';
 
     public static function getTableName()
     {

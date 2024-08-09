@@ -13,22 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('trainers', function (Blueprint $table) {
+        Schema::create('internship_admins', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
-            $table->string('emp_id');
-            $table->string('profile_image')->nullable();
+            $table->string('profile_image', 64)->nullable();
             $table->string('alternate_number')->nullable();
-            $table->date('doj')->nullable();
+
             $table->string('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->integer('pincode')->nullable();
-            $table->text('description')->nullable();
-            $table->tinyInteger('type')->default(0)->comment('0=>Temporary; 1=>Permanent;');
-            $table->tinyInteger('status')->default(1)->comment('0=>inactive, 1=>active');
+            $table->tinyInteger('type')->default(1)->comment('0=>internship, 1=>corporate');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
+
+        
             $table->timestamps();
         });
     }
@@ -40,6 +39,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('teachers');
+        //
     }
 };

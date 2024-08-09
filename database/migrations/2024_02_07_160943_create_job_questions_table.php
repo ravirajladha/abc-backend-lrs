@@ -8,18 +8,23 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        Schema::create('internships', function (Blueprint $table) {
+        Schema::create('job_questions', function (Blueprint $table) {
             $table->id();
-        
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            $table->string('name');
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_deleted')->default(false);
+            $table->text('question');
+            $table->text('explanation')->nullable();
             $table->string('image')->nullable();
-            $table->text('description')->nullable();
+            $table->text('code')->nullable();
+            $table->text('option_one')->nullable();
+            $table->text('option_two')->nullable();
+            $table->text('option_three')->nullable();
+            $table->text('option_four')->nullable();
+            $table->string('answer_key')->nullable();
             $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
@@ -29,9 +34,11 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('internships');
+        Schema::dropIfExists('job_questions');
     }
 };

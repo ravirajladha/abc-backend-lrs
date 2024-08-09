@@ -14,9 +14,9 @@ return new class extends Migration
     public function up()
     {
         Schema::create('videos', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
+            $table->id();    
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->foreignId('chapter_id')->nullable()->constrained('chapters', 'id');
             $table->foreignId('assessment_id')->nullable()->constrained('assessments', 'id');
             $table->foreignId('elab_id')->nullable()->constrained('elabs', 'id');
@@ -27,6 +27,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('url', 255);
             $table->string('image')->nullable();
+            $table->string('resource')->nullable();
+            $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

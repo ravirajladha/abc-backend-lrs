@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamp('start_datetime')->nullable();
             $table->timestamp('end_datetime')->nullable();
             $table->boolean('status')->default(false);
+            
             $table->timestamps();
         });
     }

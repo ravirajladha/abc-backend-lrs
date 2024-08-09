@@ -15,15 +15,11 @@ return new class extends Migration
     {
         Schema::create('elabs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-            // $table->foreignId('chapter_id')->nullable()->constrained('chapters', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->string('title');
             $table->text('description')->nullable();
-           
             $table->string('code_language')->comment('0=> Java; 1=> Python; 2=> C; 3=> SQL')->nullable();
-            // $table->text('code')->nullable();
-           
             $table->string('io_format')->nullable();
             $table->text('constraints')->nullable();
             $table->text('io_sample')->nullable();
@@ -33,6 +29,8 @@ return new class extends Migration
             $table->text('template2')->nullable();
             $table->boolean('active')->default(true);
             $table->text('data_harness_code')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

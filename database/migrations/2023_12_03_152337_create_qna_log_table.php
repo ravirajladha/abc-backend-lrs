@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('qna_log', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->foreignId('qna_id')->nullable()->constrained('qna', 'id');
             $table->foreignId('sender_id')->nullable()->constrained('auth', 'id');
             $table->foreignId('receiver_id')->nullable()->constrained('auth', 'id');
