@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\{
     ForumController,
     VideoController,
     StudentController,
-    SubjectController,
+    CourseController,
     TermTestController,
     AssessmentController,
     TermTestResultController,
@@ -31,12 +31,12 @@ Route::prefix('student')->group(function () {
     Route::post('/mini-project-tasks/complete-status-for-student', [MiniProjectController::class, 'completeStatusForStudent']);
     Route::post('/internship/generate-certificate', [InternshipController::class, 'generateCertificate']);
 
-    Route::get('/subjects', [SubjectController::class, 'getStudentSubjectsWithResults']);
-    Route::get('/get-report-card', [SubjectController::class, 'getStudentReportCard']);
+    Route::get('/subjects', [CourseController::class, 'getStudentSubjectsWithResults']);
+    Route::get('/get-report-card', [CourseController::class, 'getStudentReportCard']);
     Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
 
-    Route::get('/my-courses', [SubjectController::class, 'getMyCourses']);
-    Route::get('/course-preview/{subjectId}', [SubjectController::class, 'getCoursePreview']);
+    Route::get('/my-courses', [CourseController::class, 'getMyCourses']);
+    Route::get('/course-preview/{subjectId}', [CourseController::class, 'getCoursePreview']);
 
     //Job Routes
     Route::prefix('jobs')->group(function () {

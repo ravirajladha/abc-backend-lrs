@@ -23,21 +23,19 @@ class AssessmentController extends BaseController
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $assessment = DB::table('assessments as a')
-                ->select('a.*', 'c.name as class', 's.name as subject')
-                ->leftJoin('classes as c', 'c.id', '=', 'a.class_id')
-                ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id');
-
-            if ($request->classId !== null && $request->classId !== 'undefined') {
-                $assessment->where('a.class_id', $request->classId);
-            }
+                ->select('a.*', 's.name as subject', 'cou.name as course')
+                ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
+                ->leftJoin('courses as cou', 'cou.id', '=', 'a.course_id');
 
             if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
                 $assessment->where('a.subject_id', $request->subjectId);
             }
 
+            if ($request->courseId !== null && $request->courseId !== 'undefined') {
+                $assessment->where('a.course_id', $request->courseId);
+            }
+
             $res = $assessment->get();
-
-
 
             return $this->sendResponse(['assessments' => $res]);
         } else {
@@ -52,14 +50,14 @@ class AssessmentController extends BaseController
             $results = DB::table('students as s')
                 ->select(
                     's.name as student_name',
-                    's.section_id',
+                  
                     DB::raw('COUNT(r.id) as result_count'),
                     DB::raw('AVG(r.score) as average_score'),
                     DB::raw('AVG(r.percentage) as average_percentage')
                 )
                 ->leftJoin('assessment_results as r', 'r.student_id', 's.id')
                 ->where('r.assessment_id', $assessmentId)
-                ->groupBy('s.id', 's.name', 's.section_id')
+                ->groupBy('s.id', 's.name')
                 ->orderBy('s.name', 'asc')
                 ->get();
 
@@ -81,8 +79,8 @@ class AssessmentController extends BaseController
             'assessmentName' => 'required|string|max:255',
             'noOfQuestions' => 'required|integer',
             'selectedQuestions' => 'required',
-            'selectedClass' => 'required|exists:classes,id',
             'selectedSubject' => 'required|exists:subjects,id',
+            'selectedCourse' => 'required|exists:courses,id',
         ]);
 
         if ($validator->fails()) {
@@ -91,8 +89,8 @@ class AssessmentController extends BaseController
             $assessment = new Assessment();
             $assessment->title = $request->assessmentName;
             $assessment->no_of_questions = $request->noOfQuestions;
-            $assessment->class_id = $request->selectedClass;
             $assessment->subject_id = $request->selectedSubject;
+            $assessment->course_id = $request->selectedCourse;
             $assessment->time_limit = $request->duration;
             $assessment->passing_percentage = $request->passingPercentage;
             $assessment->description = $request->description;
@@ -135,8 +133,8 @@ class AssessmentController extends BaseController
 
             $assessment->title =  $request->assessmentName;
             $assessment->no_of_questions = count($request->selectedQuestions);
-            $assessment->class_id = $request->selectedClass;
             $assessment->subject_id = $request->selectedSubject;
+            $assessment->course_id = $request->selectedCourse;
             $assessment->time_limit = $request->duration;
             $assessment->passing_percentage = $request->passingPercentage;
             $assessment->description = $request->description;
@@ -171,9 +169,9 @@ class AssessmentController extends BaseController
      */ public function getAssessmentDetailsWithQuestions($assessmentId)
     {
         $assessment = DB::table('assessments as a')
-            ->select('a.id', 'a.class_id', 'a.subject_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.passing_percentage', 'a.no_of_questions', 'c.name as class', 's.name as subject', 'a.question_ids')
-            ->leftJoin('classes as c', 'c.id', '=', 'a.class_id')
+            ->select('a.id', 'a.subject_id', 'a.course_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.passing_percentage', 'a.no_of_questions', 'c.name as class', 'cou.name as course', 'a.question_ids')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', '=', 'a.course_id')
             ->where('a.id', $assessmentId)
             ->first();
 
@@ -188,7 +186,7 @@ class AssessmentController extends BaseController
         return $this->sendResponse(['assessment' => $assessment]);
     }
 
-
+//still in progress
     /**
      * Store the assessment response into database.
      *

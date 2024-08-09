@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\BaseController;
 
 use App\Models\Auth as AuthModel;
-use App\Models\School;
+use App\Models\InternshipAdmin;
 
 use App\Http\Constants\AuthConstants;
 use App\Services\Admin\DashboardService;
@@ -77,7 +77,7 @@ class AdminController extends BaseController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function storeSchoolDetails(Request $request)
+    public function storeInternshipAdminDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
@@ -90,16 +90,16 @@ class AdminController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $auth = AuthModel::create([
-                'username' => $request->email,
+                'username' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make('abc123'),
                 'phone_number' => $request->phone_number,
-                'type' => AuthConstants::TYPE_SCHOOL,
+                'type' => AuthConstants::TYPE_INTERNSHIP_ADMIN,
                 'status' => AuthConstants::STATUS_ACTIVE,
             ]);
 
             if ($auth) {
-                $school = School::create([
+                $internshipAdmin = InternshipAdmin::create([
                     'auth_id' => $auth->id,
                     'name' => $request->name,
                     'accreditation_no' => $request->accreditation_no,
@@ -115,8 +115,8 @@ class AdminController extends BaseController
                     'description' => $request->description,
                 ]);
             }
-            if ($auth && $school) {
-                return $this->sendResponse([], 'School added successfully');
+            if ($auth && $internshipAdmin) {
+                return $this->sendResponse([], 'Internship Admin added successfully');
             }
         }
     }
@@ -127,19 +127,19 @@ class AdminController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getSchoolsList(Request $request)
+    public function getInternshipAdminsList(Request $request)
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $res = DB::table('auth as a')
                 ->select('s.*', 'a.email', 'a.phone_number')
                 ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
-                ->where('a.type', AuthConstants::TYPE_SCHOOL)
+                ->where('a.type', AuthConstants::TYPE_INTERNSHIP_ADMIN)
                 ->where('a.status', AuthConstants::STATUS_ACTIVE)->get();
-            $schools = School::get();
-            return $this->sendResponse(['schools' => $res]);
+            $internshipAdmins = InternshipAdmin::get();
+            return $this->sendResponse(['internshipAdmins' => $res]);
         } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
+            return $this->sendAuthError("Not authorized fetch Internship Admins list.");
         }
     }
       /**
@@ -148,44 +148,44 @@ class AdminController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPublicSchoolsList(Request $request)
-    {
-        $userType = $request->attributes->get('type');
-        if ($userType === 'admin') {
-            $res = DB::table('auth as a')
-                ->select('s.*', 'a.email', 'a.phone_number')
-                ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
-                ->where('a.type', AuthConstants::TYPE_SCHOOL)
-                ->where('a.status', AuthConstants::STATUS_ACTIVE)
-                ->where('s.school_type', AuthConstants::STATUS_DISABLED)->get();
-            $schools = School::get();
-            return $this->sendResponse(['schools' => $res]);
-        } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
-        }
-    }
+    // public function getPublicSchoolsList(Request $request)
+    // {
+    //     $userType = $request->attributes->get('type');
+    //     if ($userType === 'admin') {
+    //         $res = DB::table('auth as a')
+    //             ->select('s.*', 'a.email', 'a.phone_number')
+    //             ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
+    //             ->where('a.type', AuthConstants::TYPE_SCHOOL)
+    //             ->where('a.status', AuthConstants::STATUS_ACTIVE)
+    //             ->where('s.school_type', AuthConstants::STATUS_DISABLED)->get();
+    //         $schools = School::get();
+    //         return $this->sendResponse(['schools' => $res]);
+    //     } else {
+    //         return $this->sendAuthError("Not authorized fetch schools list.");
+    //     }
+    // }
       /**
      * Display a listing of the private schools.
      
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPrivateSchoolsList(Request $request)
-    {
-        $userType = $request->attributes->get('type');
-        if ($userType === 'admin') {
-            $res = DB::table('auth as a')
-                ->select('s.*', 'a.email', 'a.phone_number')
-                ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
-                ->where('a.type', AuthConstants::TYPE_SCHOOL)
-                ->where('a.status', AuthConstants::STATUS_ACTIVE)
-                ->where('s.school_type', AuthConstants::STATUS_ACTIVE)->get();
-            $schools = School::get();
-            return $this->sendResponse(['schools' => $res]);
-        } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
-        }
-    }
+    // public function getPrivateSchoolsList(Request $request)
+    // {
+    //     $userType = $request->attributes->get('type');
+    //     if ($userType === 'admin') {
+    //         $res = DB::table('auth as a')
+    //             ->select('s.*', 'a.email', 'a.phone_number')
+    //             ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
+    //             ->where('a.type', AuthConstants::TYPE_SCHOOL)
+    //             ->where('a.status', AuthConstants::STATUS_ACTIVE)
+    //             ->where('s.school_type', AuthConstants::STATUS_ACTIVE)->get();
+    //         $schools = School::get();
+    //         return $this->sendResponse(['schools' => $res]);
+    //     } else {
+    //         return $this->sendAuthError("Not authorized fetch schools list.");
+    //     }
+    // }
     public function play()
     {
         $filePath = public_path('videos/video_sample.mp4');

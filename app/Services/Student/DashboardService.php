@@ -21,7 +21,7 @@ class DashboardService
     {
         $student = Student::where('auth_id', $studentAuthId)->first();
         $studentId = $student->id;
-        $classId = $student->class_id;
+        // $classId = $student->class_id;
 
         $login_logs = DB::table('student_auth_logs')
             ->where('student_id', $studentAuthId)

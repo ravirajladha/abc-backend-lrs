@@ -6,10 +6,10 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\EbookController;
 //Content Controllers
 use App\Http\Controllers\Api\ChapterController;
-use App\Http\Controllers\Api\ClassesController;
+use App\Http\Controllers\Api\SubjectController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\CaseStudyController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
@@ -98,9 +98,9 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
 
 
     //Classes Routes
-    Route::get('/classes', [ClassesController::class, 'getClassesList']);
-    Route::get('/classes/{classId}', [ClassesController::class, 'getClassDetails']);
-    Route::get('/classes/{classId}/results', [ClassesController::class, 'getClassResults']);
+    Route::get('/classes', [SubjectController::class, 'getClassesList']);
+    Route::get('/classes/{classId}', [SubjectController::class, 'getClassDetails']);
+    Route::get('/classes/{classId}/results', [SubjectController::class, 'getClassResults']);
 
     //Section Routes
     Route::get('/sections', [SectionController::class, 'getSectionList']);

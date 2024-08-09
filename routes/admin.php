@@ -13,9 +13,9 @@ use App\Http\Controllers\Api\{
     VideoController,
     SchoolController,
     ChapterController,
-    ClassesController,
-    StudentController,
     SubjectController,
+    StudentController,
+    CourseController,
     TermTestController,
     CaseStudyController,
     AssessmentController,
@@ -41,9 +41,6 @@ use App\Http\Controllers\Api\{
     InternshipController
 };
 
-
-
-
 Route::prefix('admin')->group(function () {
     Route::put('/update', [AdminController::class, 'updateDetails']);
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
@@ -64,15 +61,15 @@ Route::prefix('admin')->group(function () {
     Route::put('/schools/{schoolId}/update', [SchoolController::class, 'updateSchoolDetails']);
 
     //Classes Routes
-    Route::post('/class/store', [ClassesController::class, 'storeClassDetails']);
-    Route::put('/class/{classId}/update', [ClassesController::class, 'updateClassDetails']);
-    Route::delete('/class/{classId}/delete', [ClassesController::class, 'deleteClassDetails']);
+    Route::post('/class/store', [SubjectController::class, 'storeClassDetails']);
+    Route::put('/class/{classId}/update', [SubjectController::class, 'updateClassDetails']);
+    Route::delete('/class/{classId}/delete', [SubjectController::class, 'deleteClassDetails']);
 
     //Subject Routes
-    Route::post('/subjects/store', [SubjectController::class, 'storeSubjectDetails']);
-    Route::put('/subjects/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
-    Route::delete('/subjects/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
-    Route::get('/super-subjects', [SubjectController::class, 'getSuperSubjects']);
+    Route::post('/subjects/store', [CourseController::class, 'storeSubjectDetails']);
+    Route::put('/subjects/{subjectId}/update', [CourseController::class, 'updateSubjectDetails']);
+    Route::delete('/subjects/{subjectId}/delete', [CourseController::class, 'deleteSubjectDetails']);
+    Route::get('/super-subjects', [CourseController::class, 'getSuperSubjects']);
 
     //Subject Routes
     Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);

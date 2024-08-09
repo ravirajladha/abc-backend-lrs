@@ -8,41 +8,41 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use Illuminate\Support\Facades\DB;
-
+//changed
 class ChapterController extends BaseController
 {
 
     /**
-     * Display a listing of the chapters by class.
+     * Display a listing of the chapters by subject.
      *
      * @return object
      */
-    public function getChapterListByClass(Request $request, $classId, $subjectId)
+    public function getChapterListBySubject(Request $request, $subjectId, $courseId)
     {
         $userType = $request->attributes->get('type');
-        if ($userType === 'admin' || $userType = 'school' || $userType === 'teacher') {
-            $validator = Validator::make(['classId' => $classId, 'subjectId' => $subjectId], [
-                'classId' => 'required',
+        if ($userType === 'admin' || $userType = 'internship_admin' || $userType === 'trainer') {
+            $validator = Validator::make(['subjectId' => $subjectId, 'courseId' => $courseId], [
                 'subjectId' => 'required',
+                'courseId' => 'required',
             ]);
 
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             } else {
-                $subject = DB::table('subjects as s')
-                    ->where('s.id', $subjectId)
-                    ->value('s.name');
+                $course = DB::table('courses as cou')
+                    ->where('cou.id', $courseId)
+                    ->value('cou.name');
                 $chapters = DB::table('chapters as c')
-                    ->select('c.*', 'cl.name as class_name', 's.name as subject_name')
-                    ->leftJoin('classes as cl', 'cl.id', 'c.class_id')
-                    ->leftJoin('subjects as s', 's.id', 'c.subject_id')
-                    ->where('c.class_id', $classId)
+                    ->select('c.*', 'sub.name as subject_name', 'cou.name as course_name')
+                    ->leftJoin('subjects as sub', 'sub.id', 'c.subject_id')
+                    ->leftJoin('subjects as sub', 'sub.id', 'c.course_id')
                     ->where('c.subject_id', $subjectId)
+                    ->where('c.course_id', $courseId)
                     ->get();
-                return $this->sendResponse(['chapters' => $chapters, 'subject' => $subject]);
+                return $this->sendResponse(['chapters' => $chapters, 'course' => $course]);
             }
         } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
+            return $this->sendAuthError("Not authorized fetch Chapters list.");
         }
     }
 
@@ -51,16 +51,16 @@ class ChapterController extends BaseController
      *
      * @return object
      */
-    public function getChapterListBySubject($subjectId)
+    public function getChapterListByCourse($courseId)
     {
-        $validator = Validator::make(['subjectId' => $subjectId], [
-            'subjectId' => 'required',
+        $validator = Validator::make(['courseId' => $courseId], [
+            'courseId' => 'required',
         ]);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $chapters = Chapter::where('subject_id', $subjectId)->get();
+            $chapters = Chapter::where('course_id', $courseId)->get();
             return $this->sendResponse(['chapters' => $chapters]);
         }
     }
@@ -75,8 +75,8 @@ class ChapterController extends BaseController
     public function storeChapterDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'class_id' => 'required',
             'subject_id' => 'required',
+            'course_id' => 'required',
             'chapter_name' => 'required',
             'chapter_name.*' => 'required|max:100',
             'chapter_description' => 'string',
@@ -102,12 +102,12 @@ class ChapterController extends BaseController
                     $chaptersCount++;
 
                     // make the first chapter unlocked by default
-                    $existingChaptersCount = Chapter::where('subject_id', $request->subject_id)->count();
+                    $existingChaptersCount = Chapter::where('course_id', $request->course_id)->count();
                     $isFirstChapter = $existingChaptersCount == 0;
 
                     $chapter = new Chapter();
-                    $chapter->class_id = $request->class_id;
                     $chapter->subject_id = $request->subject_id;
+                    $chapter->course_id = $request->course_id;
                     $chapter->title = $chapterName;
                     $chapter->lock_status = $isFirstChapter ? 1 : 0;
                     $chapter->save();
@@ -136,16 +136,16 @@ class ChapterController extends BaseController
             $contentsCount = 0;
             $studentsCount = 0;
             $chapter =  DB::table('chapters as c')
-                ->select('c.title as chapter_name', 'class.name as class_name', 'c.description as chapter_description', 'c.image as chapter_image', 'c.class_id', 'c.subject_id', 's.name as subject_name')
-                ->leftJoin('subjects as s', 'c.subject_id', 's.id')
-                ->leftJoin('classes as class', 'c.class_id', 'class.id')
+                ->select('c.title as chapter_name', 'subject.name as subject_name', 'c.description as chapter_description', 'c.image as chapter_image', 'c.subject_id', 'c.course_id', 's.name as course_name')
+                ->leftJoin('courses as s', 'c.course_id', 's.id')
+                ->leftJoin('subjects as subject', 'c.subject_id', 'subject.id')
                 ->where('c.id', $chapterId)
                 ->first();
             $contents = DB::table('videos as v')
                 ->where('v.chapter_id', $chapterId)
                 ->get();
             $studentsCount = DB::table('students as s')
-                ->where('s.class_id', $chapter->class_id)
+                ->where('s.subject_id', $chapter->subject_id)
                 ->count();
             if ($contents) {
                 $contentsCount = count($contents);
