@@ -2,77 +2,47 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Combine all controller imports
+use App\Http\Controllers\Api\{
+    JobController,
+    RecruiterController,
+    AuthController,
+    AdminController,
+    EbookController,
+    ForumController,
+    VideoController,
+    SchoolController,
+    ChapterController,
+    ClassesController,
+    StudentController,
+    SubjectController,
+    TermTestController,
+    CaseStudyController,
+    AssessmentController,
+    EbookModuleController,
+    EbookElementController,
+    EbookSectionController,
+    ProjectReportController,
+    CaseStudyModuleController,
+    ReadableCoursesController,
+    CaseStudyElementController,
+    CaseStudySectionController,
+    TermTestQuestionController,
+    AssessmentQuestionController,
+    QuoteController,
+    DinacharyaController,
+    ProjectReportModuleController,
+    ProjectReportElementController,
+    FeesController,
+    ZoomCallController,
+    ProjectReportSectionController,
+    ElabController,
+    MiniProjectController,
+    InternshipController
+};
 
-//Auth Controllers
-use App\Http\Controllers\Api\JobController;
-
-use App\Http\Controllers\Api\RecruiterController;
-
-use App\Http\Controllers\Api\AuthController;
 
 
-//User Controllers
-use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\EbookController;
-use App\Http\Controllers\Api\ForumController;
-use App\Http\Controllers\Api\VideoController;
-
-
-//Content Controllers
-use App\Http\Controllers\Api\SchoolController;
-use App\Http\Controllers\Api\ChapterController;
-use App\Http\Controllers\Api\ClassesController;
-
-use App\Http\Controllers\Api\StudentController;
-
-use App\Http\Controllers\Api\SubjectController;
-
-use App\Http\Controllers\Api\TermTestController;
-use App\Http\Controllers\Api\CaseStudyController;
-use App\Http\Controllers\Api\AssessmentController;
-
-
-//Test Controllers
-
-use App\Http\Controllers\Api\Auth\LogoutController;
-use App\Http\Controllers\Api\EbookModuleController;
-use App\Http\Controllers\Api\Auth\RefreshController;
-
-// Application Controller
-use App\Http\Controllers\Api\EbookElementController;
-use App\Http\Controllers\Api\EbookSectionController;
-
-// Project Report
-use App\Http\Controllers\Api\Auth\RegisterController;
-use App\Http\Controllers\Api\ProjectReportController;
-use App\Http\Controllers\Api\OldApplicationController;
-use App\Http\Controllers\Api\TermTestResultController;
-
-// Case Study
-use App\Http\Controllers\Api\CaseStudyModuleController;
-use App\Http\Controllers\Api\ReadableCoursesController;
-use App\Http\Controllers\Api\CaseStudyElementController;
-use App\Http\Controllers\Api\CaseStudySectionController;
-use App\Http\Controllers\Api\TermTestQuestionController;
-use App\Http\Controllers\Api\AssessmentQuestionController;
-//Dincharya
-use App\Http\Controllers\Api\QuoteController;
-use App\Http\Controllers\Api\DinacharyaController;
-
-// Readable Courses
-use App\Http\Controllers\Api\ProjectReportModuleController;
-
-use App\Http\Controllers\Api\ProjectReportElementController;
-
-use App\Http\Controllers\Api\FeesController;
-use App\Http\Controllers\Api\ExternalStudentController;
-use App\Http\Controllers\Api\ZoomCallController;
-
-//Elab Controller
-use App\Http\Controllers\Api\ProjectReportSectionController;
-use App\Http\Controllers\Api\{ElabController, MiniProjectController, InternshipController};
-
-use Illuminate\Support\Facades\Response;
 
 Route::prefix('admin')->group(function () {
     Route::put('/update', [AdminController::class, 'updateDetails']);
