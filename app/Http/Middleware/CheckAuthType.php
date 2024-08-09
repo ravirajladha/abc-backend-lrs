@@ -28,12 +28,10 @@ class CheckAuthType
 
             if ($auth->type == AuthConstants::TYPE_ADMIN) {
                 $request->attributes->add(['type' => 'admin']);
-            } elseif ($auth->type == AuthConstants::TYPE_SCHOOL) {
-                $request->attributes->add(['type' => 'school']);
-            } elseif ($auth->type == AuthConstants::TYPE_SCHOOL) {
-                $request->attributes->add(['type' => 'teacher']);
-            } elseif ($auth->type == AuthConstants::TYPE_PARENT) {
-                $request->attributes->add(['type' => 'parent']);
+            } elseif ($auth->type == AuthConstants::TYPE_TRAINER) {
+                $request->attributes->add(['type' => 'trainer']);
+            } elseif ($auth->type == AuthConstants::TYPE_INTERNSHIP_ADMIN) {
+                $request->attributes->add(['type' => 'internship_admin']);
             } elseif ($auth->type == AuthConstants::TYPE_RECRUITER) {
                 $request->attributes->add(['type' => 'recruiter']);
             } else {

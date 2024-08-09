@@ -16,7 +16,6 @@ use App\Http\Constants\SubjectTypeConstants;
 
 class BaseController extends Controller
 {
-
     protected $_token;
 
     public function __construct(Request $request)
@@ -49,7 +48,7 @@ class BaseController extends Controller
      * @param string $token
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function sendResponseWithToken($token=null, $auth, $ip_address=null, $browser=null)
+    protected function sendResponseWithToken($token = null, $auth, $ip_address = null, $browser = null)
     {
         $response = [
             'status' => true,
@@ -67,35 +66,22 @@ class BaseController extends Controller
         ];
         if ($auth->type === AuthConstants::TYPE_STUDENT) {
             $student = DB::table('students as s')
-                // ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-                // ->leftJoin('sections as sec', 's.section_id', '=', 'sec.id')
-                ->leftJoin('schools as sch', 's.school_id', '=', 'sch.id')
-                ->leftJoin('parents as par', 's.parent_id', '=', 'par.id')
-                ->select(
-                    's.*',
-                    // 'c.name as class_name',
-                    // 'sec.name as section_name',
-                    'sch.name as school_name',
-                    'par.name as parent_name',
-                    'par.parent_code'
-                )
                 ->where('s.auth_id', $auth->id)
                 ->first();
 
-            $subjects = Subject::join('classes', 'subjects.class_id', '=', 'classes.id')
-                ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
-                ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
-                ->select('subjects.id', 'subjects.name','subjects.image', 'classes.name as class_name')
-                ->where('chapter_logs.video_complete_status', 1)
-                ->where('chapter_logs.student_id', $student->auth_id)
-                ->groupBy('subjects.id', 'subjects.name','subjects.image', 'classes.name')
-                ->get();
+            // $subjects = Subject::join('courses', 'subjects.course_id', '=', 'courses.id')
+            //     ->join('chapters', 'subjects.id', '=', 'chapters.subject_id')
+            //     ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
+            //     ->select('subjects.id', 'subjects.name', 'courses.name as course_name')
+            //     ->where('chapter_logs.video_complete_status', 1)
+            //     ->where('chapter_logs.student_id', $student->auth_id)
+            //     ->groupBy('subjects.id', 'subjects.name', 'subjects.image', 'courses.name')
+            //     ->get();
 
             if ($student) {
                 if ($auth->type === AuthConstants::TYPE_STUDENT) {
                     StudentAuthLog::create([
                         'student_id' => $auth->id,
-                        'school_id' => $student->school_id,
                         'login_at' => Carbon::now(),
                         'ip_address' => $ip_address,
                         'browser' => $browser,
@@ -105,20 +91,11 @@ class BaseController extends Controller
                 $response['student_data'] = [
                     'student_id' => $student->id,
                     'student_auth_id' => $student->auth_id,
-                    'student_name' => $student->name,
-                    'student_type' => $student->student_type,
-                    // 'class_id' => $student->class_id !== null ? $student->class_id : null,
-                    'class_id' => null,
-                    // 'class_name' => $student->class_name ? $student->class_name : null,
-                    'class_name' => null,
-                    // 'section_id' => $student->section_id !== null ? $student->section_id : null,
-                    'section_id' => null,
-                    // 'section_name' => $student->section_name ? $student->section_name : null,
-                    'section_name' => null,
+                    'student_name' => $auth->name,
+                    // 'class_id' => null,
+                    // 'class_name' => null,
                     'student_unique_code' => $student->student_unique_code,
-                    'school_id' => $student->school_id,
-                    'school_name' => $student->school_name,
-                    'subjects' => $subjects !== null ? $subjects : null,
+                    // 'subjects' => $subjects !== null ? $subjects : null,
                     'profile_image' => $student->profile_image,
                     'dob' => $student->dob,
                     'address' => $student->address,
@@ -126,47 +103,15 @@ class BaseController extends Controller
                     'city' => $student->city,
                     'state' => $student->state,
                     'pincode' => $student->pincode,
-                    'remarks' => $student->remarks,
-                    'parent_id' => $student->parent_id,
-                    'parent_code' => $student->parent_code,
-                    'parent_name' => $student->parent_name,
                 ];
             }
         }
-        if ($auth->type === AuthConstants::TYPE_SCHOOL) {
+        if ($auth->type === AuthConstants::TYPE_INTERNSHIP_ADMIN) {
             $school = DB::table('schools')
-                    ->select('name','school_type')
+                    ->select('name', 'school_type')
                     ->where('auth_id', $auth->id)
                     ->first();
-            $response['user']['name'] = $school->name;
             $response['user']['school_type'] = $school->school_type;
-        }
-        if ($auth->type === AuthConstants::TYPE_ADMIN) {
-            $response['user']['name'] = $auth->username;
-        }
-        if ($auth->type === AuthConstants::TYPE_TEACHER) {
-            $teacher = DB::table('teachers')
-                    ->select('name')
-                    ->where('auth_id', $auth->id)
-                    ->first();
-            $response['user']['name'] = $teacher->name;
-        }
-        if ($auth->type === AuthConstants::TYPE_RECRUITER) {
-            $recruiter = DB::table('recruiters')
-                    ->select('name')
-                    ->where('auth_id', $auth->id)
-                    ->first();
-            $response['user']['name'] = $recruiter->name;
-        }
-        if ($auth->type === AuthConstants::TYPE_STUDENT) {
-            $student = DB::table('students')
-                    ->select('name')
-                    ->where('auth_id', $auth->id)
-                    ->first();
-            $response['user']['name'] = $student->name;
-        }
-        if ($auth->type === AuthConstants::TYPE_PARENT) {
-            $response['user']['name'] = $auth->username;
         }
         return response()->json($response, 200);
     }
