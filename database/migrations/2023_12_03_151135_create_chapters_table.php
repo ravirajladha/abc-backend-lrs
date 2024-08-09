@@ -15,9 +15,8 @@ return new class extends Migration
     {
         Schema::create('chapters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
-            $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('image')->nullable();

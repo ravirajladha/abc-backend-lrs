@@ -13,23 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('internship-admin', function (Blueprint $table) {
+        Schema::create('trainer_courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
-            $table->string('image', 64)->nullable();
-            $table->string('phone_number', 255)->nullable();
-          
-            $table->string('address')->nullable();
-            $table->string('city')->nullable();
-            $table->string('state')->nullable();
-            $table->integer('pincode')->nullable();
-          
-          
-            $table->tinyInteger('type')->default(1)->comment('0=>internship, 1=>corporate');
+            // $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
+            $table->foreignId('trainer_id')->nullable()->constrained('trainers', 'id');
+            $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
-
-        
             $table->timestamps();
         });
     }

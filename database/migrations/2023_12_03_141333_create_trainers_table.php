@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('teachers', function (Blueprint $table) {
+        Schema::create('trainers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
-            $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
+            // $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
             $table->string('name');
             $table->string('emp_id');
             $table->string('profile_image')->nullable();
@@ -28,6 +28,9 @@ return new class extends Migration
             $table->integer('pincode')->nullable();
             $table->text('description')->nullable();
             $table->tinyInteger('type')->default(0)->comment('0=>Temporary; 1=>Permanent;');
+            $table->tinyInteger('status')->default(1)->comment('0=>inactive, 1=>active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

@@ -13,12 +13,14 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('sections', function (Blueprint $table) {
+        Schema::create('subjects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
             $table->string('name');
-            $table->string('image')->nullable();
-            $table->text('description')->nullable();
+            $table->integer('position')->default(999);
+            $table->tinyInteger('status')->default(1)->comment('0=>inactive, 1=>active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
+         
             $table->timestamps();
         });
     }
@@ -30,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('sections');
+        //
     }
 };

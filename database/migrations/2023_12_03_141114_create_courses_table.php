@@ -13,16 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('subjects', function (Blueprint $table) {
+        Schema::create('courses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('class_id')->nullable()->constrained('classes', 'id');
-            $table->foreignId('section_id')->nullable()->constrained('sections', 'id');
+            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+         
             $table->string('name');
             $table->string('image')->nullable();
             $table->text('description');
-            $table->tinyInteger('subject_type')->default(1)->comment('1=> Default Subject; 2 => Super Subject; 3=> Sub Subject');
-            $table->foreignId('super_subject_id')->nullable()->constrained('subjects', 'id');
+         
             $table->text('benefits');
+            $table->tinyInteger('status')->default(1)->comment('0=>inactive, 1=>active');
+            $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
+            $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
             $table->timestamps();
         });
     }

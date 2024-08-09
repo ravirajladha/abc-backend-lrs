@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone_number')->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->tinyInteger('type')->default(1)->comment('0=>Admin; 1=>School; 2=>Teacher; 3=> Parent; 4=> Student; 5=>Recruiter;');
+            $table->tinyInteger('type')->default(1)->comment('0=>Admin; 1=>Internship Admin; 2=>Trainer; 3=> Parent; 4=> Student; 5=>Recruiter;');
             $table->tinyInteger('status')->default(1)->comment('0=>Disabled; 1=>Active');
             $table->rememberToken();
             $table->timestamps();
