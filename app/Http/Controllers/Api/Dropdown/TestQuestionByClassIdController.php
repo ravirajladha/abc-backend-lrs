@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\JobQuestion;
 use Illuminate\Http\Request;
 
-class TermTestQuestionByClassIdController extends BaseController
+class TestQuestionByClassIdController extends BaseController
 {
     public function __invoke(Request $request)
     // {
@@ -16,9 +16,9 @@ class TermTestQuestionByClassIdController extends BaseController
     //     return $this->sendResponse(['term_questions' => $termQuestions, 'term_question_count' => $questionCount]);
     // }
     {
-        $classIds = explode(',', $request->query('classIds'));
-        $termQuestions = JobQuestion::whereIn('class_id', $classIds)->get();
-        $questionCount = $termQuestions->count();
-        return $this->sendResponse(['term_questions' => $termQuestions, 'term_question_count' => $questionCount]);
+        $subjectIds = explode(',', $request->query('subjectIds'));
+        $questions = JobQuestion::whereIn('subject_id', $subjectIds)->get();
+        $questionCount = $questions->count();
+        return $this->sendResponse(['questions' => $questions, 'term_question_count' => $questionCount]);
     }
 }

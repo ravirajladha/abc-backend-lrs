@@ -10,7 +10,7 @@ class AssessmentController extends BaseController
 {
     public function __invoke(Request $request)
     {
-        $assessments = Assessment::select('class_id', 'subject_id', 'title', 'id')
+        $assessments = Assessment::select('course_id', 'subject_id', 'title', 'id')
         ->where('subject_id', $request->subjectId)
         ->get()
         ->map(function ($assessment) {

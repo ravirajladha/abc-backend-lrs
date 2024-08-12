@@ -12,7 +12,7 @@ class ProjectReportController extends BaseController
 {
     public function __invoke(Request $request)
     {
-        $projectReports = ProjectReport::select('id', 'title')->where('subject_id', $request->subjectId)->get();
+        $projectReports = ProjectReport::select('id', 'title')->where('course_id', $request->courseId)->get();
         return $this->sendResponse(['projectReports' => $projectReports]);
     }
 }

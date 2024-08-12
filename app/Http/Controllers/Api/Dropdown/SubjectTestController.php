@@ -2,45 +2,44 @@
 
 namespace App\Http\Controllers\Api\Dropdown;
 
-use App\Models\Subject;
+use App\Models\Course;
 use App\Models\TermTest;
 
 use Illuminate\Support\Facades\Log;
-use App\Http\Constants\SubjectTypeConstants;
+use App\Http\Constants\CourseTypeConstants;
 use App\Http\Controllers\Api\BaseController;
 
-// This controller which show the subjects on select of class, but only those subjects which are already not the part of any term_tests
-class SubjectTestController extends BaseController
+// This controller which show the courses on select of subject, but only those courses which are already not the part of any term_tests
+class CourseTestController extends BaseController
 {
-    public function __invoke($classId)
+    public function __invoke($subjectId)
     {
-        Log::info(['classId' => $classId]);
-        // Fetch subjects for the given class ID
-        $subjects = Subject::select('id', 'name')
-            ->where('class_id', $classId)
-            ->whereIn('subject_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT, SubjectTypeConstants::TYPE_SUB_SUBJECT])
+        Log::info(['subjectId' => $subjectId]);
+        // Fetch courses for the given subject ID
+        $courses = Course::select('id', 'name')
+            ->where('subject_id', $subjectId)
             ->get()
-            ->map(function ($subject) {
-                $subject->name = ucfirst($subject->name);
-                return $subject;
+            ->map(function ($course) {
+                $course->name = ucfirst($course->name);
+                return $course;
             });
-    
-        // Fetch subjects that already have a term test assigned
-        $assignedSubjects = TermTest::select('subject_id')
-            ->whereIn('subject_id', $subjects->pluck('id'))
+
+        // Fetch courses that already have a term test assigned
+        $assignedCourses = TermTest::select('course_id')
+            ->whereIn('course_id', $courses->pluck('id'))
             ->where('status', true)
             ->get()
-            ->pluck('subject_id')
+            ->pluck('course_id')
             ->toArray();
-    
-        // Add flag to subjects to indicate if they already have a test assigned
-    $subjects = $subjects->map(function ($subject) use ($assignedSubjects) {
-        $subject->isDisabled = in_array($subject->id, $assignedSubjects);
-        return $subject;
+
+        // Add flag to courses to indicate if they already have a test assigned
+    $courses = $courses->map(function ($course) use ($assignedCourses) {
+        $course->isDisabled = in_array($course->id, $assignedCourses);
+        return $course;
     });
-    Log::info(['subjects' => $subjects]);
-        return $this->sendResponse(['subjects' => $subjects]);
+    Log::info(['courses' => $courses]);
+        return $this->sendResponse(['courses' => $courses]);
     }
-    
+
 
 }

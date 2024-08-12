@@ -11,7 +11,7 @@ class AssessmentQuestionController extends BaseController
 {
     public function __invoke(Request $request)
     {
-        $assessmentQuestions = AssessmentQuestion::where('subject_id', $request->subjectId)->count();
+        $assessmentQuestions = AssessmentQuestion::where('course_id', $request->courseId)->count();
         return $this->sendResponse(['assessmentQuestions' => $assessmentQuestions]);
     }
 }
