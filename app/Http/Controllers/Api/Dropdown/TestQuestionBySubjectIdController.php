@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\JobQuestion;
 use Illuminate\Http\Request;
 
-class TestQuestionByClassIdController extends BaseController
+class TestQuestionBySubjectIdController extends BaseController
 {
     public function __invoke(Request $request)
     // {

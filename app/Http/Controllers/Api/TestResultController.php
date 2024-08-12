@@ -3,21 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Helpers\DateTimeHelper;
-use App\Models\TermTest;
-use App\Models\TermTestQuestion;
-use App\Models\TermTestResult;
+use App\Models\Test;
+use App\Models\TestQuestion;
+use App\Models\TestResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class TermTestResultController extends BaseController
+class TestResultController extends BaseController
 {
-    public function getStudentTestDetailsBySubjectId(Request $request)
+    public function getStudentTestDetailsByCourseId(Request $request)
     {
 
-        $results = DB::table('term_tests as test')
-            ->select('test.id as test_id', 'test.class_id as test_class', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.subject_id as test_subject', 'test.term_type as term_type', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
-            ->leftJoin('term_test_results as result', 'result.test_id', 'test.id')
-            ->where('test.subject_id', $request->subjectId)
+        $results = DB::table('tests as test')
+            ->select('test.id as test_id', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.course_id as test_course', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
+            ->leftJoin('test_results as result', 'result.test_id', 'test.id')
+            ->where('test.course_id', $request->courseId)
             ->where('result.student_id', $request->studentId)
             ->get();
 
@@ -25,7 +25,7 @@ class TermTestResultController extends BaseController
         foreach ($results as $result) {
             if ($result && $result->test_question_ids) {
                 $questionIds = explode(',', $result->test_question_ids); //All Questions in the test
-                $question_bank = DB::table('term_test_questions')
+                $question_bank = DB::table('test_questions')
                     ->select('id', 'question', 'explanation', 'code', 'option_one', 'option_two', 'option_three', 'option_four', 'answer_key')
                     ->whereIn('id', $questionIds)
                     ->get();
@@ -71,9 +71,9 @@ class TermTestResultController extends BaseController
 
 
         if (!$results) {
-            return $this->sendError('Term test results not found');
+            return $this->sendError('Test results not found');
         }
 
-        return $this->sendResponse(['term_test_results' => $results], '');
+        return $this->sendResponse(['test_results' => $results], '');
     }
 }

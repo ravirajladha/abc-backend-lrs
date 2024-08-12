@@ -12,7 +12,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Constants\AuthConstants;
 use App\Models\StudentAuthLog;
 use Carbon\Carbon;
-use App\Http\Constants\SubjectTypeConstants;
 
 class BaseController extends Controller
 {

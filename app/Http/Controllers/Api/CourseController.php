@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\Services\Admin\ResultService;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Constants\SubjectTypeConstants;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
 use App\Models\Student;
