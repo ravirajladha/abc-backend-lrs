@@ -19,9 +19,9 @@ class EbookController extends BaseController
     public function getEbookList()
     {
         $ebooks = DB::table('ebooks as e')
-            ->select('e.id', 'e.title', 'e.description', 'class.name as class_name', 'e.image', 'e.class_id', 'e.subject_id', 's.name as subject_name', 'e.chapter_id')
+            ->select('e.id', 'e.title', 'e.description', 'course.name as course_name', 'e.image', 'e.class_id', 'e.subject_id', 's.name as subject_name', 'e.chapter_id')
             ->leftJoin('subjects as s', 'e.subject_id', 's.id')
-            ->leftJoin('classes as class', 'e.class_id', 'class.id')
+            ->leftJoin('courses as course', 'e.course_id', 'course.id')
             ->get();
 
         return $this->sendResponse(['ebooks' => $ebooks]);
@@ -39,7 +39,7 @@ class EbookController extends BaseController
         $validator = Validator::make($request->all(), [
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -52,7 +52,7 @@ class EbookController extends BaseController
 
             $ebook->title = $request->title;
             $ebook->description = $request->description;
-            $ebook->class_id = $request->class;
+            $ebook->course_id = $request->course;
             $ebook->subject_id = $request->subject;
             // $ebook->chapter_id = $request->chapter;
 
@@ -86,9 +86,9 @@ class EbookController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $ebook = DB::table('ebooks as e')
-                ->select('e.title as ebook_title', 'e.description as ebook_description', 'class.name as class_name', 'e.image as ebook_image', 'e.class_id', 'e.subject_id', 's.name as subject_name')
+                ->select('e.title as ebook_title', 'e.description as ebook_description', 'course.name as course_name', 'e.image as ebook_image', 'e.course_id', 'e.subject_id', 's.name as subject_name')
                 ->leftJoin('subjects as s', 'e.subject_id', 's.id')
-                ->leftJoin('classes as class', 'e.class_id', 'class.id')
+                ->leftJoin('courses as course', 'e.course_id', 'course.id')
                 ->where('e.id', $ebookId)
                 ->first();
 
@@ -109,7 +109,7 @@ class EbookController extends BaseController
             'ebookId' => 'required|exists:ebooks,id',
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
 
@@ -126,7 +126,7 @@ class EbookController extends BaseController
 
             $ebook->title = $request->title;
             $ebook->description = $request->description;
-            $ebook->class_id = $request->class;
+            $ebook->course_id = $request->course;
             $ebook->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {

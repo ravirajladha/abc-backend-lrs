@@ -36,9 +36,9 @@ class AssessmentQuestionController extends BaseController
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $assessmentQuestions = DB::table('assessment_questions as q')
-                ->select('q.*', 'c.name as class', 's.name as subject')
-                ->leftJoin('classes as c', 'c.id', '=', 'q.class_id')
-                ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id');
+                ->select('q.*', 's.name as subject', 'c.name as course')
+                ->leftJoin('subjects as s', 's.id', '=', 'q.class_id')
+                ->leftJoin('courses as c', 'c.id', '=', 'q.course_id');
 
             if ($request->classId !== null && $request->classId !== 'undefined') {
                 $assessmentQuestions->where('q.class_id', $request->classId);

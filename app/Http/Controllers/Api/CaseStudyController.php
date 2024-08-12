@@ -19,9 +19,9 @@ class CaseStudyController extends BaseController
     public function getCaseStudyList()
     {
         $caseStudies = DB::table('case_studies as c')
-            ->select('c.id', 'c.title', 'c.description', 'class.name as class_name', 'c.image', 'c.class_id', 'c.subject_id', 's.name as subject_name', 'c.chapter_id')
-            ->leftJoin('subjects as s', 'c.subject_id', 's.id')
-            ->leftJoin('classes as class', 'c.class_id', 'class.id')
+            ->select('c.id', 'c.title', 'c.description', 'subject.name as subject_name', 'c.image', 'c.subject_id', 'c.course_id', 'cou.name as course_name', 'c.chapter_id')
+            ->leftJoin('courses as cou', 'c.subject_id', 'cou.id')
+            ->leftJoin('subjects as subject', 'c.subject_id', 'subject.id')
             ->get();
 
         return $this->sendResponse(['caseStudies' => $caseStudies]);
@@ -39,7 +39,7 @@ class CaseStudyController extends BaseController
         $validator = Validator::make($request->all(), [
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'courses' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -52,7 +52,7 @@ class CaseStudyController extends BaseController
 
             $caseStudy->title = $request->title;
             $caseStudy->description = $request->description;
-            $caseStudy->class_id = $request->class;
+            $caseStudy->course_id = $request->course;
             $caseStudy->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {
@@ -103,7 +103,7 @@ class CaseStudyController extends BaseController
             'caseStudyId' => 'required|exists:case_studies,id',
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
 
@@ -120,7 +120,7 @@ class CaseStudyController extends BaseController
 
             $caseStudy->title = $request->title;
             $caseStudy->description = $request->description;
-            $caseStudy->class_id = $request->class;
+            $caseStudy->course_id = $request->course;
             $caseStudy->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {
@@ -150,9 +150,9 @@ class CaseStudyController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $caseStudy = DB::table('case_studies as e')
-                ->select('e.title as case_study_title', 'e.description as case_study_description', 'class.name as class_name', 'e.image as case_study_image', 'e.class_id', 'e.subject_id', 's.name as subject_name')
+                ->select('e.title as case_study_title', 'e.description as case_study_description', 'course.name as course_name', 'e.image as case_study_image', 'e.course_id', 'e.subject_id', 's.name as subject_name')
                 ->leftJoin('subjects as s', 'e.subject_id', 's.id')
-                ->leftJoin('classes as class', 'e.class_id', 'class.id')
+                ->leftJoin('courses as coures', 'e.course_id', 'course.id')
                 ->where('e.id', $caseStudyId)
                 ->first();
 

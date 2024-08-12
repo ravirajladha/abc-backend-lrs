@@ -110,9 +110,8 @@ class AdminController extends BaseController
                     'pincode' => $request->pincode,
                     'city' => $request->city,
                     'state' => $request->state,
-                    'student_teacher_ratio' => $request->student_teacher_ratio,
-                    'website_url' => $request->website_url,
-                    'description' => $request->description,
+            
+                 
                 ]);
             }
             if ($auth && $internshipAdmin) {

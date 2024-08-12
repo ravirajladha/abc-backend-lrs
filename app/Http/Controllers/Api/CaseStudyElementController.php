@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\CaseStudySection;
 use App\Models\CaseStudyElement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

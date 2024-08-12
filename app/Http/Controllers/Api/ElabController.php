@@ -20,7 +20,7 @@ class ElabController extends BaseController
      */
     public function getElabList()
     {
-        $elabs = Elab::with('class', 'subject')->paginate(10);
+        $elabs = Elab::with('course', 'subject')->paginate(10);
         return $this->sendResponse(['elabs' => $elabs]);
     }
     /**
@@ -35,12 +35,12 @@ class ElabController extends BaseController
     }
 
 
-    public function fetchSelectedActiveElabs($classId, $subjectId = null)
+    public function fetchSelectedActiveElabs($subjectId, $courseId = null)
 {
-    $query = Elab::where('active', 1)->where('class_id', $classId);
+    $query = Elab::where('active', 1)->where('subject_id', $subjectId);
 
     if ($subjectId !== null) {
-        $query->where('subject_id', $subjectId);
+        $query->where('course_id', $courseId);
     }
 
     $elabs = $query->get();
@@ -70,7 +70,7 @@ class ElabController extends BaseController
         $validator = Validator::make($request->all(), [
             'elabName' => 'required|string',
             // 'selectedLanguage' => 'required|string',
-            'selectedClass' => 'required|integer',
+            'selectedCourse' => 'required|integer',
             'selectedSubject' => 'required|integer',
             'testcase' => 'required|string',
             'template1' => 'required|string',
@@ -84,7 +84,7 @@ class ElabController extends BaseController
             $lab = new Elab;
             $lab->title = $request->elabName;
             // $lab->code = $request->code;
-            $lab->class_id = $request->selectedClass;
+            $lab->course_id = $request->selectedCourse;
             $lab->subject_id = $request->selectedSubject;
             $lab->description = $request->description;
             $lab->io_format = $request->io_format;
@@ -123,8 +123,6 @@ class ElabController extends BaseController
         return response()->json(['elabs' => $elabs]);
     }
 
-
-
     /**
      * Display a details of a elab through id.
      *
@@ -142,10 +140,10 @@ class ElabController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        // Load the eLab along with its associated class and subject, retrieving only their names
-        $elab = Elab::with(['class' => function ($query) {
+        // Load the eLab along with its associated course and subject, retrieving only their names
+        $elab = Elab::with(['subject' => function ($query) {
             $query->select('id', 'name'); // Select only the id and name columns
-        }, 'subject' => function ($query) {
+        }, 'course' => function ($query) {
             $query->select('id', 'name'); // Select only the id and name columns
         }])->find($elabId);
 
@@ -222,7 +220,7 @@ class ElabController extends BaseController
             $lab = Elab::find($elabId);
             $lab->title = $request->elabName;
             // $lab->code = $request->code;
-            $lab->class_id = $request->selectedClass;
+            $lab->course_id = $request->selectedCourse;
             $lab->subject_id = $request->selectedSubject;
             $lab->description = $request->description;
             $lab->constraints = $request->constraints;
@@ -242,7 +240,7 @@ class ElabController extends BaseController
                 'id' => $elabId,
                 'elabName' => $lab->title,
                 // 'code' => $lab->code,
-                'selectedClass' => $lab->class_id,
+                'selectedCourse' => $lab->course_id,
                 'selectedSubject' => $lab->subject_id,
                 'description' => $lab->description,
                 'constraints' => $lab->constraints,
@@ -335,7 +333,7 @@ class ElabController extends BaseController
             return $this->sendValidationError($validator);
         }
         $redirecting_id = null;
-        $subject_id = null;
+        $course_id = null;
         $mini_project_id = null;
         $miniProjectTaskId = null;
         $internshipId = null;
@@ -343,11 +341,11 @@ class ElabController extends BaseController
         $redirecting_id = $request->redirecting_id;
         if ($request->type == 1) {
             // type subject
-            $subject_id = $redirecting_id;
+            $course_id = $redirecting_id;
         } elseif ($request->type == 2) {
             //type mini project
             $redirectingIds = explode('&', $request->redirecting_id);
-            $subject_id   = $redirectingIds[0];
+            $course_id   = $redirectingIds[0];
             $mini_project_id = $redirectingIds[1];
             $miniProjectTaskId = $redirectingIds[2];
         } elseif ($request->type == 3) {
@@ -361,12 +359,12 @@ class ElabController extends BaseController
 
         if ($request->type == 1) {
             $submission = ElabSubmission::where('elab_id', $request->lab_id)
-                ->where('subject_id', $subject_id)
+                ->where('course_id', $course_id)
                 ->where('type', 1)
                 ->where('student_id', $request->user_id)
                 ->first();
         } elseif ($request->type == 2) {
-            $submission = ElabSubmission::where('subject_id', $subject_id)
+            $submission = ElabSubmission::where('course_id', $course_id)
                 ->where('type', 2)
                 ->where('mini_project_id', $mini_project_id)
                 ->where('mini_project_task_id', $miniProjectTaskId)
@@ -410,7 +408,7 @@ class ElabController extends BaseController
                 'start_timestamp' => $request->start_timestamp,
                 'end_timestamp' => $request->end_timestamp,
                 'student_id' => $request->user_id,
-                'subject_id' => $subject_id,
+                'course_id' => $course_id,
                 'type' => $request->type,
                 'mini_project_id' => $mini_project_id,
                 'mini_project_task_id' => $miniProjectTaskId,

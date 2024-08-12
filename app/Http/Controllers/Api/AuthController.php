@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
-
 use App\Models\Auth as AuthModel;
 
 use App\Http\Constants\AuthConstants;
 
 use App\Http\Controllers\Api\BaseController;
-use App\Models\School;
 
 class AuthController extends BaseController
 {

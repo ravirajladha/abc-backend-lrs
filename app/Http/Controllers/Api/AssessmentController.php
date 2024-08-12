@@ -6,7 +6,6 @@ use App\Models\Assessment;
 use App\Models\AssessmentQuestion;
 use App\Models\AssessmentResult;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Video;
@@ -186,9 +185,7 @@ class AssessmentController extends BaseController
         return $this->sendResponse(['assessment' => $assessment]);
     }
 
-//still in progress
-// sdfsdf
-//sdfsdf1111
+
     /**
      * Store the assessment response into database.
      *
