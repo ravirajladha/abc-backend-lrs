@@ -103,16 +103,15 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     Route::get('/classes/{classId}/results', [SubjectController::class, 'getClassResults']);
 
     //Section Routes
-    Route::get('/sections', [SectionController::class, 'getSectionList']);
 
     //Subject Routes
     Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
-    Route::get('/classes/{classId}/subjects', [SubjectController::class, 'getSubjectListByClassId']);
+    // Route::get('/classes/{classId}/subjects', [SubjectController::class, 'getSubjectListByClassId']);
     Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
     Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
 
     //Chapter Routes
-    Route::get('/classes/{classId}/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListByClass']);
+    Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
     Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
     Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
 });

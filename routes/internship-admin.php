@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Route;
 // Combine all controller imports
 use App\Http\Controllers\Api\{
     AuthController,
-    ParentController,
+    // ParentController,
     SchoolController,
     StudentController,
     StudentImageController,
-    TeacherController,
+    TrainerController,
     AssessmentController,
     ApplicationController,
     OldApplicationController
@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\{
 
 
 
-Route::prefix('school')->group(function () {
+Route::prefix('internship-admin')->group(function () {
     Route::get('/dashboard', [SchoolController::class, 'getDashboard']);
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
     Route::get('/details', [SchoolController::class, 'getSchoolDetails']);
@@ -28,27 +28,6 @@ Route::prefix('school')->group(function () {
     // assessment results video wise
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResults']);
 
-    // Applications
-
-    Route::prefix('applications')->group(function () {
-        Route::get('/{status}', [ApplicationController::class, 'getApplications']);
-        Route::post('/update-status', [ApplicationController::class, 'updateApplicationStatus']);
-        Route::post('/update-whatsapp-status', [ApplicationController::class, 'updateApplicationWhatsappStatus']);
-        Route::post('/store-application-remark', [ApplicationController::class, 'storeApplicationRemark']);
-        Route::get('/get-application/{applicationId}', [ApplicationController::class, 'getApplicationById']);
-        Route::post('/send-whatsapp-message/{contact}/{messageType}', [ApplicationController::class, 'sendWhatsappMessage']);
-        Route::post('/send-bulk-whatsapp-message/{messageType}', [ApplicationController::class, 'sendBulkWhatsappMessages']);
-    });
-    // Old Applications
-    Route::prefix('old-applications')->group(function () {
-        Route::get('/{status}', [OldApplicationController::class, 'getApplications']);
-        Route::post('/update-status', [OldApplicationController::class, 'updateApplicationStatus']);
-        Route::post('/update-whatsapp-status', [OldApplicationController::class, 'updateApplicationWhatsappStatus']);
-        Route::post('/store-application-remark', [OldApplicationController::class, 'storeApplicationRemark']);
-        Route::get('/get-application/{applicationId}', [OldApplicationController::class, 'getApplicationById']);
-        Route::post('/upload', [OldApplicationController::class, 'uploadOldApplication']);
-        Route::post('/send-bulk-whatsapp-message/{messageType}', [OldApplicationController::class, 'sendBulkWhatsappMessages']);
-    });
 
     //School Student Routes
     Route::prefix('students')->group(function () {
@@ -69,23 +48,23 @@ Route::prefix('school')->group(function () {
     });
 
 
-    //School Teacher Routes
-    Route::prefix('teachers')->group(function () {
-        Route::get('/', [TeacherController::class, 'getTeachersList']);
-        Route::get('/{teacherId}', [TeacherController::class, 'getTeacherDetails']);
-        Route::post('/store', [TeacherController::class, 'storeTeacherDetails']);
-        Route::get('/{teacherId}/assign', [TeacherController::class, 'getTeacherClassesAndSubjects']);
-        Route::post('/{teacherId}/assign', [TeacherController::class, 'storeOrUpdateTeacherClassesAndSubjects']);
-        Route::put('/{teacherId}/update', [TeacherController::class, 'updateTeacherDetails']);
-        Route::delete('/{teacherId}/delete', [TeacherController::class, 'deleteTeacherDetails']);
+    //School Trainer Routes
+    Route::prefix('trainers')->group(function () {
+        Route::get('/', [TrainerController::class, 'getTrainersList']);
+        Route::get('/{trainerId}', [TrainerController::class, 'getTrainerDetails']);
+        Route::post('/store', [TrainerController::class, 'storeTrainerDetails']);
+        Route::get('/{trainerId}/assign', [TrainerController::class, 'getTrainerSubjectsAndCourses']);
+        Route::post('/{trainerId}/assign', [TrainerController::class, 'storeOrUpdateTrainerSubjectsAndCourses']);
+        Route::put('/{trainerId}/update', [TrainerController::class, 'updateTrainerDetails']);
+        Route::delete('/{trainerId}/delete', [TrainerController::class, 'deleteTrainerDetails']);
     });
 
     //School Parent Routes
-    Route::prefix('parents')->group(function () {
-        Route::get('/', [ParentController::class, 'getParentList']);
-        Route::get('/{parentId}', [ParentController::class, 'getParentDetails']);
-        // Route::delete('/{parentId}/disable', [ParentController::class, 'disableParent']);
-    });
-
-    Route::get('/class/students/{classId?}/{sectionId?}', [StudentController::class, 'getStudentsByClassAndSection']);
+    // Route::prefix('parents')->group(function () {
+    //     Route::get('/', [ParentController::class, 'getParentList']);
+    //     Route::get('/{parentId}', [ParentController::class, 'getParentDetails']);
+    //     // Route::delete('/{parentId}/disable', [ParentController::class, 'disableParent']);
+    // });
+//pending , needs to do with studentcontroller module
+    Route::get('/subject/students/{classId?}/{sectionId?}', [StudentController::class, 'getStudentsByClassAndSection']);
 });

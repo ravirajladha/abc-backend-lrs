@@ -115,11 +115,11 @@ class CourseController extends BaseController
                 $course->results = $studentResult;
 
                 // Trainer by course
-                $teacher = DB::table('trainer_courses as ts')
+                $trainer = DB::table('trainer_courses as ts')
                 ->where('ts.course_id', $course->id)
-                ->leftJoin('teachers as t', 't.id', 'ts.teacher_id')
+                ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
                 ->first();
-                $course->teacher_name = $teacher->name;
+                $course->trainer_name = $trainer->name;
 
             }
 

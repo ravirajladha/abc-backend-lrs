@@ -19,25 +19,24 @@ Route::prefix('recruiter')->group(function () {
 
         Route::prefix('job-tests')->group(function () {
 
-            Route::get('/', [JobTestController::class, 'getAllTermTests']);
-            Route::get('/{testId}', [JobTestController::class, 'getTermTestDetails']);
-            Route::post('/store', [JobTestController::class, 'storeTermTestDetails']);
-            Route::get('/{testId}/results', [JobTestController::class, 'showTermTestResults']);
-            Route::put('/{testId}/update', [JobTestController::class, 'updateTermTestDetails']);
-            Route::delete('/{testId}/delete', [JobTestController::class, 'destroyTermTestDetails']);
-            Route::get('/availability/{subjectId}', [JobTestController::class, 'checkTermAvailability']);
+            Route::get('/', [JobTestController::class, 'getAllTests']);
+            Route::get('/{testId}', [JobTestController::class, 'getTestDetails']);
+            Route::post('/store', [JobTestController::class, 'storeTestDetails']);
+            Route::get('/{testId}/results', [JobTestController::class, 'showTestResults']);
+            Route::put('/{testId}/update', [JobTestController::class, 'updateTestDetails']);
+            Route::delete('/{testId}/delete', [JobTestController::class, 'destroyTestDetails']);
+            Route::get('/availability/{subjectId}', [JobTestController::class, 'checkAvailability']);
         });
         Route::prefix('jobs')->group(function () {
-
             Route::get('/{recruiterId?}', [JobController::class, 'getJobsByRecruiterId']);
         });
 
         //Assessment Questions Routes
         Route::prefix('job-tests-questions')->group(function () {
-            Route::get('/', [JobTestQuestionController::class, 'getAllTermTestQuestions']);
+            Route::get('/', [JobTestQuestionController::class, 'getAllTestQuestions']);
             Route::post('/store', [JobTestQuestionController::class, 'store']);
-            Route::get('/{termTestQuestionId}/show', [JobTestQuestionController::class, 'getTermTestQuestionDetails']);
-            Route::put('/{termTestQuestionId}/update', [JobTestQuestionController::class, 'update']);
-            Route::delete('/{termTestQuestionId}/delete', [JobTestQuestionController::class, 'delete']);
+            Route::get('/{testQuestionId}/show', [JobTestQuestionController::class, 'getTestQuestionDetails']);
+            Route::put('/{testQuestionId}/update', [JobTestQuestionController::class, 'update']);
+            Route::delete('/{testQuestionId}/delete', [JobTestQuestionController::class, 'delete']);
         });
     });

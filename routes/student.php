@@ -14,9 +14,9 @@ use App\Http\Controllers\Api\{
     VideoController,
     StudentController,
     CourseController,
-    TermTestController,
+    TestController,
     AssessmentController,
-    TermTestResultController,
+    TestResultController,
     ReadableCoursesController,
     ExternalStudentController,
     ElabController,
@@ -31,12 +31,12 @@ Route::prefix('student')->group(function () {
     Route::post('/mini-project-tasks/complete-status-for-student', [MiniProjectController::class, 'completeStatusForStudent']);
     Route::post('/internship/generate-certificate', [InternshipController::class, 'generateCertificate']);
 
-    Route::get('/subjects', [CourseController::class, 'getStudentSubjectsWithResults']);
+    Route::get('/courses', [CourseController::class, 'getStudentCoursesWithResults']);
     Route::get('/get-report-card', [CourseController::class, 'getStudentReportCard']);
-    Route::get('/get-subject-results', [TermTestResultController::class, 'getStudentTestDetailsBySubjectId']);
+    Route::get('/get-course-results', [TestResultController::class, 'getStudentTestDetailsByCourseId']);
 
     Route::get('/my-courses', [CourseController::class, 'getMyCourses']);
-    Route::get('/course-preview/{subjectId}', [CourseController::class, 'getCoursePreview']);
+    Route::get('/course-preview/{courseId}', [CourseController::class, 'getCoursePreview']);
 
     //Job Routes
     Route::prefix('jobs')->group(function () {
@@ -52,7 +52,7 @@ Route::prefix('student')->group(function () {
 
     //Qna Routes
     Route::prefix('qna')->group(function () {
-        Route::get('/{studentId}/{teacherId}/{subjectId}', [QnaController::class, 'getQnaBySubject']);
+        Route::get('/{studentId}/{trainerId}/{subjectId}', [QnaController::class, 'getQnaBySubject']);
         Route::post('/', [QnaController::class, 'storeQnaByClass']);
         Route::get('/search/{question?}', [QnaController::class, 'searchQuestionByKeyword']);
     });
@@ -69,19 +69,17 @@ Route::prefix('student')->group(function () {
     //elabs for student
     Route::prefix('elabs')->group(function () {
         Route::get('/{id}', [ElabController::class, 'getElabDetail']);
-
         //submit elabs code ino submission table
-
         Route::post('/elab-submission', [ElabController::class, 'elabSubmission']);
     });
 
     //Term Test Routes
-    Route::prefix('term-tests')->group(function () {
-        Route::get('/{testId}', [TermTestController::class, 'getTermTestDetails']);
-        Route::get('/get-details-by-token/{token}/{testId}', [TermTestController::class, 'getTermTestDetailsByToken']);
-        Route::post('/', [TermTestController::class, 'storeTermTestResponse']);
-        Route::post('/token', [TermTestController::class, 'storeTermTestResponseWithToken']);
-        Route::post('/start', [TermTestController::class, 'startTest']);
+    Route::prefix('tests')->group(function () {
+        Route::get('/{testId}', [TestController::class, 'getTestDetails']);
+        Route::get('/get-details-by-token/{token}/{testId}', [TestController::class, 'getTestDetailsByToken']);
+        Route::post('/', [TestController::class, 'storeTestResponse']);
+        Route::post('/token', [TestController::class, 'storeTestResponseWithToken']);
+        Route::post('/start', [TestController::class, 'startTest']);
     });
     Route::prefix('job-tests')->group(function () {
         Route::get('/{jobId}', [JobController::class, 'getJobTestDetails']);
@@ -97,13 +95,16 @@ Route::prefix('student')->group(function () {
         Route::get('/{assessmentId}', [AssessmentController::class, 'getAssessmentDetailsWithQuestions']);
         Route::post('/', [AssessmentController::class, 'storeAssessmentResponse']);
     });
+
     Route::prefix('assessments')->group(function () {
         Route::get('/{assessmentId}', [AssessmentController::class, 'getAssessmentDetailsWithQuestions']);
         Route::post('/', [AssessmentController::class, 'storeAssessmentResponse']);
     });
+
     Route::prefix('internships')->group(function () {
         Route::get('/', [InternshipController::class, 'getInternshipsForStudent']);
     });
+
     Route::get('/dashboard', [StudentController::class, 'getDashboard']);
     Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
 
@@ -117,7 +118,7 @@ Route::prefix('student')->group(function () {
 
     Route::get("/parent-details/{studentId}", [StudentController::class, 'getParentDetails']);
 
-    //Content Page Routes
+    //Content Page Routes, video controller is pending
     Route::get('/subjects/{subjectId}/contents', [VideoController::class, 'getContents']);
 
     Route::get('/subjects/{subjectId}/external-student-contents', [ExternalStudentController::class, 'getContents']);

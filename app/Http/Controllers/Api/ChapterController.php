@@ -218,7 +218,7 @@ class ChapterController extends BaseController
         return $this->sendResponse([], 'Chapter deleted successfully');
     }
 
-    public function updatechapterLockStatus(Request $request, $chapterId){
+    public function updateChapterLockStatus(Request $request, $chapterId){
         $validator = Validator::make(['chapter_id' => $chapterId], [
             'chapter_id' => 'required',
         ]);

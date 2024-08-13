@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
             $table->foreignId('course_id')->nullable()->constrained('courses', 'id');
             $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
-            $table->foreignId('teacher_id')->nullable()->constrained('auth', 'id');
+            $table->foreignId('trainer_id')->nullable()->constrained('auth', 'id');
             $table->text('question')->nullable();
             $table->text('answer')->nullable();
             $table->text('url')->nullable();

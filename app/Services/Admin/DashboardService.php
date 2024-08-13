@@ -25,7 +25,7 @@ class DashboardService
         $job_tests = DB::table('job_tests')->count();
         $subscribed_students = DB::table('students')->where('is_paid', true)->count();
         $unsubscribed_students = DB::table('students')->where('is_paid', false)->count();
-        $trainers = DB::table('teachers')->count();
+        $trainers = DB::table('trainer')->count();
 
 
         $res = [

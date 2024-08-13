@@ -11,35 +11,35 @@ use Illuminate\Support\Facades\Validator;
 
 class JobTestQuestionController extends BaseController
 {
-    public function getTermTestQuestionDetails($termTestQuestionId)
+    public function getTestQuestionDetails($TestQuestionId)
     {
-        $termTestQuestion = JobQuestion::find($termTestQuestionId);
+        $TestQuestion = JobQuestion::find($TestQuestionId);
 
-        if (!$termTestQuestion) {
-            return $this->sendError('Term test question not found');
+        if (!$TestQuestion) {
+            return $this->sendError('Test question not found');
         }
 
-        return $this->sendResponse(['term_test_question' => $termTestQuestion], '');
+        return $this->sendResponse(['test_question' => $TestQuestion], '');
     }
 
-    public function getAllTermTestQuestions(Request $request)
+    public function getAllTestQuestions(Request $request)
     {
 
-        $termTestQuestions = DB::table('job_questions as q')
+        $testQuestions = DB::table('job_questions as q')
             ->select('q.*', 's.name as subject')
             ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id');
 
         if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
-            $termTestQuestions->where('q.subject_id', $request->subjectId);
+            $testQuestions->where('q.subject_id', $request->subjectId);
         }     
 
-        $term_test_questions = $termTestQuestions->get();
+        $test_questions = $testQuestions->get();
 
-        if (!$termTestQuestions) {
-            return $this->sendResponse([], 'Term test questions not found');
+        if (!$testQuestions) {
+            return $this->sendResponse([], 'Test questions not found');
         }
 
-        return $this->sendResponse(['term_test_questions' => $term_test_questions], '');
+        return $this->sendResponse(['test_questions' => $test_questions], '');
     }
 
     public function store(Request $request)
@@ -61,24 +61,24 @@ class JobTestQuestionController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        $termTest = new JobQuestion();
-        // $termTest->subject_id = $request->selectedSubject;
-        $termTest->subject_id = $request->selectedSubject;
-        $termTest->question = $request->question;
-        $termTest->explanation = $request->explanation;
-        $termTest->code = $request->code;
-        $termTest->image = $request->image;
-        $termTest->option_one = $request->option_one;
-        $termTest->option_two = $request->option_two;
-        $termTest->option_three = $request->option_three;
-        $termTest->option_four = $request->option_four;
-        $termTest->answer_key = $request->answer_key;
-        $termTest->save();
+        $test = new JobQuestion();
+        // $test->subject_id = $request->selectedSubject;
+        $test->subject_id = $request->selectedSubject;
+        $test->question = $request->question;
+        $test->explanation = $request->explanation;
+        $test->code = $request->code;
+        $test->image = $request->image;
+        $test->option_one = $request->option_one;
+        $test->option_two = $request->option_two;
+        $test->option_three = $request->option_three;
+        $test->option_four = $request->option_four;
+        $test->answer_key = $request->answer_key;
+        $test->save();
 
-        return $this->sendResponse(['termTest' => $termTest], 'Term test question created successfully');
+        return $this->sendResponse(['test' => $test], 'Test question created successfully');
     }
 
-    public function update(Request $request, $termTestQuestionId)
+    public function update(Request $request, $testQuestionId)
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -96,47 +96,47 @@ class JobTestQuestionController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        $termTest = JobQuestion::find($termTestQuestionId);
+        $test = JobQuestion::find($testQuestionId);
 
-        if (!$termTest) {
+        if (!$test) {
             return $this->sendError('Term test question not found');
         }
 
-        $termTest->subject_id = $request->selectedSubject;
-        $termTest->question = $request->question;
-        $termTest->explanation = $request->explanation;
-        $termTest->code = $request->code;
-        $termTest->image = $request->image;
-        $termTest->option_one = $request->option_one;
-        $termTest->option_two = $request->option_two;
-        $termTest->option_three = $request->option_three;
-        $termTest->option_four = $request->option_four;
-        $termTest->answer_key = $request->answer_key;
-        $termTest->save();
+        $test->subject_id = $request->selectedSubject;
+        $test->question = $request->question;
+        $test->explanation = $request->explanation;
+        $test->code = $request->code;
+        $test->image = $request->image;
+        $test->option_one = $request->option_one;
+        $test->option_two = $request->option_two;
+        $test->option_three = $request->option_three;
+        $test->option_four = $request->option_four;
+        $test->answer_key = $request->answer_key;
+        $test->save();
 
-        return $this->sendResponse($termTest, 'Job test question updated successfully');
+        return $this->sendResponse($test, 'Job test question updated successfully');
     }
 
-    public function delete($termTestQuestionId)
+    public function delete($testQuestionId)
     {
 
-        $termTest = DB::table('job_tests as t')
+        $test = DB::table('job_tests as t')
             ->select('t.id', 't.question_ids')
-            ->whereIn('t.question_ids', [$termTestQuestionId])
+            ->whereIn('t.question_ids', [$testQuestionId])
             ->first();
 
-        if ($termTest) {
-            return $this->sendError('Term test question cannot be deleted, since it is used in a test.');
+        if ($test) {
+            return $this->sendError('Test question cannot be deleted, since it is used in a test.');
         }
 
-        $termTestQuestion = JobQuestion::find($termTestQuestionId);
+        $testQuestion = JobQuestion::find($testQuestionId);
 
-        if (!$termTestQuestion) {
-            return $this->sendError('Term test question not found');
+        if (!$testQuestion) {
+            return $this->sendError('Test question not found');
         }
 
-        $termTestQuestion->delete();
+        $testQuestion->delete();
 
-        return $this->sendResponse([], 'Term test question deleted successfully');
+        return $this->sendResponse([], 'Test question deleted successfully');
     }
 }

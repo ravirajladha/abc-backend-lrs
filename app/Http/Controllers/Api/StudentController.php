@@ -208,7 +208,7 @@ class StudentController extends BaseController
     {
         $res = [];
         $userType = $request->attributes->get('type');
-        if ($userType === 'admin' || $userType = 'school' || $userType === 'teacher') {
+        if ($userType === 'admin' || $userType = 'school' || $userType === 'trainer') {
             $validator = Validator::make(['student_id' => $studentId], [
                 'student_id' => 'required',
             ]);

@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\School;
-use App\Models\Classes;
-use App\Models\Teacher;
+
+use App\Models\Trainer;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-// use App\Models\TeacherClasses;
-use App\Models\TeacherSubject;
-use App\Models\TeacherCourse;
+
+use App\Models\TrainerSubject;
+use App\Models\TrainerCourse;
 
 use App\Models\Auth as AuthModel;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +40,7 @@ class RecruiterController extends BaseController
     }
 
     /**
-     * Update teacher details
+     * Update trainer details
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -75,7 +74,7 @@ class RecruiterController extends BaseController
     }
 
     /**
-     * Display a listing of the teachers.
+     * Display a listing of the trainers.
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -97,14 +96,13 @@ class RecruiterController extends BaseController
     }
 
     /**
-     * Display the specified teacher.
+     * Display the specified trainer.
      *
      */
     public function getRecruiterDetails($recruiterId)
     {
         $res = [];
-        // $teacher_classes = [];
-        // $teacher_subjects = [];
+ 
 
         $validator = Validator::make(['recruiterId' => $recruiterId], [
             'recruiterId' => 'required',
@@ -114,7 +112,7 @@ class RecruiterController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-            // $teacher = Teacher::where('auth_id', $recruiterId)
+            // $trainer = Trainer::where('auth_id', $recruiterId)
             //     ->where('school_id', $schoolId)
             //     ->first();
             $recruiter = Recruiter::where('auth_id', $recruiterId)
@@ -154,7 +152,7 @@ class RecruiterController extends BaseController
 
 
     /**
-     * Store teacher
+     * Store trainer
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -206,9 +204,9 @@ class RecruiterController extends BaseController
 
 
     /**
-     * Get teacher classes and subjects
+     * Get trainer classes and subjects
      *
-     * @param int $teacherId
+     * @param int $trainerId
      * @return \Illuminate\Http\JsonResponse
      */
     public function getTrainerSubjectsAndCourses($trainerId)
@@ -237,15 +235,15 @@ class RecruiterController extends BaseController
         }
 
 
-        return $this->sendResponse(['teacher' => $trainerSubjectCourses], '');
+        return $this->sendResponse(['trainer' => $trainerSubjectCourses], '');
     }
 
 
     /**
-     * Store or update teacher classes and subjects
+     * Store or update trainer classes and subjects
      *
      * @param Request $request
-     * @param int $teacherId
+     * @param int $trainerId
      * @return \Illuminate\Http\JsonResponse
      */
     public function storeOrUpdateTrainerSubjectsAndCourses(Request $request, $trainerId)
@@ -253,7 +251,7 @@ class RecruiterController extends BaseController
         $validator = Validator::make(array_merge($request->all(), ['trainerId' => $trainerId]), [
             'trainerId' => 'required',
             'trainer_data' => 'required|array',
-            'trainer_data.*.class_id' => 'required|exists:classes,id',
+            'trainer_data.*.course_id' => 'required|exists:courses,id',
             'trainer_data.*.subject_id' => 'required|exists:subjects,id',
         ]);
 
@@ -267,7 +265,7 @@ class RecruiterController extends BaseController
             ->first();
         // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
-        foreach ($request->input('teacher_data') as $data) {
+        foreach ($request->input('trainer_data') as $data) {
             TrainerSubject::updateOrCreate(
                 [
                     'subject_id' => $data['subject_id'],
@@ -295,7 +293,7 @@ class RecruiterController extends BaseController
             );
         }
 
-        return $this->sendResponse([], 'Teacher Subjects and Courses added or updated successfully');
+        return $this->sendResponse([], 'Trainer Subjects and Courses added or updated successfully');
     }
 
     /**
@@ -379,7 +377,7 @@ class RecruiterController extends BaseController
 
 
     /**
-     * Remove the specified teacher from storage.
+     * Remove the specified trainer from storage.
      *
      * @param  Request $request
      * @return \Illuminate\Http\JsonResponse

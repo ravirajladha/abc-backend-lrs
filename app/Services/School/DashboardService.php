@@ -10,13 +10,13 @@ class DashboardService
     {
         $classes = DB::table('classes')->count();
         $students = DB::table('students')->where('school_id', $schoolId)->count();
-        $teachers = DB::table('teachers')->where('school_id', $schoolId)->count();
+        $trainers = DB::table('trainers')->count();
         $applications = DB::table('applications')->count();
 
         $res = [
             'class' => $classes,
             'students' => $students,
-            'teachers' => $teachers,
+            'trainers' => $trainers,
             'applications' => $applications,
         ];
 

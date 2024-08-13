@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
-    public function getTrainerDashboardItems($teacherId)
+    public function getTrainerDashboardItems($trainerId)
     {
-        // $schoolId = DB::table('teachers')->where('id', $teacherId)->pluck('school_id');
+        // $schoolId = DB::table('trainers')->where('id', $trainerId)->pluck('school_id');
 
-        $subjectIds = DB::table('teacher_subjects')->where('teacher_id', $teacherId)->pluck('subject_id');
+        $subjectIds = DB::table('trainer_subjects')->where('trainer_id', $trainerId)->pluck('subject_id');
         $subjectsCount = count($subjectIds);
 
         $totalStudentsCount = 0;
@@ -21,7 +21,7 @@ class DashboardService
             $totalStudentsCount += $studentsCount;
         }
 
-        $courseIds = DB::table('teacher_courses')->where('teacher_id', $teacherId)->pluck('course_id');
+        $courseIds = DB::table('trainer_courses')->where('trainer_id', $trainerId)->pluck('course_id');
         $coursesCount = count($courseIds);
 
         $percent = 0;

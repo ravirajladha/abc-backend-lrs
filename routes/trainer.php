@@ -7,36 +7,36 @@ use App\Http\Controllers\Api\{
     QnaController,
     AuthController,
     ChapterController,
-    TeacherController,
+    TrainerController,
     AssessmentController
 };
 
 
-Route::prefix('teacher')->group(function () {
+Route::prefix('trainer')->group(function () {
 
     Route::prefix('qna')->group(function () {
         Route::get('/{trainerId}/{studentId}', [QnaController::class, 'getQnaBySubject']);
         Route::post('/', [QnaController::class, 'storeTrainerQnaResponse']);
-        Route::get('/get-unreplied-count', [TeacherController::class, 'countUnrepliedQnAsForTeacher']);
+        Route::get('/get-unreplied-count', [TrainerController::class, 'countUnrepliedQnAsForTrainer']);
     });
 
-    Route::prefix('results')->group(function () {
-        Route::get('/term-test', [TeacherController::class, 'getAllTermResults']);
-        Route::get('/assessments', [TeacherController::class, 'getAllAssessmentResults']);
-    });
+    // Route::prefix('results')->group(function () {
+    //     Route::get('/test', [TrainerController::class, 'getAllResults']);
+    //     Route::get('/assessments', [TrainerController::class, 'getAllAssessmentResults']);
+    // });
 
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
-    Route::get('/dashboard', [TeacherController::class, 'getDashboard']);
+    Route::get('/dashboard', [TrainerController::class, 'getDashboard']);
 
-    Route::get('/get-classes', [TeacherController::class, 'getTeacherClasses']);
-    Route::get('/get-subjects/{classId}', [TeacherController::class, 'getTeacherSubjectsByClass']);
-    Route::get('/get-chapters', [TeacherController::class, 'getAllTeacherChaptersBySubject']);
-    Route::get('/get-students', [TeacherController::class, 'getAllStudentsBySubjects']);
+    Route::get('/get-classes', [TrainerController::class, 'getTrainerSubjects']);
+    Route::get('/get-courses/{subjectId}', [TrainerController::class, 'getTrainerCoursesBySubject']);
+    // Route::get('/get-chapters', [TrainerController::class, 'getAllTrainerChaptersByCourse']);
+    Route::get('/get-students', [TrainerController::class, 'getAllStudentsByCourses']);
 
-    Route::get('/{teacherId}', [TeacherController::class, 'getTeacherDetails']);
-    Route::put('/{teacherId}/update', [TeacherController::class, 'updateTeacherPassword']);
+    Route::get('/{trainerId}', [TrainerController::class, 'getTrainerDetails']);
+    Route::put('/{trainerId}/update', [TrainerController::class, 'updateTrainerPassword']);
 
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResultsByStudentId']);
 
-    Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updatechapterLockStatus']);
+    Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updateChapterLockStatus']);
 });

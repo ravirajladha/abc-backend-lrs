@@ -134,10 +134,10 @@ class ExternalStudentController extends BaseController
             }
         }
 
-        // Teacher Id by $subjectId
-        $teacher = DB::table('teacher_subjects as ts')
+        // Trainer Id by $subjectId
+        $trainer = DB::table('trainer_subjects as ts')
             ->where('ts.subject_id', $subjectId)
-            ->leftJoin('teachers as t', 't.id', 'ts.teacher_id')
+            ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
             ->first();
 
         // Final Contents Structure
@@ -145,7 +145,7 @@ class ExternalStudentController extends BaseController
             'subject' => $subject,
             'chapters' => $chapters,
             'video' => $video,
-            'teacher' => $teacher,
+            'trainer' => $trainer,
             'mini_projects' => $mini_projects,
         ];
 

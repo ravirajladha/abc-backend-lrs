@@ -16,7 +16,7 @@ use App\Http\Controllers\Api\{
     SubjectController,
     StudentController,
     CourseController,
-    TermTestController,
+    TestController,
     CaseStudyController,
     AssessmentController,
     EbookModuleController,
@@ -27,10 +27,9 @@ use App\Http\Controllers\Api\{
     ReadableCoursesController,
     CaseStudyElementController,
     CaseStudySectionController,
-    TermTestQuestionController,
+    TestQuestionController,
     AssessmentQuestionController,
-    QuoteController,
-    DinacharyaController,
+
     ProjectReportModuleController,
     ProjectReportElementController,
     FeesController,
@@ -46,30 +45,27 @@ Route::prefix('admin')->group(function () {
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
     Route::get('/dashboard', [AdminController::class, 'getDashboard']);
 
-
-    Route::get('/get-dinacharya-logs', [DinacharyaController::class, 'getDinacharyaLogs']);
-    Route::get('/send-dinacharya-messages', [DinacharyaController::class, 'sendDinacharyaMessages']);
-    //School Routes
+    //School Routes, is pending currently
     Route::get('/schools', [AdminController::class, 'getSchoolsList']);
     Route::get('/public-schools', [AdminController::class, 'getPublicSchoolsList']);
     Route::get('/private-schools', [AdminController::class, 'getPrivateSchoolsList']);
     Route::get('/schools/{schoolId}', [SchoolController::class, 'getSchoolDetailsBySchoolId']);
-    Route::get('/schools/{schoolId}/teachers', [SchoolController::class, 'getSchoolTeachersBySchoolId']);
+    Route::get('/schools/{schoolId}/trainers', [SchoolController::class, 'getSchoolTrainersBySchoolId']);
     Route::get('/schools/{schoolId}/students', [SchoolController::class, 'getSchoolStudentsBySchoolId']);
     Route::get('/schools/{schoolId}/applications', [SchoolController::class, 'getSchoolApplicationsBySchoolId']);
     Route::post('/schools/store', [AdminController::class, 'storeSchoolDetails']);
     Route::put('/schools/{schoolId}/update', [SchoolController::class, 'updateSchoolDetails']);
 
     //Classes Routes
-    Route::post('/class/store', [SubjectController::class, 'storeClassDetails']);
-    Route::put('/class/{classId}/update', [SubjectController::class, 'updateClassDetails']);
-    Route::delete('/class/{classId}/delete', [SubjectController::class, 'deleteClassDetails']);
+    Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
+    Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
+    Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
 
     //Subject Routes
-    Route::post('/subjects/store', [CourseController::class, 'storeSubjectDetails']);
-    Route::put('/subjects/{subjectId}/update', [CourseController::class, 'updateSubjectDetails']);
-    Route::delete('/subjects/{subjectId}/delete', [CourseController::class, 'deleteSubjectDetails']);
-    Route::get('/super-subjects', [CourseController::class, 'getSuperSubjects']);
+    Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
+    Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
+    Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
+    // Route::get('/super-subjects', [CourseController::class, 'getSuperSubjects']);
 
     //Subject Routes
     Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
@@ -191,8 +187,8 @@ Route::prefix('admin')->group(function () {
         Route::delete('/delete-elab-participant-codebase/{id}/delete', [ElabController::class, 'deleteElabParticipantCodebase']);
         Route::get('/submission/{userId}/{elabId}', [ElabController::class, 'getElabSubmissionByStudent']);
         Route::get('/get-active-elabs', [ElabController::class, 'getActiveElabs']);
-        Route::get('/get-selected-active-elabs/{classId}/{subjectId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
-        Route::get('/get-selected-active-elabs-without-subject/{classId}/{subjectId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
+        Route::get('/get-selected-active-elabs/{subjectId}/{subjectId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
+        Route::get('/get-selected-active-elabs-without-course/{subjectId}/{courseId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
         Route::get('/', [ElabController::class, 'getElabList']);
         Route::post('/store', [ElabController::class, 'storeElabDetails']);
         Route::get('/{elabId}/{studentId?}', [ElabController::class, 'getElabDetailsByElabId']);
@@ -213,23 +209,23 @@ Route::prefix('admin')->group(function () {
     //Term Test Routes
     Route::prefix('term-tests')->group(function () {
 
-        Route::get('/', [TermTestController::class, 'getAllTermTests']);
-        Route::get('/{testId}', [TermTestController::class, 'getTermTestDetails']);
-        Route::post('/store', [TermTestController::class, 'storeTermTestDetails']);
-        Route::get('/{testId}/results', [TermTestController::class, 'showTermTestResults']);
-        Route::put('/{testId}/update', [TermTestController::class, 'updateTermTestDetails']);
-        Route::delete('/{testId}/delete', [TermTestController::class, 'destroyTermTestDetails']);
+        Route::get('/', [TestController::class, 'getAllTests']);
+        Route::get('/{testId}', [TestController::class, 'getTestDetails']);
+        Route::post('/store', [TestController::class, 'storeTestDetails']);
+        Route::get('/{testId}/results', [TestController::class, 'showTestResults']);
+        Route::put('/{testId}/update', [TestController::class, 'updateTestDetails']);
+        Route::delete('/{testId}/delete', [TestController::class, 'destroyTestDetails']);
 
-        Route::get('/availability/{subjectId}', [TermTestController::class, 'checkTermAvailability']);
+        Route::get('/availability/{subjectId}', [TestController::class, 'checkAvailability']);
     });
 
     //Assessment Questions Routes
     Route::prefix('tests-questions')->group(function () {
-        Route::get('/', [TermTestQuestionController::class, 'getAllTermTestQuestions']);
-        Route::post('/store', [TermTestQuestionController::class, 'store']);
-        Route::get('/{termTestQuestionId}/show', [TermTestQuestionController::class, 'getTermTestQuestionDetails']);
-        Route::put('/{termTestQuestionId}/update', [TermTestQuestionController::class, 'update']);
-        Route::delete('/{termTestQuestionId}/delete', [TermTestQuestionController::class, 'delete']);
+        Route::get('/', [TestQuestionController::class, 'getAllTestQuestions']);
+        Route::post('/store', [TestQuestionController::class, 'store']);
+        Route::get('/{TestQuestionId}/show', [TestQuestionController::class, 'getTestQuestionDetails']);
+        Route::put('/{TestQuestionId}/update', [TestQuestionController::class, 'update']);
+        Route::delete('/{TestQuestionId}/delete', [TestQuestionController::class, 'delete']);
     });
 
     //Assessment Questions Routes
@@ -288,6 +284,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/{internshipId}/update', [InternshipController::class, 'update']);
         Route::post('store', [InternshipController::class, 'storeInternshipDetails']);
     });
+
     Route::prefix('internship-tasks')->group(function () {
 
         Route::post('store', [InternshipController::class, 'storeInternshipTaskDetails']);
@@ -328,18 +325,10 @@ Route::prefix('admin')->group(function () {
         Route::get('/', [RecruiterController::class, 'getRecruitersList']);
         Route::get('/{recruiterId}', [RecruiterController::class, 'getRecruiterDetails']);
         Route::post('/store', [RecruiterController::class, 'storeRecruiterDetails']);
-        Route::get('/{recruiterId}/assign', [RecruiterController::class, 'getTeacherSubjectsAndCourses']);
-        Route::post('/{recruiterId}/assign', [RecruiterController::class, 'storeOrUpdateTeacherClassesAndSubjects']);
+        Route::get('/{recruiterId}/assign', [RecruiterController::class, 'getTrainerSubjectsAndCourses']);
+        Route::post('/{recruiterId}/assign', [RecruiterController::class, 'storeOrUpdateTrainerSubjectsAndCourses']);
         Route::put('/{recruiterId}/update', [RecruiterController::class, 'updateRecruiterDetails']);
         Route::delete('/{recruiterId}/delete', [RecruiterController::class, 'deleteTrainerDetails']);
-    });
-    Route::prefix('quotes')->group(function () {
-        Route::get('/', [QuoteController::class, 'getQuoteList']);
-        Route::get('/{quoteId}', [QuoteController::class, 'getQuoteDetails']);
-        Route::post('/store', [QuoteController::class, 'storeQuote']);
-        Route::post('/bulk-store', [QuoteController::class, 'bulkStoreQuote']);
-        Route::put('/{quoteId}/update', [QuoteController::class, 'updateQuote']);
-        Route::delete('/{recruiterId}/delete', [QuoteController::class, 'deleteQuote']);
     });
 
     Route::prefix('zoom-calls')->group(function () {

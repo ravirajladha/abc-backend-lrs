@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Dropdown;
 
 use App\Models\Course;
-use App\Models\TermTest;
+use App\Models\Test;
 
 use Illuminate\Support\Facades\Log;
 use App\Http\Constants\CourseTypeConstants;
@@ -25,7 +25,7 @@ class CourseTestController extends BaseController
             });
 
         // Fetch courses that already have a term test assigned
-        $assignedCourses = TermTest::select('course_id')
+        $assignedCourses = Test::select('course_id')
             ->whereIn('course_id', $courses->pluck('id'))
             ->where('status', true)
             ->get()

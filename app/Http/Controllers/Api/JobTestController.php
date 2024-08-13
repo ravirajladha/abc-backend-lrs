@@ -21,41 +21,41 @@ class JobTestController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAllTermTests(Request $request)
+    public function getAllTests(Request $request)
     {
-        $term_tests = DB::table('job_tests as t')
+        $tests = DB::table('job_tests as t')
             ->select('t.*', 's.name as subject_name')
             ->leftJoin('subjects as s', 's.id', '=', DB::raw("substring_index(t.subject_id, ',', 1)")); // Adjust if needed based on how class names are stored or matched
 
         if (!empty($request->subjectId) && $request->subjectId !== 'undefined') {
             // Use FIND_IN_SET to look for a specific subjectId within the comma-separated list
-            $term_tests->whereRaw("FIND_IN_SET(?, t.subject_id)", [$request->subjectId]);
+            $tests->whereRaw("FIND_IN_SET(?, t.subject_id)", [$request->subjectId]);
         }
 
-        $term_tests = $term_tests->get();
+        $tests = $tests->get();
 
-        return $this->sendResponse(['term_tests' => $term_tests]);
+        return $this->sendResponse(['tests' => $tests]);
     }
 
 
 
-    public function showTermTestResults(Request $request, $testId)
+    public function showTestResults(Request $request, $testId)
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $results = DB::table('students as s')
                 ->select('r.*', 's.name as student_name')
-                ->leftJoin('term_test_results as r', 'r.student_id', 's.id')
+                ->leftJoin('test_results as r', 'r.student_id', 's.id')
                 ->where('r.test_id', $testId)
                 ->orderBy('s.name', 'asc')
                 ->get();
             return $this->sendResponse(['results' => $results], '');
         } else {
-            return $this->sendAuthError("Not authorized fetch term test results.");
+            return $this->sendAuthError("Not authorized fetch test results.");
         }
     }
 
-    public function storeTermTestDetails(Request $request)
+    public function storeTestDetails(Request $request)
     {
         $validator = Validator::make(
             $request->all(),
@@ -97,29 +97,30 @@ class JobTestController extends BaseController
         }
     }
 
-    public function getTermTestDetails(Request $request, $testId)
+    public function getTestDetails(Request $request, $testId)
     {
-        $term_test = DB::table('job_tests as a')
+        $test = DB::table('job_tests as a')
             ->select('a.id', 'a.subject_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions',  'a.question_ids', 'a.instruction')
             ->where('a.id', $testId)
             ->first();
 
-        if ($term_test && $term_test->question_ids) {
-            $questionIds = explode(',', $term_test->question_ids);
-            $term_test->questions = DB::table('job_questions')
+        if ($test && $test->question_ids) {
+            $questionIds = explode(',', $test->question_ids);
+            $test->questions = DB::table('job_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
-        return $this->sendResponse(['term_test' => $term_test]);
+        
+        return $this->sendResponse(['test' => $test]);
     }
 
-    //new test method to retirve the test details with the token
+    //new test method to retrieve the test details with the token
     //update the token status also so that no one can take the test again
 
-    public function getTermTestDetailsByToken(Request $request, $token, $testId)
+    public function getTestDetailsByToken(Request $request, $token, $testId)
     {
         // Find the test result entry using the token
-        $testResult = DB::table('term_test_results')
+        $testResult = DB::table('test_results')
             ->where('token', $token)
             ->where('test_id', $testId)
             ->first();
@@ -135,31 +136,31 @@ class JobTestController extends BaseController
         }
 
         // Update the status to 1 to mark as taken
-        DB::table('term_test_results')
+        DB::table('test_results')
             ->where('id', $testResult->id)
             ->update(['token_status' => 1]);
 
-        // Fetch the term test details
-        $term_test = DB::table('term_tests as a')
-            ->select('a.id', 'a.course_id', 'a.subject_id', 'a.title', 'a.term_type', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as course', 's.name as subject', 'a.question_ids')
+        // Fetch the  test details
+        $test = DB::table('tests as a')
+            ->select('a.id', 'a.course_id', 'a.subject_id', 'a.title',  'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as course', 's.name as subject', 'a.question_ids')
             ->leftJoin('courses as c', 'c.id', '=', 'a.course_id')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
             ->where('a.id', $testId)
             ->first();
 
-        if ($term_test && $term_test->question_ids) {
-            $questionIds = explode(',', $term_test->question_ids);
-            $term_test->questions = DB::table('term_test_questions')
+        if ($test && $test->question_ids) {
+            $questionIds = explode(',', $test->question_ids);
+            $test->questions = DB::table('test_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
 
         // Return the test details along with the test_result_id
-        return $this->sendResponse(['term_test' => $term_test, 'test_result_id' => $testResult->id], "Test details retrieved successfully", true);
+        return $this->sendResponse(['test' => $test, 'test_result_id' => $testResult->id], "Test details retrieved successfully", true);
     }
 
 
-    public function getTermTestResuts($test_id)
+    public function getTestResults($test_id)
     {
         $result = JobTestResult::with('test', 'user')->where('test_id', $test_id)->get();
         return $result;
@@ -169,10 +170,10 @@ class JobTestController extends BaseController
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $Test
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateTermTestDetails(Request $request, $testId)
+    public function updateTestDetails(Request $request, $testId)
     {
         $validator = Validator::make(
             $request->all(),
@@ -197,7 +198,7 @@ class JobTestController extends BaseController
             $test->title = $request->testTitle;
             $test->subject_id = $request->selectedSubject;
 
-            // $test->term_type = $request->testTerm;
+        
             $test->description = $request->description;
             $test->question_ids = implode(',', $request->selectedQuestions);
             $test->no_of_questions = count($request->selectedQuestions);
@@ -228,10 +229,10 @@ class JobTestController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $Test
      * @return \Illuminate\Http\Response
      */
-    public function destroyTermTestDetails(Request $request, $testId)
+    public function destroyTestDetails(Request $request, $testId)
     {
 
         $validator = Validator::make(
@@ -252,7 +253,7 @@ class JobTestController extends BaseController
     }
 
 
-    public function storeTermTestResponse(Request $request)
+    public function storeTestResponse(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
@@ -451,19 +452,12 @@ class JobTestController extends BaseController
     }
 
     /**
-     * Check if term test is created for that subject
+     * Check if  test is created for that subject
      *
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $Test
      * @return \Illuminate\Http\Response
      */
-    public function checkTermAvailability($classId)
-    {
-        $terms = JobTest::where('class_id', $classId)
-            ->pluck('term_type')
-            ->toArray();
 
-        return $this->sendResponse(['terms' => $terms]);
-    }
     public function startTest(Request $request)
     {
         $data = $request->validate([
