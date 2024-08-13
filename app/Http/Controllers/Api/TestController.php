@@ -2,67 +2,67 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\TermTest;
+use App\Models\Test;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
-use App\Models\TermTestResult;
-use App\Models\TermTestQuestion;
+use App\Models\TestResult;
+use App\Models\TestQuestion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-class TermTestController extends BaseController
+class TestController extends BaseController
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAllTermTests(Request $request)
+    public function getAllTests(Request $request)
     {
         $userType = $request->attributes->get('type');
         // if ($userType === 'admin') {
-        $term_tests = DB::table('term_tests as t')
-            ->select('t.*', 'c.name as class', 's.name as subject')
-            ->leftJoin('classes as c', 'c.id', '=', 't.class_id')
-            ->leftJoin('subjects as s', 's.id', '=', 't.subject_id');
-
-        if ($request->classId !== null && $request->classId !== 'undefined') {
-            $term_tests->where('t.class_id', $request->classId);
-        }
+        $tests = DB::table('tests as t')
+            ->select('t.*', 's.name as subject', 'cou.name as course')
+            ->leftJoin('subject as s', 's.id', '=', 't.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', '=', 't.course_id');
 
         if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
-            $term_tests->where('t.subject_id', $request->subjectId);
+            $tests->where('t.subject_id', $request->subjectId);
         }
 
-        $term_tests = $term_tests->get();
+        if ($request->courseId !== null && $request->courseId !== 'undefined') {
+            $tests->where('t.course_id', $request->courseId);
+        }
 
-        return $this->sendResponse(['term_tests' => $term_tests]);
+        $tests = $tests->get();
+
+        return $this->sendResponse(['tests' => $tests]);
         // } else {
-        //     return $this->sendAuthError("Not authorized fetch term tests list.");
+        //     return $this->sendAuthError("Not authorized fetch tests list.");
         // }
     }
 
 
-    public function showTermTestResults(Request $request, $testId)
+    public function showTestResults(Request $request, $testId)
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $results = DB::table('students as s')
                 ->select('r.*', 's.name as student_name', 's.section_id')
-                ->leftJoin('term_test_results as r', 'r.student_id', 's.id')
+                ->leftJoin('test_results as r', 'r.student_id', 's.id')
                 ->where('r.test_id', $testId)
                 ->orderBy('s.name', 'asc')
                 ->get();
             return $this->sendResponse(['results' => $results], '');
         } else {
-            return $this->sendAuthError("Not authorized fetch term test results.");
+            return $this->sendAuthError("Not authorized fetch  test results.");
         }
     }
 
-    public function storeTermTestDetails1(Request $request)
+    public function storeTestDetails1(Request $request)
     {
         $validator = Validator::make(
             $request->all(),
@@ -71,8 +71,8 @@ class TermTestController extends BaseController
                 // 'testTerm' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
-                'selectedClass' => 'required|string|max:255',
                 'selectedSubject' => 'required|string|max:255',
+                'selectedCourse' => 'required|string|max:255',
                 'instruction' => 'required|string',
             ]
         );
@@ -80,10 +80,10 @@ class TermTestController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $test = new TermTest;
+            $test = new Test;
             $test->title = $request->testTitle;
-            $test->class_id = $request->selectedClass;
             $test->subject_id = $request->selectedSubject;
+            $test->course_id = $request->selectedCourse;
             // $test->term_type = $request->testTerm;
             $test->description = $request->description;
             $test->question_ids = implode(',', $request->selectedQuestions);
@@ -107,7 +107,7 @@ class TermTestController extends BaseController
         }
     }
 
-    public function storeTermTestDetails(Request $request)
+    public function storeTestDetails(Request $request)
     {
         Log::info(['test' => $request->all()]);
         $validator = Validator::make(
@@ -116,8 +116,8 @@ class TermTestController extends BaseController
                 'testTitle' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
-                'selectedClass' => 'required|string|max:255',
                 'selectedSubject' => 'required|string|max:255',
+                'selectedCourse' => 'required|string|max:255',
                 'instruction' => 'required|string',
                 // 'status' => 'required|boolean', // Add validation for status
             ]
@@ -127,20 +127,20 @@ class TermTestController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        // Check if there is an existing active term test for the selected subject
-        $existingActiveTest = TermTest::where('subject_id', $request->selectedSubject)
+        // Check if there is an existing active  test for the selected course
+        $existingActiveTest = Test::where('course_id', $request->selectedCourse)
             ->where('status', 1)
             ->first();
 
         if ($existingActiveTest) {
-            // return $this->sendError('Already test assigned with same subject, need to disable the test first.', [], 404);
-            return $this->sendResponse([], "Test created Already test assigned with same subject, need to disable the test first.!", false);
+            // return $this->sendError('Already test assigned with same course, need to disable the test first.', [], 404);
+            return $this->sendResponse([], "Test created Already test assigned with same course, need to disable the test first.!", false);
         }
 
-        $test = new TermTest;
+        $test = new Test;
         $test->title = $request->testTitle;
-        $test->class_id = $request->selectedClass;
         $test->subject_id = $request->selectedSubject;
+        $test->course_id = $request->selectedCourse;
         $test->description = $request->description;
         $test->question_ids = implode(',', $request->selectedQuestions);
         $test->no_of_questions = $request->no_of_questions;
@@ -166,9 +166,9 @@ class TermTestController extends BaseController
     }
 
 
-    public function getTermTestDetails(Request $request, $testId)
+    public function getTestDetails(Request $request, $testId)
     {
-        $result = DB::table('term_test_results as r')
+        $result = DB::table('test_results as r')
             ->leftJoin('students as s', 's.id', '=', 'r.student_id')
             ->where('s.auth_id', $this->getLoggedUserId())
             ->where('r.test_id', $testId)
@@ -178,30 +178,30 @@ class TermTestController extends BaseController
             return $this->sendResponse([], "Test Taken Successfully!");
         }
 
-        $term_test = DB::table('term_tests as a')
-            ->select('a.id', 'a.class_id', 'a.subject_id', 'a.title', 'a.term_type', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as class', 's.name as subject', 'a.question_ids', 'a.instruction', 'a.status')
-            ->leftJoin('classes as c', 'c.id', '=', 'a.class_id')
+        $test = DB::table('tests as a')
+            ->select('a.id', 'a.subject_id', 'a.course_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 's.name as subject', 'cou.name as course', 'a.question_ids', 'a.instruction', 'a.status')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', '=', 'a.course_id')
             ->where('a.id', $testId)
             ->first();
 
-        if ($term_test && $term_test->question_ids) {
-            $questionIds = explode(',', $term_test->question_ids);
+        if ($test && $test->question_ids) {
+            $questionIds = explode(',', $test->question_ids);
 
-            $term_test->questions = DB::table('term_test_questions')
+            $test->questions = DB::table('test_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
 
-        return $this->sendResponse(['term_test' => $term_test]);
+        return $this->sendResponse(['test' => $test]);
     }
     //new test method to retirve the test details with the token
     //update the token status also so that no one can take the test again
 
-    public function getTermTestDetailsByToken(Request $request, $token, $testId)
+    public function getTestDetailsByToken(Request $request, $token, $testId)
     {
         // Find the test result entry using the token
-        $testResult = DB::table('term_test_results')
+        $testResult = DB::table('test_results')
             ->where('token', $token)
             ->where('test_id', $testId)
             ->first();
@@ -217,33 +217,33 @@ class TermTestController extends BaseController
         }
 
         // Update the status to 1 to mark as taken
-        DB::table('term_test_results')
+        DB::table('test_results')
             ->where('id', $testResult->id)
             ->update(['token_status' => 1]);
 
-        // Fetch the term test details
-        $term_test = DB::table('term_tests as a')
-            ->select('a.id', 'a.class_id', 'a.subject_id', 'a.title', 'a.term_type', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as class', 's.name as subject', 'a.question_ids')
-            ->leftJoin('classes as c', 'c.id', '=', 'a.class_id')
+        // Fetch the  test details
+        $test = DB::table('tests as a')
+            ->select('a.id', 'a.subject_id', 'a.course_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 's.name as subject', 'cou.name as course', 'a.question_ids')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', '=', 'a.course_id')
             ->where('a.id', $testId)
             ->first();
 
-        if ($term_test && $term_test->question_ids) {
-            $questionIds = explode(',', $term_test->question_ids);
-            $term_test->questions = DB::table('term_test_questions')
+        if ($test && $test->question_ids) {
+            $questionIds = explode(',', $test->question_ids);
+            $test->questions = DB::table('test_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
 
         // Return the test details along with the test_result_id
-        return $this->sendResponse(['term_test' => $term_test, 'test_result_id' => $testResult->id], "Test details retrieved successfully", true);
+        return $this->sendResponse(['test' => $test, 'test_result_id' => $testResult->id], "Test details retrieved successfully", true);
     }
 
 
-    public function getTermTestResuts($test_id)
+    public function getTestResuts($test_id)
     {
-        $result = TermTestResult::with('test', 'user')->where('test_id', $test_id)->get();
+        $result = TestResult::with('test', 'user')->where('test_id', $test_id)->get();
         return $result;
     }
 
@@ -251,10 +251,10 @@ class TermTestController extends BaseController
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $test
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateTermTestDetails(Request $request, $testId)
+    public function updateTestDetails(Request $request, $testId)
     {
         $validator = Validator::make(
             $request->all(),
@@ -262,8 +262,8 @@ class TermTestController extends BaseController
                 'testTitle' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
-                'selectedClass' => 'required|max:255',
                 'selectedSubject' => 'required|max:255',
+                'selectedCourse' => 'required|max:255',
                 'instruction' => 'required',
                 'status' => 'required',
             ]
@@ -273,27 +273,27 @@ class TermTestController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        $test = TermTest::find($testId);
+        $test = Test::find($testId);
 
         if (!$test) {
             return $this->sendError('Test not found');
         }
 
-        // Check if there is another active term test for the selected subject
-        $existingActiveTest = TermTest::where('subject_id', $request->selectedSubject)
+        // Check if there is another active  test for the selected course
+        $existingActiveTest = Test::where('course_id', $request->selectedCourse)
             ->where('status', 1)
             ->where('id', '!=', $testId)
             ->where('status', 1) // Exclude the current test being updated
             ->first();
 
         if ($existingActiveTest) {
-            // return $this->sendError('Another active test already assigned with the same subject, need to disable the other test first.', [], 400);
-            return $this->sendResponse([], "Another active test already assigned with the same subject, need to disable the other test first.", false);
+            // return $this->sendError('Another active test already assigned with the same course, need to disable the other test first.', [], 400);
+            return $this->sendResponse([], "Another active test already assigned with the same course, need to disable the other test first.", false);
         }
 
         $test->title = $request->testTitle;
-        $test->class_id = $request->selectedClass;
         $test->subject_id = $request->selectedSubject;
+        $test->course_id = $request->selectedCourse;
         $test->description = $request->description;
         $test->question_ids = implode(',', $request->selectedQuestions);
         $test->no_of_questions = $request->numberOfQuestions;
@@ -322,10 +322,10 @@ class TermTestController extends BaseController
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $test
      * @return \Illuminate\Http\Response
      */
-    public function destroyTermTestDetails(Request $request, $testId)
+    public function destroyTestDetails(Request $request, $testId)
     {
 
         $validator = Validator::make(
@@ -337,7 +337,7 @@ class TermTestController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $test = TermTest::find($testId);
+            $test = Test::find($testId);
 
             $test->delete();
         }
@@ -345,7 +345,7 @@ class TermTestController extends BaseController
         return $this->sendResponse([], 'Test deleted successfully');
     }
 
-    public function storeTermTestResponse(Request $request)
+    public function storeTestResponse(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
@@ -357,9 +357,9 @@ class TermTestController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             //Get Test and Test Questions Data
-            $test = TermTest::find($request->testId);
+            $test = Test::find($request->testId);
             $test_questions = explode(',', $test->question_ids);
-            $test_question_answers = TermTestQuestion::whereIn('id', $test_questions)->get();
+            $test_question_answers = TestQuestion::whereIn('id', $test_questions)->get();
 
             //Process Student Answers
             $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
@@ -391,10 +391,10 @@ class TermTestController extends BaseController
                 $score_percentage = 0;
             }
 
-            $test_result = new TermTestResult;
+            $test_result = new TestResult;
             $test_result->test_id = $request->testId;
             $test_result->student_id  = $request->studentId;
-            // $test_result->subject_id  = $request->subject_id;
+            // $test_result->course_id  = $request->course_id;
             $test_result->school_id = $request->schoolId;
             $test_result->score = $score;
             $test_result->percentage = $score_percentage;
@@ -407,7 +407,7 @@ class TermTestController extends BaseController
         }
     }
 
-    public function storeTermTestResponseWithToken(Request $request)
+    public function storeTestResponseWithToken(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
@@ -419,14 +419,14 @@ class TermTestController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             //Get Test and Test Questions Data
-            $testResult = TermTestResult::where('token', $request->token)->first();
+            $testResult = TestResult::where('token', $request->token)->first();
 
             if (!$testResult) {
                 return $this->sendError('Test result not found or token is invalid.', [], 404);
             }
-            $test = TermTest::find($request->testId);
+            $test = Test::find($request->testId);
             $test_questions = explode(',', $test->question_ids);
-            $test_question_answers = TermTestQuestion::whereIn('id', $test_questions)->get();
+            $test_question_answers = TestQuestion::whereIn('id', $test_questions)->get();
 
             //Process Student Answers
             $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
@@ -459,7 +459,7 @@ class TermTestController extends BaseController
                 $score_percentage = 0;
             }
 
-            // $test_result = new TermTestResult;
+            // $test_result = new TestResult;
             // $test_result->test_id = $request->testId;
             // $test_result->student_id  = $request->studentId;
             // $test_result->school_id = $request->schoolId;
@@ -473,8 +473,8 @@ class TermTestController extends BaseController
 
             $testResult->score = $score;
             $testResult->percentage = $score_percentage;
+            $testResult->course_id = $request->courseId;
             $testResult->subject_id = $request->subjectId;
-            $testResult->class_id = $request->classId;
 
             $testResult->response_answers = implode(',', $selectedAnswers);
             $testResult->response_questions = implode(',', $selectedQuestionIds);
@@ -487,32 +487,32 @@ class TermTestController extends BaseController
     }
 
     /**
-     * Check if term test is created for that subject
+     * Check if  test is created for that course
      *
-     * @param  \App\Models\TermTest  $termTest
+     * @param  \App\Models\Test  $test
      * @return \Illuminate\Http\Response
      */
-    public function checkTermAvailability($subjectId)
-    {
-        $terms = TermTest::where('subject_id', $subjectId)
-            ->pluck('term_type')
-            ->toArray();
+    // public function checkTermAvailability($courseId)
+    // {
+    //     $terms = Test::where('course_id', $courseId)
+    //         ->pluck('term_type')
+    //         ->toArray();
 
-        return $this->sendResponse(['terms' => $terms]);
-    }
+    //     return $this->sendResponse(['terms' => $terms]);
+    // }
     public function startTest(Request $request)
     {
         $data = $request->validate([
             'studentId' => 'required|integer',
             'schoolId' => 'required|integer',
-            'subjectId' => 'required|integer',
+            'courseId' => 'required|integer',
             'latestTestId' => 'required|integer',
         ]);
 
         // Check if the test session already exists to prevent duplicates
 
 
-        $existingSession = TermTestResult::where('student_id', $data['studentId'])
+        $existingSession = TestResult::where('student_id', $data['studentId'])
             ->where('test_id', $data['latestTestId'])
             ->first();
 
@@ -521,10 +521,10 @@ class TermTestController extends BaseController
         }
         $token = Str::random(32);
         // Create a new test session
-        $testSession = TermTestResult::create([
+        $testSession = TestResult::create([
             'student_id' => $data['studentId'],
             'school_id' => $data['schoolId'],
-            // 'subject_id' => $data['subjectId'],
+            // 'course_id' => $data['courseId'],
             'test_id' => $data['latestTestId'],
             // Set additional fields as necessary
             'token' => $token,
