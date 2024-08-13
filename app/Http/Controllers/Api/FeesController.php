@@ -25,17 +25,17 @@ class FeesController extends BaseController
     public function storeFeeDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'class' => 'required|exists:classes,id',
+            'subjects' => 'required|exists:subjects,id',
             'amount' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
-        if (Fee::where('class_id', $request->class)->exists()) {
+        if (Fee::where('subject_id', $request->subject)->exists()) {
             $validator = Validator::make($request->all(), [
-                'class' => ['exists:classes,id', function ($attribute, $value, $fail) {
-                    $fail('A fee already exists for this class, you can edit.');
+                'subject' => ['exists:subjects,id', function ($attribute, $value, $fail) {
+                    $fail('A fee already exists for this subject, you can edit.');
                 }]
             ]);
 
@@ -43,7 +43,7 @@ class FeesController extends BaseController
         }
 
         $fee = new Fee();
-        $fee->class_id = $request->class;
+        $fee->subject_id = $request->subject;
         $fee->amount = $request->amount;
 
         if ($fee->save()) {
@@ -63,8 +63,8 @@ class FeesController extends BaseController
     public function getFeesList()
     {
         $fees = DB::table('fees')
-        ->join('classes', 'fees.class_id', '=', 'classes.id')
-        ->select('fees.*', 'classes.name as class_name')
+        ->join('subjects', 'fees.subject_id', '=', 'subjects.id')
+        ->select('fees.*', 'subjects.name as subject_name')
         ->get();
 
         return $this->sendResponse(['fees' => $fees], 'Fees fetched successfully.');
@@ -140,8 +140,8 @@ class FeesController extends BaseController
     public function getFeeDetailsById($id)
     {
         $fee = DB::table('fees')
-        ->join('classes', 'fees.class_id', '=', 'classes.id')
-        ->select('fees.*', 'classes.name as class_name')
+        ->join('subjects', 'fees.subject_id', '=', 'subjects.id')
+        ->select('fees.*', 'subjects.name as subject_name')
         ->where('fees.id',$id)
         ->first();
         if (!$fee) {
@@ -151,9 +151,10 @@ class FeesController extends BaseController
         return $this->sendResponse(['fee' => $fee], 'Fee fetched successfully.');
     }
 
-    public function getFeeByClass($classId)
+    // public function getFeeByClass($classId)
+    public function getFeeBySubject($subjectId)
     {
-        $fee = Fee::where('fees.class_id',$classId)
+        $fee = Fee::where('fees.subject_id',$subjectId)
         ->value('amount');
         if (!$fee) {
             return $this->sendError('Fee not found.', [], 404);

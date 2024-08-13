@@ -15,8 +15,8 @@ use App\Http\Controllers\Api\{
 Route::prefix('teacher')->group(function () {
 
     Route::prefix('qna')->group(function () {
-        Route::get('/{teacherId}/{studentId}', [QnaController::class, 'getQnaBySubject']);
-        Route::post('/', [QnaController::class, 'storeTeacherQnaResponse']);
+        Route::get('/{trainerId}/{studentId}', [QnaController::class, 'getQnaBySubject']);
+        Route::post('/', [QnaController::class, 'storeTrainerQnaResponse']);
         Route::get('/get-unreplied-count', [TeacherController::class, 'countUnrepliedQnAsForTeacher']);
     });
 

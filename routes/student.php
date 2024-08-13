@@ -53,7 +53,7 @@ Route::prefix('student')->group(function () {
     //Qna Routes
     Route::prefix('qna')->group(function () {
         Route::get('/{studentId}/{teacherId}/{subjectId}', [QnaController::class, 'getQnaBySubject']);
-        Route::post('/', [QnaController::class, 'storeQnaBySubject']);
+        Route::post('/', [QnaController::class, 'storeQnaByClass']);
         Route::get('/search/{question?}', [QnaController::class, 'searchQuestionByKeyword']);
     });
 

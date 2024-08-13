@@ -7,8 +7,9 @@ use App\Models\Classes;
 use App\Models\Teacher;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\TeacherClasses;
+// use App\Models\TeacherClasses;
 use App\Models\TeacherSubject;
+use App\Models\TeacherCourse;
 
 use App\Models\Auth as AuthModel;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ use App\Http\Constants\AuthConstants;
 use Illuminate\Support\Facades\Validator;
 
 use App\Services\Recruiter\DashboardService;
-use App\Models\{Recruiter, Job, JobApplication,JobTest,RecruiterAuthLog, JobQuestion, JobTestResult};
+use App\Models\{Recruiter};
 
 class RecruiterController extends BaseController
 {
@@ -124,9 +125,7 @@ class RecruiterController extends BaseController
                 $auth = AuthModel::where('id', $recruiterId)
                     ->where('type', AuthConstants::TYPE_RECRUITER)
                     ->first();
-
             }
-
 
             if ($recruiter && $auth) {
                 $res = [
@@ -180,10 +179,10 @@ class RecruiterController extends BaseController
                 'status' => AuthConstants::STATUS_ACTIVE,
             ]);
 
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+         
 
             if ($auth) {
-                $teacher = Recruiter::create([
+                $trainer = Recruiter::create([
                     'auth_id' => $auth->id,
                   
                     'name' => $request->name,
@@ -198,7 +197,7 @@ class RecruiterController extends BaseController
                     'description' => $request->description,
                 ]);
             }
-            if ($auth && $teacher) {
+            if ($auth && $trainer) {
                 return $this->sendResponse([], 'Recruiter added successfully');
             }
         }
@@ -212,39 +211,33 @@ class RecruiterController extends BaseController
      * @param int $teacherId
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getTeacherClassesAndSubjects($teacherId)
+    public function getTrainerSubjectsAndCourses($trainerId)
     {
-        $teacherClassSubjects = [];
+        $trainerSubjectCourses= [];
 
-        $teacher = DB::table('teachers')
+        $trainer = DB::table('trainers')
             ->select('*')
-            ->where('auth_id', $teacherId)
+            ->where('auth_id', $trainerId)
             ->first();
 
-        if (!$teacher) {
-            return $this->sendError('Teacher not found');
+        if (!$trainer) {
+            return $this->sendError('Trainer not found');
         }
 
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-
-        $teacherSubjects = TeacherSubject::where([
-            'teacher_id' => $teacher->id,
-            'school_id' => $schoolId,
+        $trainerCourses = TrainerCourse::where([
+            'trainer_id' => $trainer->id,
+         
         ])->get(['subject_id']);
 
-        foreach ($teacherSubjects as $subject) {
-            $teacherClassSubjects[] =  DB::table('subjects as s')
-                ->select('s.id as subject_id', 's.class_id')
-                ->where('s.id', $subject->subject_id)
+        foreach ($trainerCourses as $course) {
+            $trainerSubjectCourses[] =  DB::table('courses as c')
+                ->select('c.id as course_id', 'c.subject_id')
+                ->where('c.id', $course->course_id)
                 ->first();
         }
 
-        // $response = [
-        //     'teacher_classes' => $teacherClasses,
-        //     'teacher_subjects' => $teacherSubjects,
-        // ];
 
-        return $this->sendResponse(['teacher' => $teacherClassSubjects], '');
+        return $this->sendResponse(['teacher' => $trainerSubjectCourses], '');
     }
 
 
@@ -255,58 +248,58 @@ class RecruiterController extends BaseController
      * @param int $teacherId
      * @return \Illuminate\Http\JsonResponse
      */
-    public function storeOrUpdateTeacherClassesAndSubjects(Request $request, $teacherId)
+    public function storeOrUpdateTrainerSubjectsAndCourses(Request $request, $trainerId)
     {
-        $validator = Validator::make(array_merge($request->all(), ['teacherId' => $teacherId]), [
-            'teacherId' => 'required',
-            'teacher_data' => 'required|array',
-            'teacher_data.*.class_id' => 'required|exists:classes,id',
-            'teacher_data.*.subject_id' => 'required|exists:subjects,id',
+        $validator = Validator::make(array_merge($request->all(), ['trainerId' => $trainerId]), [
+            'trainerId' => 'required',
+            'trainer_data' => 'required|array',
+            'trainer_data.*.class_id' => 'required|exists:classes,id',
+            'trainer_data.*.subject_id' => 'required|exists:subjects,id',
         ]);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
 
-        $teacher = DB::table('teachers')
+        $trainer = DB::table('trainers')
             ->select('*')
-            ->where('auth_id', $teacherId)
+            ->where('auth_id', $trainerId)
             ->first();
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
         foreach ($request->input('teacher_data') as $data) {
-            TeacherClasses::updateOrCreate(
+            TrainerSubject::updateOrCreate(
                 [
-                    'class_id' => $data['class_id'],
-                    'teacher_id' => $teacher->id,
-                    'school_id' => $schoolId,
+                    'subject_id' => $data['subject_id'],
+                    'trainer_id' => $trainer->id,
+                  
                 ],
                 [
-                    'class_id' => $data['class_id'],
-                    'teacher_id' => $teacher->id,
-                    'school_id' => $schoolId,
+                    'subject_id' => $data['subject_id'],
+                    'trainer_id' => $trainer->id,
+                  
                 ]
             );
 
-            TeacherSubject::updateOrCreate(
+            TrainerCourse::updateOrCreate(
                 [
-                    'subject_id' => $data['subject_id'],
-                    'teacher_id' =>  $teacher->id,
-                    'school_id' => $schoolId,
+                    'course_id' => $data['course_id'],
+                    'trainer_id' =>  $trainer->id,
+                  
                 ],
                 [
-                    'subject_id' => $data['subject_id'],
-                    'teacher_id' =>  $teacher->id,
-                    'school_id' => $schoolId,
+                    'course_id' => $data['course_id'],
+                    'trainer_id' =>  $trainer->id,
+                  
                 ]
             );
         }
 
-        return $this->sendResponse([], 'Teacher Classes and Subjects added or updated successfully');
+        return $this->sendResponse([], 'Teacher Subjects and Courses added or updated successfully');
     }
 
     /**
-     * Update the specified teacher in storage.
+     * Update the specified trainer in storage.
      *
      */
     public function updateRecruiterDetails(Request $request, $recruiterId)
@@ -365,7 +358,7 @@ class RecruiterController extends BaseController
             $res = [
                 'id' => $recruiter->id,
                 'auth_id' => $recruiter->auth_id,
-                'school_id' => $recruiter->school_id,
+                // 'school_id' => $recruiter->school_id,
                 'email' => $auth->email,
                 'phone_number' => $auth->phone_number,
                 'profile_image' => $recruiter->profile_image,
@@ -391,57 +384,57 @@ class RecruiterController extends BaseController
      * @param  Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteTeacherDetails(Request $request, $teacherId)
+    public function deleteTrainerDetails(Request $request, $trainerId)
     {
         $userType = $request->attributes->get('type');
-        if ($userType = 'school') {
-            $validator = Validator::make(['teacher_id' => $teacherId], [
-                'teacher_id' => 'required',
+        if ($userType = 'admin') {
+            $validator = Validator::make(['trainer_id' => $trainerId], [
+                'trainer_id' => 'required',
             ]);
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             } else {
-                $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-                $teacher = Teacher::where('auth_id', $teacherId)->where('school_id', $schoolId)->first();
-                $auth = AuthModel::find($teacherId);
-                if ($teacher && $auth) {
-                    $teacher->delete();
+                // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+                $trainer = Trainer::where('auth_id', $trainerId)->first();
+                $auth = AuthModel::find($trainerId);
+                if ($trainer && $auth) {
+                    $trainer->delete();
                     $auth->delete();
                 } else {
-                    return $this->sendError("Trying to delete a invalid teacher.");
+                    return $this->sendError("Trying to delete a invalid trainer.");
                 }
             }
-            return $this->sendResponse([], 'Teacher deleted successfully');
+            return $this->sendResponse([], 'Trainer deleted successfully');
         } else {
             return $this->sendAuthError("Not authorized delete student.");
         }
     }
 
-    public function getAllStudentsBySubjects(Request $request)
+    public function getAllStudentsByCourses(Request $request)
     {
         $students = [];
 
-        $teacherId = $this->getLoggedUserId();
+        $trainerId = $this->getLoggedUserId();
 
-        $teacher = DB::table('teachers')
+        $trainer = DB::table('trainers')
             ->select('*')
-            ->where('auth_id', $teacherId)
+            ->where('auth_id', $trainerId)
             ->first();
 
-        if ($teacher) {
+        if ($trainer) {
 
-            $teacherClasses = TeacherClasses::where([
-                'teacher_id' => $teacher->id,
-            ])->get(['class_id']);
-
-            $teacherSubjects = TeacherSubject::where([
-                'teacher_id' => $teacher->id,
+            $trainerSubjects = TrainerSubject::where([
+                'trainer_id' => $trainer->id,
             ])->get(['subject_id']);
 
+            $trainerCourses = TrainerCourse::where([
+                'trainer_id' => $trainer->id,
+            ])->get(['course_id']);
+
             $students_query = DB::table('students as s')
-                ->select('s.*', 'c.name as class_name')
-                ->join('classes as c', 's.class_id', '=', 'c.id')
-                ->whereIn('s.class_id', $teacherClasses)
+                ->select('s.*', 'sub.name as subject_name')
+                ->join('subjects as sub', 's.subject_id', '=', 'sub.id')
+                ->whereIn('s.subject_id', $trainerSubjects)
                 ->get();
 
             $students =  $students_query;
@@ -449,7 +442,7 @@ class RecruiterController extends BaseController
             foreach ($students as $student) {
                 $qna = DB::table('qna as q')
                     ->where('q.student_id', $student->id)
-                    ->where('q.teacher_id', $teacher->id)
+                    ->where('q.trainer_id', $trainer->id)
                     ->whereNull('q.answer')
                     ->orderBy('created_at', 'desc')
                     ->exists();

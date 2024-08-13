@@ -30,18 +30,18 @@ class InternshipController extends BaseController
             'mp.description',
             'mp.image',
             'mp.is_active',
-            'mp.class_id',
-            'class.name as class_name',
+            'mp.subject_id',
+            'subject.name as subject_name',
             // 'mp.subject_id',
             // 's.name as subject_name',
             DB::raw('IFNULL(mps.participant_count, 0) as participant_count'),
             DB::raw('COALESCE(COUNT(it.id), 0) as task_count') // Count of internship_tasks
         )
         // ->leftJoin('subjects as s', 'mp.subject_id', 's.id')
-        ->leftJoin('classes as class', 'mp.class_id', 'class.id')
+        ->leftJoin('subjects as subject', 'mp.subject_id', 'subject.id')
         ->leftJoin(DB::raw('(SELECT internship_id, COUNT(student_id) AS participant_count FROM internship_certificates GROUP BY internship_id) as mps'), 'mp.id', '=', 'mps.internship_id')
         ->leftJoin('internship_tasks as it', 'mp.id', '=', 'it.internship_id')
-        ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.class_id', 'class.name','mps.participant_count') // Group by all non-aggregated columns
+        ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.subject_id', 'subject.name','mps.participant_count') // Group by all non-aggregated columns
         ->get();
 
     return $this->sendResponse(['internships' => $internships]);
@@ -87,20 +87,20 @@ public function getInternshipsForStudent(Request $request)
             'mp.description',
             'mp.image',
             'mp.is_active',
-            'mp.class_id',
-            'class.name as class_name',
+            'mp.subject_id',
+            'subject.name as subject_name',
             DB::raw('IFNULL(mps.participant_count, 0) as participant_count'),
             DB::raw('COALESCE(COUNT(it.id), 0) as task_count'),
             DB::raw('CASE WHEN ic.certificate IS NOT NULL THEN "completed" ELSE "incomplete" END as status') // Internship status based on certificate
         )
-        ->leftJoin('classes as class', 'mp.class_id', 'class.id')
+        ->leftJoin('subjects as subject', 'mp.subject_id', 'subject.id')
         ->leftJoin(DB::raw('(SELECT internship_id, COUNT(student_id) AS participant_count FROM internship_certificates GROUP BY internship_id) as mps'), 'mp.id', '=', 'mps.internship_id')
         ->leftJoin('internship_tasks as it', 'mp.id', '=', 'it.internship_id')
         ->leftJoin('internship_certificates as ic', function($join) use ($studentId) {
             $join->on('mp.id', '=', 'ic.internship_id')
                  ->where('ic.student_id', '=', $studentId);
         })
-        ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.class_id', 'class.name', 'mps.participant_count', 'ic.certificate')
+        ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.subject_id', 'subject.name', 'mps.participant_count', 'ic.certificate')
         ->get();
         Log::info(['internshgip detail id', $internships]);
 
@@ -134,10 +134,10 @@ public function getInternshipsForStudent(Request $request)
             // Retrieve the mini project details using a join query
             $internship = Internship::select(
                 'internships.*',
-                'classes.name as class_name',
+                'subjects.name as subject_name',
                 // 'subjects.name as subject_name'
             )
-                ->leftJoin('classes', 'internships.class_id', '=', 'classes.id')
+                ->leftJoin('subjects', 'internships.subject_id', '=', 'subjects.id')
                 // ->leftJoin('subjects', 'internships.subject_id', '=', 'subjects.id')
                 ->findOrFail($internshipId);
 
@@ -214,7 +214,7 @@ public function getInternshipsForStudent(Request $request)
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'class' => 'required|exists:classes,id',
+            'subject' => 'required|exists:subjects,id',
             // 'subject' => 'required|exists:subjects,id',
         ]);
 
@@ -224,7 +224,7 @@ public function getInternshipsForStudent(Request $request)
             $internship = new Internship();
             $internship->name = $request->name;
             $internship->description = $request->description;
-            $internship->class_id = $request->class;
+            $internship->subject_id = $request->subject;
             // $internship->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {

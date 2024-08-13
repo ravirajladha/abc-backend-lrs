@@ -130,7 +130,7 @@ class ForumController extends BaseController
         } else {
             $forum_question = new ForumQuestion();
             $forum_question->student_id = $request->studentId;
-            $forum_question->school_id = $request->schoolId;
+          
             $forum_question->question = $request->question;
             $forum_question->status = ForumConstants::STATUS_ACTIVE;
             $forum_question->save();
@@ -152,7 +152,7 @@ class ForumController extends BaseController
         } else {
             $forum_answer = new ForumAnswer();
             $forum_answer->student_id = $request->studentId;
-            $forum_answer->school_id = $request->schoolId;
+          
             $forum_answer->question_id = $request->forumId;
             $forum_answer->answer = $request->answer;
             $forum_answer->status = ForumConstants::STATUS_ACTIVE;

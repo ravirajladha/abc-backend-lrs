@@ -28,7 +28,7 @@ Route::prefix('parent')->group(function () {
     // Route::get('student/{studentId}/results/{studentId}', [AssessmentController::class, 'getAssessmentResultsWithVideo']);
 
     Route::post('/students/store', [StudentController::class, 'storeStudentDetails']);
-    Route::get('/get-fee/{classId}', [FeesController::class, 'getFeeByClass']);
+    Route::get('/get-fee/{classId}', [FeesController::class, 'getFeeBySubject']);
 
     // for mobile
     Route::get('chapter/{chapterId}/results/{studentId}', [AssessmentController::class, 'getAssessmentResultsWithVideo']);

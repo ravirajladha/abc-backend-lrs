@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\ProjectReportSection;
 use App\Models\ProjectReportElement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

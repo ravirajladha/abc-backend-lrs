@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
-use App\Models\{JobApplication, JobQuestion, JobTest};
+use App\Models\{JobApplication};
 use App\Http\Helpers\DateTimeHelper;
 
 class JobController extends BaseController
@@ -21,20 +21,6 @@ class JobController extends BaseController
         $loggedUserId = $this->getLoggedUserId(); // Assuming you have a method to get the logged user's ID
 
         if ($userType === 'admin' || $userType === 'recruiter') {
-            // $jobs = DB::table('jobs as j')
-            //     ->select('j.*', 's.name as student_name', 'a.student_id', 'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
-            //     ->leftJoin('job_applications as a', 'a.job_id', '=', 'j.id')
-            //     ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
-            //     ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
-            //     ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id');
-
-            // if ($userType === 'recruiter') {
-            //     $jobs->where('j.recruiter_id', '=', $loggedUserId);
-            // }
-
-            // Log::info("Getting jobs query: ", ['query' => $jobs->toSql(), 'bindings' => $jobs->getBindings()]);
-            // $jobs = $jobs->get();
-            // Log::info("getting jobs", $jobs);
 
                 // Step 1: Get unique job IDs
                 $jobIdsQuery = DB::table('jobs as j')
@@ -55,8 +41,6 @@ class JobController extends BaseController
                 // Step 2: Get detailed job information using the unique job IDs
                 $jobsQuery = DB::table('jobs as j')
                     ->select('j.*',  'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
-                    // ->leftJoin('job_applications as a', 'a.job_id', '=', 'j.id')
-                    // ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
                     ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
                     ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id')
                     ->whereIn('j.id', $jobIds);
@@ -72,12 +56,12 @@ class JobController extends BaseController
         if ($userType === 'student') {
 
             $student = DB::table('students as s')
-                ->select('s.auth_id', 's.class_id')
+                ->select('s.auth_id', 's.subject_id')
                 ->where('s.auth_id', $this->getLoggedUserId())
                 ->first();
 
             $student_id = $student->auth_id;
-            $student_class_id = $student->class_id;
+            // $student_subject_id = $student->subject_id;
 
             $jobs = DB::table('jobs as j')
                 ->select('j.*', 'r.name as recruiter_name','t.instruction as test_instruction')
@@ -135,7 +119,7 @@ class JobController extends BaseController
                     }
                 },
             ],
-            'selectedClass' => 'required',
+            'selectedSubject' => 'required',
         ]);
 
 
@@ -154,7 +138,7 @@ class JobController extends BaseController
                 $job->image = null;
             }
 
-            $job->class_Id = $request->selectedClass;
+            $job->subject_Id = $request->selectedSubject;
             $job->annual_ctc = $request->annual_ctc;
             $job->location = $request->location;
             $job->criteria = $request->criteria;
@@ -234,7 +218,7 @@ class JobController extends BaseController
             $job->recruiter_id = $request->recruiter_id;
             $job->passing_percentage = $request->test_id ? $request->passing_percentage : 0;
             $job->instruction = $request->instruction;
-            $job->class_Id = $request->selectedClass;
+            $job->subject_Id = $request->selectedSubject;
 
             if ($job->save()) {
                 return $this->sendResponse([], 'Job updated successfully.');
@@ -328,10 +312,10 @@ class JobController extends BaseController
     {
         Log::info('Received request parameters', ['params' => $request->all()]);
         $query = DB::table('job_applications as a')
-            ->select('a.*', 'a.id as application_id','j.*', 's.name as student_name', 'a.student_id', 'c.name as class_name', 'a.is_pass')
+            ->select('a.*', 'a.id as application_id','j.*', 's.name as student_name', 'a.student_id', 'sub.name as subject_name', 'a.is_pass')
             ->leftJoin('jobs as j', 'j.id', '=', 'a.job_id')
             ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
-            ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
+            ->leftJoin('subjects as sub', 'sub.id', '=', 's.class_id')
             ->where('a.job_id', $jobId)
             ->where('is_completed', true);
     
@@ -424,9 +408,8 @@ class JobController extends BaseController
     {
         Log::info(['request for student job details' => $request->all()]);
         $results = DB::table('job_tests as test')
-            ->select('test.id as test_id', 'test.class_id as test_class', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
+            ->select('test.id as test_id', 'test.subject_id as test_subject', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
             ->leftJoin('job_applications as result', 'result.test_id', 'test.id')
-  
             ->where('result.id', $request->applicationId)
             ->get();
 

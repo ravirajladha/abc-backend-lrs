@@ -24,12 +24,12 @@ class JobTestController extends BaseController
     public function getAllTermTests(Request $request)
     {
         $term_tests = DB::table('job_tests as t')
-            ->select('t.*', 'c.name as class_name')
-            ->leftJoin('classes as c', 'c.id', '=', DB::raw("substring_index(t.class_id, ',', 1)")); // Adjust if needed based on how class names are stored or matched
+            ->select('t.*', 's.name as subject_name')
+            ->leftJoin('subjects as s', 's.id', '=', DB::raw("substring_index(t.subject_id, ',', 1)")); // Adjust if needed based on how class names are stored or matched
 
-        if (!empty($request->classId) && $request->classId !== 'undefined') {
-            // Use FIND_IN_SET to look for a specific class ID within the comma-separated list
-            $term_tests->whereRaw("FIND_IN_SET(?, t.class_id)", [$request->classId]);
+        if (!empty($request->subjectId) && $request->subjectId !== 'undefined') {
+            // Use FIND_IN_SET to look for a specific subjectId within the comma-separated list
+            $term_tests->whereRaw("FIND_IN_SET(?, t.subject_id)", [$request->subjectId]);
         }
 
         $term_tests = $term_tests->get();
@@ -44,7 +44,7 @@ class JobTestController extends BaseController
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $results = DB::table('students as s')
-                ->select('r.*', 's.name as student_name', 's.section_id')
+                ->select('r.*', 's.name as student_name')
                 ->leftJoin('term_test_results as r', 'r.student_id', 's.id')
                 ->where('r.test_id', $testId)
                 ->orderBy('s.name', 'asc')
@@ -63,7 +63,7 @@ class JobTestController extends BaseController
                 'testTitle' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
-                'selectedClass' => 'required|string|max:255',
+                'selectedSubject' => 'required|string|max:255',
                 'instruction' => 'required|string',
             ]
         );
@@ -73,7 +73,7 @@ class JobTestController extends BaseController
         } else {
             $test = new JobTest;
             $test->title = $request->testTitle;
-            $test->class_id = $request->selectedClass;
+            $test->subject_id = $request->selectedSubject;
             $test->description = $request->description;
             $test->question_ids = implode(',', $request->selectedQuestions);
             $test->no_of_questions = count($request->selectedQuestions);
@@ -100,7 +100,7 @@ class JobTestController extends BaseController
     public function getTermTestDetails(Request $request, $testId)
     {
         $term_test = DB::table('job_tests as a')
-            ->select('a.id', 'a.class_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions',  'a.question_ids', 'a.instruction')
+            ->select('a.id', 'a.subject_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions',  'a.question_ids', 'a.instruction')
             ->where('a.id', $testId)
             ->first();
 
@@ -141,8 +141,8 @@ class JobTestController extends BaseController
 
         // Fetch the term test details
         $term_test = DB::table('term_tests as a')
-            ->select('a.id', 'a.class_id', 'a.subject_id', 'a.title', 'a.term_type', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as class', 's.name as subject', 'a.question_ids')
-            ->leftJoin('classes as c', 'c.id', '=', 'a.class_id')
+            ->select('a.id', 'a.course_id', 'a.subject_id', 'a.title', 'a.term_type', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions', 'c.name as course', 's.name as subject', 'a.question_ids')
+            ->leftJoin('courses as c', 'c.id', '=', 'a.course_id')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
             ->where('a.id', $testId)
             ->first();
@@ -180,7 +180,7 @@ class JobTestController extends BaseController
                 'testTitle' => 'required',
                 'duration' => 'required',
                 'selectedQuestions' => 'required',
-                'selectedClass' => 'required|max:255',
+                'selectedSubject' => 'required|max:255',
                 'instruction' => 'required',
             ]
         );
@@ -195,7 +195,7 @@ class JobTestController extends BaseController
             }
 
             $test->title = $request->testTitle;
-            $test->class_id = $request->selectedClass;
+            $test->subject_id = $request->selectedSubject;
 
             // $test->term_type = $request->testTerm;
             $test->description = $request->description;
@@ -208,7 +208,7 @@ class JobTestController extends BaseController
             $test->end_date = $request->end_date;
             $test->description = $request->description;
             $test->instruction = $request->instruction;
-            $test->class_id = $request->selectedClass;
+            // $test->class_id = $request->selectedClass;
 
             if (!empty($request->file('image'))) {
                 if ($test->image) {
@@ -256,7 +256,7 @@ class JobTestController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
-            'schoolId' => 'required',
+     
             'testId' => 'required',
         ]);
 
@@ -303,7 +303,7 @@ class JobTestController extends BaseController
             $test_result->test_id = $request->testId;
             $test_result->student_id  = $request->studentId;
             // $test_result->subject_id  = $request->subject_id;
-            $test_result->school_id = $request->schoolId;
+          
             $test_result->score = $score;
             $test_result->percentage = $score_percentage;
             $selectedAnswersArray = is_array($request->selectedAnswers) ? $request->selectedAnswers : explode(',', $request->selectedAnswers);
@@ -318,7 +318,6 @@ class JobTestController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
-            'schoolId' => 'required',
             'testId' => 'required',
         ]);
 
@@ -387,7 +386,6 @@ class JobTestController extends BaseController
         Log::info("jobs without token", $request->all());
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
-            'schoolId' => 'required',
             'testId' => 'required',
         ]);
 
@@ -458,9 +456,9 @@ class JobTestController extends BaseController
      * @param  \App\Models\TermTest  $termTest
      * @return \Illuminate\Http\Response
      */
-    public function checkTermAvailability($subjectId)
+    public function checkTermAvailability($classId)
     {
-        $terms = JobTest::where('subject_id', $subjectId)
+        $terms = JobTest::where('class_id', $classId)
             ->pluck('term_type')
             ->toArray();
 
@@ -470,7 +468,6 @@ class JobTestController extends BaseController
     {
         $data = $request->validate([
             'studentId' => 'required|integer',
-            'schoolId' => 'required|integer',
             'subjectId' => 'required|integer',
             'latestTestId' => 'required|integer',
         ]);
@@ -489,7 +486,6 @@ class JobTestController extends BaseController
         // Create a new test session
         $testSession = JobTestResult::create([
             'student_id' => $data['studentId'],
-            'school_id' => $data['schoolId'],
             // 'subject_id' => $data['subjectId'],
             'test_id' => $data['latestTestId'],
             // Set additional fields as necessary

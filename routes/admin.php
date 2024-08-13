@@ -328,10 +328,10 @@ Route::prefix('admin')->group(function () {
         Route::get('/', [RecruiterController::class, 'getRecruitersList']);
         Route::get('/{recruiterId}', [RecruiterController::class, 'getRecruiterDetails']);
         Route::post('/store', [RecruiterController::class, 'storeRecruiterDetails']);
-        Route::get('/{recruiterId}/assign', [RecruiterController::class, 'getTeacherClassesAndSubjects']);
+        Route::get('/{recruiterId}/assign', [RecruiterController::class, 'getTeacherSubjectsAndCourses']);
         Route::post('/{recruiterId}/assign', [RecruiterController::class, 'storeOrUpdateTeacherClassesAndSubjects']);
         Route::put('/{recruiterId}/update', [RecruiterController::class, 'updateRecruiterDetails']);
-        Route::delete('/{recruiterId}/delete', [RecruiterController::class, 'deleteTeacherDetails']);
+        Route::delete('/{recruiterId}/delete', [RecruiterController::class, 'deleteTrainerDetails']);
     });
     Route::prefix('quotes')->group(function () {
         Route::get('/', [QuoteController::class, 'getQuoteList']);

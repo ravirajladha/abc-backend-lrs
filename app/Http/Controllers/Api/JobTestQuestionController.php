@@ -26,11 +26,11 @@ class JobTestQuestionController extends BaseController
     {
 
         $termTestQuestions = DB::table('job_questions as q')
-            ->select('q.*', 'c.name as class')
-            ->leftJoin('classes as c', 'c.id', '=', 'q.class_id');
+            ->select('q.*', 's.name as subject')
+            ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id');
 
-        if ($request->classId !== null && $request->classId !== 'undefined') {
-            $termTestQuestions->where('q.class_id', $request->classId);
+        if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
+            $termTestQuestions->where('q.subject_id', $request->subjectId);
         }     
 
         $term_test_questions = $termTestQuestions->get();
@@ -51,7 +51,7 @@ class JobTestQuestionController extends BaseController
             'option_three' => 'required|string',
             'option_four' => 'required|string',
             'answer_key' => 'required|in:option_one,option_two,option_three,option_four',
-            'selectedClass' => 'required|exists:classes,id',
+            'selectedSubject' => 'required|exists:subjects,id',
             // 'selectedSubject' => 'required|exists:subjects,id',
         ], [
             'answer_key' => 'Please select a valid option as the answer key.',
@@ -63,7 +63,7 @@ class JobTestQuestionController extends BaseController
 
         $termTest = new JobQuestion();
         // $termTest->subject_id = $request->selectedSubject;
-        $termTest->class_id = $request->selectedClass;
+        $termTest->subject_id = $request->selectedSubject;
         $termTest->question = $request->question;
         $termTest->explanation = $request->explanation;
         $termTest->code = $request->code;
@@ -87,7 +87,7 @@ class JobTestQuestionController extends BaseController
             'option_three' => 'required|string|max:255',
             'option_four' => 'required|string|max:255',
             'answer_key' => 'required|in:option_one,option_two,option_three,option_four',
-            'selectedClass' => 'required|exists:classes,id',
+            'selectedSubject' => 'required|exists:subjects,id',
         ], [
             'answer_key' => 'Please select a valid option as the answer key.',
         ]);
@@ -102,7 +102,7 @@ class JobTestQuestionController extends BaseController
             return $this->sendError('Term test question not found');
         }
 
-        $termTest->class_id = $request->selectedClass;
+        $termTest->subject_id = $request->selectedSubject;
         $termTest->question = $request->question;
         $termTest->explanation = $request->explanation;
         $termTest->code = $request->code;

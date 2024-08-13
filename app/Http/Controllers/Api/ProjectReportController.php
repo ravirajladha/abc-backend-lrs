@@ -20,9 +20,9 @@ class ProjectReportController extends BaseController
     public function getProjectReportList()
     {
         $projectReports = DB::table('project_reports as p')
-            ->select('p.id', 'p.title', 'p.description', 'class.name as class_name', 'p.image', 'p.class_id', 'p.subject_id', 's.name as subject_name', 'p.chapter_id')
-            ->leftJoin('subjects as s', 'p.subject_id', 's.id')
-            ->leftJoin('classes as class', 'p.class_id', 'class.id')
+            ->select('p.id', 'p.title', 'p.description', 'course.name as course_name', 'p.image', 'p.subject_id', 'p.course_id', 's.name as subject_name', 'p.chapter_id')
+            ->leftJoin('courses as c', 'p.course_id', 'c.id')
+            ->leftJoin('subjects as subject', 'p.subject_id', 'subject.id')
             ->get();
 
         return $this->sendResponse(['projectReports' => $projectReports]);
@@ -40,7 +40,7 @@ class ProjectReportController extends BaseController
         $validator = Validator::make($request->all(), [
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -53,7 +53,7 @@ class ProjectReportController extends BaseController
 
             $projectReport->title = $request->title;
             $projectReport->description = $request->description;
-            $projectReport->class_id = $request->class;
+            $projectReport->course_id = $request->course;
             $projectReport->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {
@@ -104,7 +104,7 @@ class ProjectReportController extends BaseController
             'projectReportId' => 'required|exists:project_reports,id',
             'title' => 'required',
             'description' => 'required',
-            'class' => 'required|exists:classes,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
 
@@ -121,7 +121,7 @@ class ProjectReportController extends BaseController
 
             $projectReport->title = $request->title;
             $projectReport->description = $request->description;
-            $projectReport->class_id = $request->class;
+            $projectReport->course_id = $request->course;
             $projectReport->subject_id = $request->subject;
 
             if (!empty($request->file('image'))) {
@@ -151,9 +151,9 @@ class ProjectReportController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $project_report = DB::table('project_reports as e')
-                ->select('e.title as project_report_title', 'e.description as project_report_description', 'class.name as class_name', 'e.image as project_report_image', 'e.class_id', 'e.subject_id', 's.name as subject_name')
+                ->select('e.title as project_report_title', 'e.description as project_report_description', 'course.name as course_name', 'e.image as project_report_image', 'e.course_id', 'e.subject_id', 's.name as subject_name')
                 ->leftJoin('subjects as s', 'e.subject_id', 's.id')
-                ->leftJoin('classes as class', 'e.class_id', 'class.id')
+                ->leftJoin('courses as course', 'e.course_id', 'course.id')
                 ->where('e.id', $projectReportId)
                 ->first();
 

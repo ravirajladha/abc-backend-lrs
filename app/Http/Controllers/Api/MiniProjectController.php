@@ -26,23 +26,23 @@ class MiniProjectController extends BaseController
                 'mp.description',
                 'mp.image',
                 'mp.is_active',
-                'mp.class_id',
-                'class.name as class_name',
                 'mp.subject_id',
-                's.name as subject_name',
+                'subject.name as subject_name',
+                'mp.course_id',
+                'c.name as course_name',
                 DB::raw('IFNULL(mps.participant_count, 0) as participant_count'),
                 DB::raw('COALESCE(COUNT(mpt.id), 0) as task_count') // Count of mini_project_tasks
             )
-            ->leftJoin('subjects as s', 'mp.subject_id', 's.id')
-            ->leftJoin('classes as class', 'mp.class_id', 'class.id')
+            ->leftJoin('courses as c', 'mp.course_id', 'c.id')
+            ->leftJoin('subjects as subject', 'mp.subject_id', 'subject.id')
             ->leftJoin(DB::raw('(SELECT mini_project_id, COUNT(student_id) AS participant_count FROM mini_project_students GROUP BY mini_project_id) as mps'), 'mp.id', '=', 'mps.mini_project_id')
             ->leftJoin('mini_project_tasks as mpt', 'mp.id', '=', 'mpt.mini_project_id')
-            ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.class_id', 'class.name', 'mp.subject_id', 's.name','mps.participant_count')  // Group by mini_project id to get count per mini_project
+            ->groupBy('mp.id', 'mp.name', 'mp.description', 'mp.image', 'mp.is_active', 'mp.subject_id', 'subject.name', 'mp.course_id', 'c.name', 'mps.participant_count')  // Group by mini_project id to get count per mini_project
             ->get();
-    
+
         return $this->sendResponse(['miniProjects' => $miniProjects]);
     }
-    
+
 
     public function getMiniProjectDetails($miniProjectId)
     {
@@ -50,11 +50,11 @@ class MiniProjectController extends BaseController
             // Retrieve the mini project details using a join query
             $miniProject = MiniProject::select(
                 'mini_projects.*',
-                'classes.name as class_name',
+                'courses.name as course_name',
                 'subjects.name as subject_name'
             )
-                ->leftJoin('classes', 'mini_projects.class_id', '=', 'classes.id')
-                ->leftJoin('subjects', 'mini_projects.subject_id', '=', 'subjects.id')
+            ->leftJoin('subjects', 'mini_projects.subject_id', '=', 'subjects.id')
+            ->leftJoin('courses', 'mini_projects.course_id', '=', 'courses.id')
                 ->findOrFail($miniProjectId);
 
             // If the mini project is found, return the details
@@ -91,11 +91,11 @@ class MiniProjectController extends BaseController
             ->where('id', $miniProjectId)
             ->first();
 
-            $mini_project_tasks = DB::table('mini_project_tasks')
-            ->select('mini_project_tasks.id', 'mini_project_tasks.name', 'mini_project_tasks.description', 'mini_project_tasks.elab_id', 'elabs.title as elab_name', 'mini_project_tasks.is_active') // Adjust these columns as needed
-            ->leftJoin('elabs', 'mini_project_tasks.elab_id', '=', 'elabs.id')
-            ->where('mini_project_tasks.mini_project_id', $miniProjectId)
-            ->get();
+        $mini_project_tasks = DB::table('mini_project_tasks')
+        ->select('mini_project_tasks.id', 'mini_project_tasks.name', 'mini_project_tasks.description', 'mini_project_tasks.elab_id', 'elabs.title as elab_name', 'mini_project_tasks.is_active') // Adjust these columns as needed
+        ->leftJoin('elabs', 'mini_project_tasks.elab_id', '=', 'elabs.id')
+        ->where('mini_project_tasks.mini_project_id', $miniProjectId)
+        ->get();
 
         return $this->sendResponse([
             'miniProject' => $miniProject,
@@ -112,7 +112,7 @@ class MiniProjectController extends BaseController
             ->first();
 
         $miniProjectTasks = DB::table('mini_project_tasks as mpt')
-            ->select('mpt.id', 'mpt.name as mini_project_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status', 'mps.id as submission_id' ,'mps.elab_submission_id','mps.created_at as code_submitted_at')
+            ->select('mpt.id', 'mpt.name as mini_project_task_name', 'mpt.description', 'mpt.elab_id', 'elab.title as elab_title', 'mps.status', 'mps.id as submission_id', 'mps.elab_submission_id', 'mps.created_at as code_submitted_at')
             ->leftJoin('elabs as elab', 'mpt.elab_id', 'elab.id')
             ->leftJoin('mini_project_submissions as mps', function ($join) use ($miniProjectId, $studentId) {
                 $join->on('mpt.id', '=', 'mps.mini_project_task_id')
@@ -163,8 +163,8 @@ class MiniProjectController extends BaseController
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'class' => 'required|exists:classes,id',
             'subject' => 'required|exists:subjects,id',
+            'course' => 'required|exists:courses,id',
         ]);
 
         if ($validator->fails()) {
@@ -173,8 +173,8 @@ class MiniProjectController extends BaseController
             $miniProject = new MiniProject();
             $miniProject->name = $request->name;
             $miniProject->description = $request->description;
-            $miniProject->class_id = $request->class;
             $miniProject->subject_id = $request->subject;
+            $miniProject->course_id = $request->course;
 
             if (!empty($request->file('image'))) {
                 $extension = $request->file('image')->extension();
@@ -253,7 +253,6 @@ class MiniProjectController extends BaseController
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $miniProject)
-
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:50',
@@ -299,7 +298,6 @@ class MiniProjectController extends BaseController
      * @return \Illuminate\Http\Response
      */
     public function updateTask(Request $request, $miniProjectTask)
-
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:50',
@@ -333,7 +331,7 @@ class MiniProjectController extends BaseController
             'miniProjectTaskId' => 'required|integer',
             'studentId' => 'required|integer',
             'elabId' => 'required|integer',
-            'subjectId' => 'required|integer',
+            'courseId' => 'required|integer',
             'miniProjectId' => 'required|integer',
             // Add more validation rules if needed
         ]);
@@ -343,21 +341,21 @@ class MiniProjectController extends BaseController
         ->where('mini_project_id', $validatedData['miniProjectId'])
         ->first();
 
-    if (!$miniProjectStudent) {
-        // Create a new MiniProjectStudent if it doesn't exist
-        $miniProjectStudent = MiniProjectStudent::create([
-            'student_id' => $validatedData['studentId'],
-            'subject_id' => $validatedData['subjectId'],
-            'mini_project_id' => $validatedData['miniProjectId'],
-            'start_datetime' => now(),
-        ]);
-    }
+        if (!$miniProjectStudent) {
+            // Create a new MiniProjectStudent if it doesn't exist
+            $miniProjectStudent = MiniProjectStudent::create([
+                'student_id' => $validatedData['studentId'],
+                'course_id' => $validatedData['courseId'],
+                'mini_project_id' => $validatedData['miniProjectId'],
+                'start_datetime' => now(),
+            ]);
+        }
 
 
 
         // Check if an existing MiniProjectSubmission record exists for the given criteria
         $existingSubmission = MiniProjectSubmission::where('student_id', $validatedData['studentId'])
-            ->where('subject_id', $validatedData['subjectId'])
+            ->where('course_id', $validatedData['courseId'])
             ->where('mini_project_id', $validatedData['miniProjectId'])
             ->where('mini_project_task_id', $validatedData['miniProjectTaskId'])
             ->first();
@@ -372,7 +370,7 @@ class MiniProjectController extends BaseController
             $submission->mini_project_task_id = $validatedData['miniProjectTaskId'];
             $submission->student_id = $validatedData['studentId'];
             $submission->elab_id = $validatedData['elabId'];
-            $submission->subject_id = $validatedData['subjectId'];
+            $submission->course_id = $validatedData['courseId'];
             $submission->mini_project_id = $validatedData['miniProjectId'];
             $submission->mini_project_student_id = $miniProjectStudent->id;
             $submission->status = 1;
@@ -550,11 +548,11 @@ class MiniProjectController extends BaseController
         try {
             // Find the mini project student record
             $miniProjectStudent = MiniProjectStudent::findOrFail($miniProjectStudentId);
-    
+
             // Retrieve MiniProjectSubmission records and corresponding details
-            $submissions = MiniProjectSubmission::where('mini_project_student_id', $miniProjectStudentId)->get();
+            $submissions = MiniProjectSubmission::where('mini_project_student_id', $miniProjectStudentId)->get();  
             $details = [];
-    
+
             // Extract the details needed from each submission
             foreach ($submissions as $submission) {
                 $detail = [
@@ -563,22 +561,22 @@ class MiniProjectController extends BaseController
                     'student_id' => $submission->student_id,
                 ];
                 $details[] = $detail;
-    
-                  // Delete MiniProjectSubmission records
-            MiniProjectSubmission::where('mini_project_student_id', $miniProjectStudentId)->delete();
-    
-            
+
+                // Delete MiniProjectSubmission records
+                MiniProjectSubmission::where('mini_project_student_id', $miniProjectStudentId)->delete();
+
+
                 // Delete ElabSubmission records using the extracted details
                 ElabSubmission::where('mini_project_id', $submission->mini_project_id)
                              ->where('mini_project_task_id', $submission->mini_project_task_id)
                              ->where('student_id', $submission->student_id)
                              ->delete();
             }
-    
-          
+
+
             // Delete the mini project student record
             $miniProjectStudent->delete();
-    
+
             // Return the details before deletion along with a success response
             return $this->sendResponse(['details' => $details], 'Mini project participant deleted successfully');
         } catch (\Exception $e) {
@@ -613,10 +611,10 @@ class MiniProjectController extends BaseController
             $miniProjectTask = MiniProjectTask::findOrFail($miniProjectTaskId);
             // Delete the record
             MiniProjectSubmission::where('mini_project_task_id', $miniProjectTaskId)->delete();
-            
+
             MiniProjectStudent::where('mini_project_id', $miniProjectTask->mini_project_id)->delete();
             ElabSubmission::where('mini_project_task_id', $miniProjectTaskId)->delete();
-            
+
             $miniProjectTask->delete();
 
             // Return a success response
