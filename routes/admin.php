@@ -187,7 +187,7 @@ Route::prefix('admin')->group(function () {
         Route::delete('/delete-elab-participant-codebase/{id}/delete', [ElabController::class, 'deleteElabParticipantCodebase']);
         Route::get('/submission/{userId}/{elabId}', [ElabController::class, 'getElabSubmissionByStudent']);
         Route::get('/get-active-elabs', [ElabController::class, 'getActiveElabs']);
-        Route::get('/get-selected-active-elabs/{subjectId}/{subjectId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
+        Route::get('/get-selected-active-elabs/{subjectId}/{courseId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
         Route::get('/get-selected-active-elabs-without-course/{subjectId}/{courseId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
         Route::get('/', [ElabController::class, 'getElabList']);
         Route::post('/store', [ElabController::class, 'storeElabDetails']);

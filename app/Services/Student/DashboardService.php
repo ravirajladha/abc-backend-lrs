@@ -3,6 +3,7 @@
 namespace App\Services\Student;
 
 use App\Models\Student;
+use App\Models\Auth;
 use App\Models\StudentVideoLog;
 
 use App\Http\Helpers\DateTimeHelper;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Http\Constants\TermTestConstants;
 
-use App\Services\Admin\TermTestService;
+use App\Services\Admin\TestService;
 
 use App\Models\ZoomCallUrl;
 use Carbon\Carbon;
@@ -19,9 +20,11 @@ class DashboardService
 {
     public function getStudentDashboardItems($studentAuthId)
     {
-        $student = Student::where('auth_id', $studentAuthId)->first();
-        $studentId = $student->id;
+        // $student = Student::where('auth_id', $studentAuthId)->first();
+        // $studentId = $student->id;
         // $classId = $student->class_id;
+
+        $auth = Auth::where('id', $studentAuthId)->first();
 
         $login_logs = DB::table('student_auth_logs')
             ->where('student_id', $studentAuthId)
@@ -36,7 +39,7 @@ class DashboardService
             $last_login_at = null;
         }
 
-        $avg_assessment_score = DB::table('assessment_results')->where('student_id', $studentId)->avg('score');
+        $avg_assessment_score = DB::table('assessment_results')->where('student_id', $studentAuthId)->avg('score');
 
         $total_watch_time = StudentVideoLog::where('student_id', $studentAuthId)->sum('watch_time');
 
@@ -94,12 +97,12 @@ class DashboardService
 
         $resultService = new ResultService();
 
-        $firstTermResult = $resultService->getTermTestTotalResult($studentId);
-        // $secondTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::SECOND_TERM);
-        // $thirdTermResult = $resultService->getTermTestTotalResult($studentId, TermTestConstants::THIRD_TERM);
+        $firstTermResult = $resultService->getTestTotalResult($studentAuthId);
+        // $secondTermResult = $resultService->getTermTestTotalResult($studentAuthId, TermTestConstants::SECOND_TERM);
+        // $thirdTermResult = $resultService->getTermTestTotalResult($studentAuthId, TermTestConstants::THIRD_TERM);
 
-        $termTestService = new TermTestService();
-        $firstTermTotalMarks = $termTestService->getTermTestTotalMarks($studentId);
+        $testService = new TestService();
+        $firstTermTotalMarks = $testService->getTestTotalMarks($studentAuthId);
         // $secondTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::SECOND_TERM);
         // $thirdTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::THIRD_TERM);
 
@@ -110,8 +113,8 @@ class DashboardService
         $zoomCall = ZoomCallUrl::where('date', $today)->select('url')->first();
 
         $res = [
-            'id' => $studentId,
-            'student_name' => $student->name,
+            'id' => $studentAuthId,
+            'student_name' => $auth->username,
             'last_login_at' => $last_login_at,
             'video_stats' => !empty($videoStats) ? $videoStats : null,
             'total_watch_time' => !empty($total_watch_time) ?  $dateTimeHelper->formatTime($total_watch_time) : null,

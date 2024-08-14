@@ -64,8 +64,9 @@ class ForumController extends BaseController
     {
         $forum = [];
         $question = DB::table('forum_questions as f')
-            ->select('f.question', 'f.dislikes_count', 'f.likes_count', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+            ->select('f.question', 'f.dislikes_count', 'f.likes_count', 'f.student_id', 's.profile_image', 'a.username as student_name', 'f.created_at')
             ->leftJoin('students as s', 's.id', 'f.student_id')
+            ->leftJoin('auth as a', 'a.id', 'f.student_id')
             ->where('f.status', ForumConstants::STATUS_ACTIVE)
             ->where('f.id', $forumId)
             ->first();
@@ -77,22 +78,23 @@ class ForumController extends BaseController
         //     ->get();
 
         $loggedUserId = $this->getLoggedUserId();
-        $student = Student::where('auth_id', $loggedUserId)->first();
+        // $student = Student::where('auth_id', $loggedUserId)->first();
         $answers = DB::table('forum_answers as f')
             ->select(
                 'f.id',
                 'f.answer',
                 'f.vote_count',
                 'f.student_id',
-                's.name as student_name',
+                'a.username as student_name',
                 's.profile_image',
                 'f.created_at',
                 DB::raw('IFNULL(v.vote_type, 0) as vote_type')
             )
             ->leftJoin('students as s', 's.id', 'f.student_id')
-            ->leftJoin('forum_answer_votes as v', function ($join) use ($student) {
+            ->leftJoin('auth as a', 'a.id', 'f.student_id')
+            ->leftJoin('forum_answer_votes as v', function ($join) use ($loggedUserId) {
                 $join->on('v.answer_id', '=', 'f.id')
-                    ->where('v.student_id', '=', $student->id);
+                    ->where('v.student_id', '=', $loggedUserId);
             })
             ->where('f.status', ForumConstants::STATUS_ACTIVE)
             ->where('f.question_id', $forumId)
@@ -130,7 +132,7 @@ class ForumController extends BaseController
         } else {
             $forum_question = new ForumQuestion();
             $forum_question->student_id = $request->studentId;
-          
+
             $forum_question->question = $request->question;
             $forum_question->status = ForumConstants::STATUS_ACTIVE;
             $forum_question->save();
@@ -152,7 +154,7 @@ class ForumController extends BaseController
         } else {
             $forum_answer = new ForumAnswer();
             $forum_answer->student_id = $request->studentId;
-          
+
             $forum_answer->question_id = $request->forumId;
             $forum_answer->answer = $request->answer;
             $forum_answer->status = ForumConstants::STATUS_ACTIVE;
