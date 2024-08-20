@@ -1,19 +1,22 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
 use App\Models\Course;
+use App\Models\Student;
 use App\Models\Subject;
 use App\Models\ChapterLog;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use App\Services\Admin\ResultService;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
-use App\Models\Student;
+
 //changed
 //error in $resultsService->getCourseResults
 class CourseController extends BaseController
@@ -31,7 +34,7 @@ class CourseController extends BaseController
 
     public function getMyCourses()
     {
-        $studentId = Student::where('auth_id',$this->getLoggedUserId())->value('id');
+        $studentId = Student::where('auth_id', $this->getLoggedUserId())->value('id');
 
         $courses = Course::join('subjects', 'courses.subject_id', '=', 'subjects.id')
             ->join('chapters', 'courses.id', '=', 'chapters.subject_id')
@@ -41,91 +44,91 @@ class CourseController extends BaseController
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
             ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name')
             ->get();
-            foreach ($courses as $course) {
+        foreach ($courses as $course) {
 
-                // if ($course->subject_type == 3 && $course->super_subject_id) {
-                //     $superSubject = Subject::select('name')->find($course->super_subject_id);
-                //     $course->super_subject_name = $superSubject ? $superSubject->name : null;
-                // } else {
-                //     $course->super_subject_name = null;
-                // }
+            // if ($course->subject_type == 3 && $course->super_subject_id) {
+            //     $superSubject = Subject::select('name')->find($course->super_subject_id);
+            //     $course->super_subject_name = $superSubject ? $superSubject->name : null;
+            // } else {
+            //     $course->super_subject_name = null;
+            // }
 
 
-                $chapterIds = DB::table('chapters')->where('course_id', $course->id)
-                        ->whereExists(function ($query) {
-                            $query->select(DB::raw(1))
+            $chapterIds = DB::table('chapters')->where('course_id', $course->id)
+                    ->whereExists(function ($query) {
+                        $query->select(DB::raw(1))
                           ->from('videos')
                           ->whereRaw('videos.chapter_id = chapters.id');
-                        })
-                        ->pluck('id')->toArray();
+                    })
+                    ->pluck('id')->toArray();
 
-                $completedChaptersCount = 0;
-                if (!empty($chapterIds)) {
-                    $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
-                        ->whereIn('chapter_id', $chapterIds)
-                        ->where('video_complete_status', 1)
-                        ->where('assessment_complete_status', 1)
-                        ->count();
+            $completedChaptersCount = 0;
+            if (!empty($chapterIds)) {
+                $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
+                    ->whereIn('chapter_id', $chapterIds)
+                    ->where('video_complete_status', 1)
+                    ->where('assessment_complete_status', 1)
+                    ->count();
 
-                    $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
-                    $course->chapter_completed = $allChaptersCompleted;
-                } else {
-                    $course->chapter_completed = false;
-                }
-
-                $course->completePercentage = ($completedChaptersCount/count($chapterIds)) * 100;
-
-                $latestTest = DB::table('term_tests')
-                    ->where('course_id', $course->id)
-                    ->where('status', 1)
-                    ->select('id', 'term_type', 'description')
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-                if ($latestTest) {
-                    $latestTestId = $latestTest->id;
-                    $testDescription = $latestTest->description;
-                    $latestTerm = $latestTest->term_type;
-
-                    $latestTestResults = DB::table('term_test_results as results')
-                        ->where('results.student_id', $studentId)
-                        ->where('results.test_id', $latestTestId)
-                        ->exists();
-
-                    if (!$latestTestResults) {
-                        $course->latest_test_id = $latestTestId;
-                        $course->latest_term = $latestTerm;
-                        $course->testDescription = $testDescription;
-                    } else {
-                        $course->latest_test_id = false;
-                        $course->latest_term = false;
-                        $course->testDescription = false;
-                    }
-                }
-
-                $studentResult = [];
-
-                $studentResult = DB::table('term_test_results as results')
-                    ->select('results.*', 'test.term_type')
-                    ->leftJoin('term_tests as test', 'test.id', 'results.test_id')
-                    ->where('results.student_id', $studentId)
-                    ->where('test.course_id', $course->id)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-
-                $course->results = $studentResult;
-
-                // Trainer by course
-                $trainer = DB::table('trainer_courses as ts')
-                ->where('ts.course_id', $course->id)
-                ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
-                ->first();
-                $course->trainer_name = $trainer->name;
-
+                $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
+                $course->chapter_completed = $allChaptersCompleted;
+            } else {
+                $course->chapter_completed = false;
             }
+
+            $course->completePercentage = ($completedChaptersCount / count($chapterIds)) * 100;
+
+            $latestTest = DB::table('term_tests')
+                ->where('course_id', $course->id)
+                ->where('status', 1)
+                ->select('id', 'term_type', 'description')
+                ->orderBy('created_at', 'desc')
+                ->first();
+            if ($latestTest) {
+                $latestTestId = $latestTest->id;
+                $testDescription = $latestTest->description;
+                $latestTerm = $latestTest->term_type;
+
+                $latestTestResults = DB::table('term_test_results as results')
+                    ->where('results.student_id', $studentId)
+                    ->where('results.test_id', $latestTestId)
+                    ->exists();
+
+                if (!$latestTestResults) {
+                    $course->latest_test_id = $latestTestId;
+                    $course->latest_term = $latestTerm;
+                    $course->testDescription = $testDescription;
+                } else {
+                    $course->latest_test_id = false;
+                    $course->latest_term = false;
+                    $course->testDescription = false;
+                }
+            }
+
+            $studentResult = [];
+
+            $studentResult = DB::table('term_test_results as results')
+                ->select('results.*', 'test.term_type')
+                ->leftJoin('term_tests as test', 'test.id', 'results.test_id')
+                ->where('results.student_id', $studentId)
+                ->where('test.course_id', $course->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $course->results = $studentResult;
+
+            // Trainer by course
+            $trainer = DB::table('trainer_courses as ts')
+            ->where('ts.course_id', $course->id)
+            ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
+            ->first();
+            $course->trainer_name = $trainer->name;
+
+        }
 
         return $this->sendResponse(['courses' => $courses]);
     }
-//still in progress
+    //still in progress
     /**
      * Display the student report card.
      *
@@ -139,7 +142,7 @@ class CourseController extends BaseController
         // $sectionId = $request->sectionId;
         $report_card = [];
 
-        if (!($studentId && $subjectId )) {
+        if (!($studentId && $subjectId)) {
             return $this->sendError('Failed to fetch student results.');
         }
 
@@ -165,44 +168,53 @@ class CourseController extends BaseController
      */
     public function getCourseListBySubjectId($subjectId)
     {
+        // Log the received subjectId
+        Log::info('Received subjectId:', ['subjectId' => $subjectId]);
+
         $res = [];
 
+        // Validate subjectId
         $validator = Validator::make(['subjectId' => $subjectId], [
             'subjectId' => 'required',
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation failed:', $validator->errors()->toArray());
             return $this->sendValidationError($validator);
         } else {
             $subject = Subject::where('id', $subjectId)->first();
+            // Log the subject data retrieved
+            Log::info('Retrieved subject:', ['subject' => $subject]);
+
             $courses = DB::table('courses as cou')
-                ->select('cou.id', 'cou.name', 'cou.image', 'course_type')
+                ->select('cou.id', 'cou.name', 'cou.image', )
                 ->where('cou.subject_id', $subjectId)
-                // ->whereIn('cou.course_type', [SubjectTypeConstants::TYPE_DEFAULT_SUBJECT,SubjectTypeConstants::TYPE_SUB_SUBJECT])
                 ->get();
 
-            // Fetch super subject name
-            // foreach ($courses as $course) {
-            //     if ($course->course_type == 3 ) {
-            //         $superSubject = Course::select('name')->find($course->super_subject_id);
-            //         $course->super_subject_name = $superSubject ? $superSubject->name : null;
-            //     } else {
-            //         $subject->super_subject_name = null;
-            //     }
-            // }
+            // Log the courses retrieved
+            Log::info('Retrieved courses:', ['courses' => $courses]);
+
             if ($subject) {
                 $res = [
                     'subject_id' => $subjectId,
                     'subject' => $subject->name,
                     'courses' => $courses,
                 ];
+
+                // Log the final response data
+                Log::info('Final response:', $res);
             } else {
+                Log::error('Subject not found:', ['subjectId' => $subjectId]);
                 return $this->sendError('Course not found!');
             }
         }
 
+        // Log the response before sending it back
+        Log::info('Sending response:', ['response' => $res]);
+
         return $this->sendResponse($res);
     }
+
 
     /**
      * Display a listing of the subjects with results for students by classId.
@@ -242,21 +254,24 @@ class CourseController extends BaseController
 
     public function storeCourseDetails(Request $request)
     {
+     
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required',
             'course_name' => 'required|max:75|unique:courses,name',
             'course_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'course_type' => 'required',
             'benefits' => 'required|string',
             'description' => 'required|string',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
+
             $course = new Course();
             $course->name = $request->course_name;
             $course->subject_id = $request->subject_id;
-            $course->course_type = $request->course_type;
+            $course->access_validity = $request->access_validity;
+
             // if ($request->course_type == 3) {
             //     $subject->super_subject_id = $request->super_subject_id;
             // }
@@ -269,7 +284,7 @@ class CourseController extends BaseController
             }
             $course->benefits = $request->benefits;
             $course->description = $request->description;
-
+            $course->created_by = $loggedUserId;
             if ($course->save()) {
                 return $this->sendResponse([], 'Course created successfully.');
             } else {
@@ -316,7 +331,8 @@ class CourseController extends BaseController
         if (!$request->has('course_name')) {
             return $this->sendError('Course name is required.');
         }
-
+        $loggedUserId = $this->getLoggedUserId();
+        $course->updated_by = $loggedUserId;
         $course->name = $request->course_name;
 
         if ($request->hasFile('course_image')) {
@@ -385,7 +401,7 @@ class CourseController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $course = Course::join('subjects', 'courses.subject_id', '=', 'subjects.id')
-            ->select('courses.*','subjects.name as subject_name')
+            ->select('courses.*', 'subjects.name as subject_name')
             ->where('courses.id', $courseId)->first();
             $chapters = DB::table('chapters as c')
             ->select('c.id', 'c.title', 'c.image', 'c.lock_status')
@@ -407,7 +423,7 @@ class CourseController extends BaseController
             ->leftJoin('trainers as t', 't.id', 'tc.trainer_id')
             ->first();
 
-            return $this->sendResponse(['course' => $course,'chapters' => $chapters,'trainer'=> $trainer]);
+            return $this->sendResponse(['course' => $course,'chapters' => $chapters,'trainer' => $trainer]);
         }
     }
 }

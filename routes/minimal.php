@@ -2,9 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('minimal')->group(function () {
-    Route::get('/subjects', \App\Http\Controllers\Api\Dropdown\CourseController::class);
+    Route::get('/subjects', \App\Http\Controllers\Api\Dropdown\SubjectController::class);
     Route::get('/subjects/{subjectId}/courses', \App\Http\Controllers\Api\Dropdown\CourseController::class);
     Route::get('/tests/subjects/{subjectId}/courses', \App\Http\Controllers\Api\Dropdown\CourseTestController::class);
     Route::get('/assessments', \App\Http\Controllers\Api\Dropdown\AssessmentController::class);

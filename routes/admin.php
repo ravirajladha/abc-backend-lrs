@@ -56,21 +56,58 @@ Route::prefix('admin')->group(function () {
     Route::post('/schools/store', [AdminController::class, 'storeSchoolDetails']);
     Route::put('/schools/{schoolId}/update', [SchoolController::class, 'updateSchoolDetails']);
 
-    //Classes Routes
-    Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
-    Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
-    Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
+      // Retrieve a list of subjects
+Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
 
-    //Subject Routes
-    Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
-    Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
-    Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
-    // Route::get('/super-subjects', [CourseController::class, 'getSuperSubjects']);
+// Retrieve details of a specific subject
+Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
 
-    //Subject Routes
-    Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
-    Route::put('/chapters/{chapterId}/update', [ChapterController::class, 'updateChapterDetails']);
-    Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'deleteChapterDetails']);
+// Retrieve results associated with a specific subject
+Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
+
+// Create a new subject
+Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
+
+// Update details of an existing subject
+Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
+
+// Delete a subject
+Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
+
+
+// Retrieve a list of courses associated with a specific subject
+Route::get('/subjects/{subjectId}/courses', [CourseController::class, 'getCourseListBySubjectId']);
+
+// Retrieve details of a specific course
+Route::get('/courses/{courseId}', [CourseController::class, 'getCourseDetails']);
+
+// Create a new course
+Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
+
+// Update details of an existing course
+Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
+
+// Delete a course
+Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
+
+// Retrieve a list of chapters associated with a specific course (and subject)
+Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
+
+// Retrieve a list of chapters associated with a specific subject (without specifying course)
+Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
+
+// Retrieve details of a specific chapter
+Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
+
+// Create a new chapter
+Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
+
+// Update details of an existing chapter
+Route::put('/chapters/{chapterId}/update', [ChapterController::class, 'updateChapterDetails']);
+
+// Delete a chapter
+Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'deleteChapterDetails']);
+
 
     //eBook Routes
     Route::prefix('ebooks')->group(function () {
@@ -207,7 +244,7 @@ Route::prefix('admin')->group(function () {
     });
 
     //Term Test Routes
-    Route::prefix('term-tests')->group(function () {
+    Route::prefix('tests')->group(function () {
 
         Route::get('/', [TestController::class, 'getAllTests']);
         Route::get('/{testId}', [TestController::class, 'getTestDetails']);

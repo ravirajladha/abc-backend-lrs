@@ -37,11 +37,11 @@ class AssessmentQuestionController extends BaseController
         if ($userType === 'admin') {
             $assessmentQuestions = DB::table('assessment_questions as q')
                 ->select('q.*', 's.name as subject', 'c.name as course')
-                ->leftJoin('subjects as s', 's.id', '=', 'q.class_id')
+                ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id')
                 ->leftJoin('courses as c', 'c.id', '=', 'q.course_id');
 
-            if ($request->classId !== null && $request->classId !== 'undefined') {
-                $assessmentQuestions->where('q.class_id', $request->classId);
+            if ($request->courseId !== null && $request->courseId !== 'undefined') {
+                $assessmentQuestions->where('q.course_id', $request->courseId);
             }
 
             if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
@@ -70,7 +70,7 @@ class AssessmentQuestionController extends BaseController
             'option_three' => 'required|string',
             'option_four' => 'required|string',
             'answer_key' => 'required|in:option_one,option_two,option_three,option_four',
-            'selectedClass' => 'required|exists:classes,id',
+            'selectedCourse' => 'required|exists:courses,id',
             'selectedSubject' => 'required|exists:subjects,id',
         ], [
             'answer_key' => 'Please select a valid option as the answer key.',
@@ -88,7 +88,7 @@ class AssessmentQuestionController extends BaseController
             $assessmentQuestion->option_three = $request->option_three;
             $assessmentQuestion->option_four = $request->option_four;
             $assessmentQuestion->answer_key = $request->answer_key;
-            $assessmentQuestion->class_id = $request->selectedClass;
+            $assessmentQuestion->course_id = $request->selectedCourse;
             $assessmentQuestion->subject_id = $request->selectedSubject;
             $assessmentQuestion->save();
         }
@@ -112,7 +112,7 @@ class AssessmentQuestionController extends BaseController
             'option_three' => 'required|string',
             'option_four' => 'required|string',
             'answer_key' => 'required|in:option_one,option_two,option_three,option_four',
-            'selectedClass' => 'required|exists:classes,id',
+            'selectedCourse' => 'required|exists:courses,id',
             'selectedSubject' => 'required|exists:subjects,id',
         ], [
             'answer_key' => 'Please select a valid option as the answer key.',
@@ -134,7 +134,7 @@ class AssessmentQuestionController extends BaseController
             $assessmentQuestion->option_three = $request->option_three;
             $assessmentQuestion->option_four = $request->option_four;
             $assessmentQuestion->answer_key = $request->answer_key;
-            $assessmentQuestion->class_id = $request->selectedClass;
+            $assessmentQuestion->course_id = $request->selectedCourse;
             $assessmentQuestion->subject_id = $request->selectedSubject;
             $assessmentQuestion->save();
         }

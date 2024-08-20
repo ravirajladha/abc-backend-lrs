@@ -7,10 +7,11 @@ use App\Models\Subject;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Services\Admin\ResultService;
+use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\Api\BaseController;
 
 //checked
 class SubjectController extends BaseController
@@ -22,6 +23,12 @@ class SubjectController extends BaseController
      */
     public function getSubjectsList()
     {
+
+        $loggedUserId = $this->getLoggedUserId();
+    
+
+        Log::info('Received subjectId:', ['subjectId' => $loggedUserId]);
+
         $subjects = Subject::orderBy('position')->orderBy('created_at')->get();
         return $this->sendResponse(['subjects' => $subjects]);
     }
@@ -48,8 +55,10 @@ class SubjectController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
             $subject = new Subject;
             $subject->name = $request->subject_name;
+            $subject->created_by = $loggedUserId;
             $subject->save();
         }
         return $this->sendResponse([], 'Subject added successfully');
@@ -78,36 +87,58 @@ class SubjectController extends BaseController
      *
      */
     public function updateSubjectDetails(Request $request, $subjectId)
-{
-    $validator = Validator::make(
-        array_merge($request->all(), ['subjectId' => $subjectId]),
-        [
-            'subjectId' => 'required|exists:subjects,id',
-            'subject_name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('subjectId', 'name')->ignore($subjectId),
-            ],
-            'status' => 'required|boolean',
-            'position' => 'required|integer',
-        ]
-    );
+    {
+        try {
+            // Validate the request data
+            $validator = Validator::make(
+                array_merge($request->all(), ['subjectId' => $subjectId]),
+                [
+                    'subjectId' => 'required|exists:subjects,id',
+                    'subject_name' => [
+                        'required',
+                        'string',
+                        'max:255',
+                        Rule::unique('subjects', 'name')->ignore($subjectId),
+                    ],
+                    'status' => 'required|boolean',
+                    'position' => 'required|integer',
+                ]
+            );
+    
+            // If validation fails, return the validation error response
+            if ($validator->fails()) {
+                return $this->sendValidationError($validator);
+            }
+    
+            // Find the subject by ID
+            $subject = Subject::find($subjectId);
+    
+            // If subject is not found, return an error response
+            if (!$subject) {
+                return $this->sendError('Subject not found!', 404);
+            }
+            $loggedUserId = $this->getLoggedUserId();
+   
 
-    if ($validator->fails()) {
-        return $this->sendValidationError($validator);
-    } else {
-        $subject = Subject::find($subjectId);
-        $subject->update([
-            'name' => $request->subject_name,
-            'status' => $request->status,
-            'position' => $request->position,
-        ]);
+            // Update the subject details
+            $subject->update([
+                'name' => $request->subject_name,
+                'status' => $request->status,
+                'position' => $request->position,
+                'updated_by' => $loggedUserId,
+            ]);
+    
+            // Return the updated subject data in the response
+            return $this->sendResponse(['subject' => $subject], 'Subject updated successfully');
+        } catch (\Exception $e) {
+            // Log the error message for debugging
+            \Log::error('Error updating subject: ' . $e->getMessage());
+    
+            // Return a general error response
+            return $this->sendError('An error occurred while updating the subject', 500);
+        }
     }
-
-    return $this->sendResponse(['subject' => $subject], 'Subject updated successfully');
-}
-
+    
 
     /**
      * Remove the specified subject from storage.

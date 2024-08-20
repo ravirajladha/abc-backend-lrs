@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Assessment;
-use App\Models\AssessmentQuestion;
-use App\Models\AssessmentResult;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use App\Models\Video;
+use App\Models\Assessment;
+use Illuminate\Http\Request;
+use App\Models\AssessmentResult;
+use App\Models\AssessmentQuestion;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class AssessmentController extends BaseController
 {
@@ -74,6 +75,9 @@ class AssessmentController extends BaseController
      */
     public function storeAssessmentDetails(Request $request)
     {
+        // Log the incoming request data
+        Log::info('Store Assessment Details - Incoming Request:', $request->all());
+    
         $validator = Validator::make($request->all(), [
             'assessmentName' => 'required|string|max:255',
             'noOfQuestions' => 'required|integer',
@@ -81,8 +85,10 @@ class AssessmentController extends BaseController
             'selectedSubject' => 'required|exists:subjects,id',
             'selectedCourse' => 'required|exists:courses,id',
         ]);
-
+    
         if ($validator->fails()) {
+            // Log validation errors
+            Log::warning('Store Assessment Details - Validation Failed:', $validator->errors()->toArray());
             return $this->sendValidationError($validator);
         } else {
             $assessment = new Assessment();
@@ -94,9 +100,16 @@ class AssessmentController extends BaseController
             $assessment->passing_percentage = $request->passingPercentage;
             $assessment->description = $request->description;
             $assessment->question_ids = implode(',', $request->selectedQuestions);
+    
+            // Log the assessment object before saving
+            Log::info('Store Assessment Details - Assessment Object:', $assessment->toArray());
+    
             $assessment->save();
+    
+            // Log a success message after saving
+            Log::info('Store Assessment Details - Assessment Saved Successfully:', ['assessment_id' => $assessment->id]);
         }
-
+    
         return $this->sendResponse([], 'Assessment added successfully');
     }
 
@@ -168,7 +181,7 @@ class AssessmentController extends BaseController
      */ public function getAssessmentDetailsWithQuestions($assessmentId)
     {
         $assessment = DB::table('assessments as a')
-            ->select('a.id', 'a.subject_id', 'a.course_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.passing_percentage', 'a.no_of_questions', 'c.name as class', 'cou.name as course', 'a.question_ids')
+            ->select('a.id', 'a.subject_id', 'a.course_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.passing_percentage', 'a.no_of_questions', 'cou.name as course', 'cou.name as course', 'a.question_ids')
             ->leftJoin('subjects as s', 's.id', '=', 'a.subject_id')
             ->leftJoin('courses as cou', 'cou.id', '=', 'a.course_id')
             ->where('a.id', $assessmentId)

@@ -20,30 +20,53 @@ class TestController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
+
+
     public function getAllTests(Request $request)
     {
-        $userType = $request->attributes->get('type');
-        // if ($userType === 'admin') {
-        $tests = DB::table('tests as t')
-            ->select('t.*', 's.name as subject', 'cou.name as course')
-            ->leftJoin('subject as s', 's.id', '=', 't.subject_id')
-            ->leftJoin('courses as cou', 'cou.id', '=', 't.course_id');
-
-        if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
-            $tests->where('t.subject_id', $request->subjectId);
+        try {
+            $userType = $request->attributes->get('type');
+            // Uncomment the following line if you need to restrict access based on user type
+            // if ($userType === 'admin') {
+            
+            // Start building the query
+            $tests = DB::table('tests as t')
+                ->select('t.*', 's.name as subject', 'cou.name as course')
+                ->leftJoin('subjects as s', 's.id', '=', 't.subject_id')
+                ->leftJoin('courses as cou', 'cou.id', '=', 't.course_id');
+    
+            // Apply filters if available
+            if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
+                $tests->where('t.subject_id', $request->subjectId);
+            }
+    
+            if ($request->courseId !== null && $request->courseId !== 'undefined') {
+                $tests->where('t.course_id', $request->courseId);
+            }
+    
+            // Log the SQL query before execution
+            Log::info('SQL Query:', ['query' => $tests->toSql(), 'bindings' => $tests->getBindings()]);
+    
+            // Execute the query
+            $tests = $tests->get();
+    
+            // Log the query result
+            Log::info('Query Result:', ['tests' => $tests]);
+    
+            return $this->sendResponse(['tests' => $tests]);
+            
+            // } else {
+            //     return $this->sendAuthError("Not authorized to fetch tests list.");
+            // }
+        } catch (\Exception $e) {
+            // Log the exception message
+            Log::error('Error fetching tests:', ['message' => $e->getMessage()]);
+            
+            // Return an error response
+            return $this->sendResponse([], 'Error fetching tests', false, 500);
         }
-
-        if ($request->courseId !== null && $request->courseId !== 'undefined') {
-            $tests->where('t.course_id', $request->courseId);
-        }
-
-        $tests = $tests->get();
-
-        return $this->sendResponse(['tests' => $tests]);
-        // } else {
-        //     return $this->sendAuthError("Not authorized fetch tests list.");
-        // }
     }
+    
 
 
     public function showTestResults(Request $request, $testId)
@@ -51,7 +74,7 @@ class TestController extends BaseController
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
             $results = DB::table('students as s')
-                ->select('r.*', 's.name as student_name', 's.section_id')
+                ->select('r.*', 's.name as student_name')
                 ->leftJoin('test_results as r', 'r.student_id', 's.id')
                 ->where('r.test_id', $testId)
                 ->orderBy('s.name', 'asc')
@@ -195,7 +218,7 @@ class TestController extends BaseController
 
         return $this->sendResponse(['test' => $test]);
     }
-    //new test method to retirve the test details with the token
+    //new test method to retrieve the test details with the token
     //update the token status also so that no one can take the test again
 
     public function getTestDetailsByToken(Request $request, $token, $testId)

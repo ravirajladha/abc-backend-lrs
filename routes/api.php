@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Auth\RefreshController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\ProjectReportController;
 use Illuminate\Support\Facades\Response;
+
 /*
 |
 |------------------------------------------------------------------------
@@ -96,22 +97,12 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     require __DIR__ . '/parent.php';
     require __DIR__ . '/recruiter.php';
 
-
     //Classes Routes
     Route::get('/classes', [SubjectController::class, 'getClassesList']);
     Route::get('/classes/{classId}', [SubjectController::class, 'getClassDetails']);
     Route::get('/classes/{classId}/results', [SubjectController::class, 'getClassResults']);
 
-    //Section Routes
 
-    //Subject Routes
-    Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
-    // Route::get('/classes/{classId}/subjects', [SubjectController::class, 'getSubjectListByClassId']);
-    Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
-    Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
 
-    //Chapter Routes
-    Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
-    Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
-    Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
+ 
 });

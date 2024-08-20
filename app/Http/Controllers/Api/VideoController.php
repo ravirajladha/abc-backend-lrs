@@ -131,8 +131,8 @@ class VideoController extends BaseController
     public function storeVideoDetails(Request $request)
     {
         $rules = [
-            'class_id' => 'required|numeric',
             'subject_id' => 'required|numeric',
+            'course_id' => 'required|numeric',
             'chapter_id' => 'required|numeric',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -145,7 +145,7 @@ class VideoController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $video = new Video();
-            $video->class_id = $request->class_id;
+            $video->course_id = $request->course_id;
             $video->subject_id = $request->subject_id;
             $video->chapter_id = $request->chapter_id;
             $video->title = $request->title;
@@ -227,8 +227,8 @@ class VideoController extends BaseController
     public function updateVideoDetails(Request $request, $videoId)
     {
         $rules = [
-            'class_id' => 'required|numeric',
             'subject_id' => 'required|numeric',
+            'course_id' => 'required|numeric',
             'chapter_id' => 'required|numeric',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -242,7 +242,7 @@ class VideoController extends BaseController
         } else {
             $video = Video::findOrFail($videoId);
 
-            $video->class_id = $request->class_id;
+            $video->course_id = $request->course_id;
             $video->subject_id = $request->subject_id;
             $video->chapter_id = $request->chapter_id;
             $video->title = $request->title;

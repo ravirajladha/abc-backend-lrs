@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Test;
 use App\Models\TestQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class TestQuestionController extends BaseController
@@ -22,31 +23,44 @@ class TestQuestionController extends BaseController
         return $this->sendResponse(['test_question' => $testQuestion], '');
     }
 
+
+
     public function getAllTestQuestions(Request $request)
     {
-
+        // Start building the query
         $testQuestions = DB::table('test_questions as q')
             ->select('q.*', 's.name as subject', 'cou.name as course')
             ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id')
             ->leftJoin('courses as cou', 'cou.id', '=', 'q.course_id');
-
+    
+        // Apply filters if available
         if ($request->subjectId !== null && $request->subjectId !== 'undefined') {
             $testQuestions->where('q.subject_id', $request->subjectId);
         }
-
+    
         if ($request->courseId !== null && $request->courseId !== 'undefined') {
             $testQuestions->where('q.course_id', $request->courseId);
         }
-
+    
+        // Log the SQL query before execution
+        Log::info('SQL Query:', ['query' => $testQuestions->toSql(), 'bindings' => $testQuestions->getBindings()]);
+    
+        // Execute the query
         $test_questions = $testQuestions->get();
-
-        if (!$testQuestions) {
+    
+        // Log the result
+        Log::info('Query Result:', ['test_questions' => $test_questions]);
+    
+        // Check if data was retrieved
+        if ($test_questions->isEmpty()) {
+            Log::warning('No test questions found');
             return $this->sendResponse([], 'Test questions not found');
         }
-
+    
+        // Return the response with data
         return $this->sendResponse(['test_questions' => $test_questions], '');
     }
-
+    
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
