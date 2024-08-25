@@ -17,36 +17,36 @@ class ExternalStudentController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getContents($subjectId)
+    public function getContents($courseId)
     {
         $studentId = DB::table('students')->where('auth_id', $this->getLoggedUserId())->value('id');
         $studentAuthId = $this->getLoggedUserId();
 
-        // Subject Details by $subjectId
-        $subject = DB::table('subjects')
-            ->select('id', 'name', 'image','subject_type','super_subject_id')
-            ->where('id', $subjectId)
+        // Course Details by $subjectId
+        $course = DB::table('courses')
+            ->select('id', 'name', 'image')
+            ->where('id', $courseId)
             ->first();
-        if($subject->subject_type == 3){
-            // get subjects related to the super subject
-            $allsubSbujects = DB::table('subjects')->where('super_subject_id', $subject->super_subject_id)->pluck('id');
-            // get chapters related to the super subject
-            $superSubjectChapters = DB::table('chapters')->whereIn('subject_id', $allsubSbujects)->pluck('id');
+        // if($subject->subject_type == 3){
+        //     // get subjects related to the super subject
+        //     $allsubSbujects = DB::table('subjects')->where('super_subject_id', $subject->super_subject_id)->pluck('id');
+        //     // get chapters related to the super subject
+        //     $superSubjectChapters = DB::table('chapters')->whereIn('subject_id', $allsubSbujects)->pluck('id');
 
-            $superSubjectChaptersCompleted = $this->areAllChaptersCompleted($studentAuthId, $superSubjectChapters);
-        }else{
-            $superSubjectChaptersCompleted = true;
-        }
+        //     $superSubjectChaptersCompleted = $this->areAllChaptersCompleted($studentAuthId, $superSubjectChapters);
+        // }else{
+        //     $superSubjectChaptersCompleted = true;
+        // }
         // Mini projects $subjectId
         $mini_projects = DB::table('mini_projects')
             ->select('id', 'name', 'image')
-            ->where('subject_id', $subjectId)
+            ->where('course_id', $courseId)
             ->get();
 
         // List of Chapters from the Subject
         $chapters = DB::table('chapters as c')
             ->select('c.id', 'c.title', 'c.image', 'c.lock_status')
-            ->where('c.subject_id', $subjectId)
+            ->where('c.course_id', $courseId)
             ->get();
 
         // List of Videos from the Subject for each Chapter
@@ -66,7 +66,7 @@ class ExternalStudentController extends BaseController
                 } else {
                     $chapter->progress_status = 0; // not started
                 }
-                $chapter->superSubjectChaptersCompleted = $superSubjectChaptersCompleted;
+                // $chapter->superSubjectChaptersCompleted = $superSubjectChaptersCompleted;
                 $chapter->completedBufferTime = false;
                 if ($chapter->progress_status == 2) {
                     // Check if today's date is greater than the date when the chapter was completed
@@ -84,7 +84,7 @@ class ExternalStudentController extends BaseController
                          ->where('vl.student_id', '=', $studentAuthId);
                 })
                 ->leftJoin('elabs as el', 'el.id', '=', 'v.elab_id')
-                ->where('v.subject_id', $subjectId)
+                ->where('v.course_id', $courseId)
                 ->where('v.chapter_id', $chapter->id)
                 ->orderBy('v.id')
                 ->get();
@@ -106,9 +106,9 @@ class ExternalStudentController extends BaseController
         $videoPlayback = DB::table('student_video_logs as logs')
             ->select('v.*', 'logs.watch_time')
             ->leftJoin('videos as v', 'v.id', 'logs.video_id')
-            ->leftJoin('subjects as sub', 'sub.id', 'v.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', 'v.course_id')
             ->where('logs.student_id', $this->getLoggedUserId())
-            ->where('v.subject_id', $subjectId)
+            ->where('v.course_id', $courseId)
             ->orderBy('logs.updated_at', 'desc')
             ->whereNotNull('logs.video_id')
             ->first();
@@ -125,7 +125,7 @@ class ExternalStudentController extends BaseController
             // Latest Video from the Subject
             $latestVideo = DB::table('videos as v')
                 ->select('v.*')
-                ->where('v.subject_id', $subjectId)
+                ->where('v.course_id', $courseId)
                 // ->orderBy('v.created_at', 'desc')
                 ->first();
 
@@ -135,14 +135,14 @@ class ExternalStudentController extends BaseController
         }
 
         // Trainer Id by $subjectId
-        $trainer = DB::table('trainer_subjects as ts')
-            ->where('ts.subject_id', $subjectId)
+        $trainer = DB::table('trainer_courses as ts')
+            ->where('ts.course_id', $courseId)
             ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
             ->first();
 
         // Final Contents Structure
         $contents = [
-            'subject' => $subject,
+            'course' => $course,
             'chapters' => $chapters,
             'video' => $video,
             'trainer' => $trainer,

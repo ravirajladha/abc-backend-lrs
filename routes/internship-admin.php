@@ -28,7 +28,6 @@ Route::prefix('internship-admin')->group(function () {
     // assessment results video wise
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResults']);
 
-
     //School Student Routes
     Route::prefix('students')->group(function () {
         Route::get('/get-public-students', [StudentController::class, 'getPublicStudentDetailsFromStudent']);

@@ -132,7 +132,7 @@ class AdminController extends BaseController
         if ($userType === 'admin') {
             $res = DB::table('auth as a')
                 ->select('s.*', 'a.email', 'a.phone_number')
-                ->leftJoin('schools as s', 's.auth_id', '=', 'a.id')
+                ->leftJoin('internship_admins as s', 's.auth_id', '=', 'a.id')
                 ->where('a.type', AuthConstants::TYPE_INTERNSHIP_ADMIN)
                 ->where('a.status', AuthConstants::STATUS_ACTIVE)->get();
             $internshipAdmins = InternshipAdmin::get();

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\School;
+use App\Models\InternshipAdmin;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\Application;
@@ -32,9 +32,9 @@ class SchoolController extends BaseController
      */
     public function getDashboard(Request $request, DashboardService $dashboardService)
     {
-        $schoolId = School::where('auth_id',  $this->getLoggedUserId())->value('id');
+        $schoolId = InternshipAdmin::where('auth_id',  $this->getLoggedUserId())->value('id');
         $userType = $request->attributes->get('type');
-        if ($userType === 'school') {
+        if ($userType === 'internship_admin') {
             $dashboard =  $dashboardService->getSchoolDashboardItems($schoolId);
             return $this->sendResponse(['dashboard' => $dashboard]);
         }
@@ -47,45 +47,71 @@ class SchoolController extends BaseController
      * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function getSchoolDetailsBySchoolId($schoolId)
+    public function getInternshipAdminDetailsByInternshipAdminId($internshipAdminId)
     {
         $res = [];
-        $validator = Validator::make(['schoolId' => $schoolId], [
-            'schoolId' => 'required|numeric',
+        
+        // Log the incoming ID
+        \Log::info('Received internshipAdminId: ' . $internshipAdminId);
+        
+        $validator = Validator::make(['internshipAdminId' => $internshipAdminId], [
+            'internshipAdminId' => 'required|numeric', // Corrected the key
         ]);
+        
         if ($validator->fails()) {
+            // Log validation errors
+            \Log::error('Validation failed: ' . json_encode($validator->errors()->all()));
             return $this->sendValidationError($validator);
         } else {
-            $auth = AuthModel::where('id', $schoolId)->where('type', AuthConstants::TYPE_SCHOOL)->first();
-            $school = School::where('auth_id', $schoolId)->first();
-            if ($auth && $school) {
+            // Log before querying AuthModel
+            \Log::info('Validation passed. Querying AuthModel...');
+            
+            $auth = AuthModel::where('id', $internshipAdminId)
+                             ->where('type', AuthConstants::TYPE_INTERNSHIP_ADMIN)
+                             ->first();
+            \Log::info('Auth result: ' . json_encode($auth));
+            
+            // Log before querying InternshipAdmin
+            \Log::info('Querying InternshipAdmin...');
+            
+            $internshipAdmin = InternshipAdmin::where('auth_id', $internshipAdminId)->first();
+            \Log::info('InternshipAdmin result: ' . json_encode($internshipAdmin));
+            
+            if ($auth && $internshipAdmin) {
                 $res = [
-                    'id' => $school->id,
-                    'auth_id' => $school->auth_id,
+                    'id' => $internshipAdmin->id,
+                    'auth_id' => $internshipAdmin->auth_id,
                     'email' => $auth->email,
-                    'name' => $school->name,
-                    'accreditation_no' => $school->accreditation_no,
-                    'logo' => $school->logo,
-                    'year_of_establishment' => $school->year_of_establishment,
-                    'legal_name' => $school->legal_name,
-                    'phone_number' => $school->phone_number,
-                    'address' => $school->address,
-                    'pincode' => $school->pincode,
-                    'city' => $school->city,
-                    'state' => $school->state,
-                    'website_url' => $school->website_url,
-                    'office_address' => $school->office_address,
-                    'description' => $school->description,
-                    'image' => $school->image,
+                    'name' => $internshipAdmin->name,
+                    'accreditation_no' => $internshipAdmin->accreditation_no,
+                    'logo' => $internshipAdmin->logo,
+                    'year_of_establishment' => $internshipAdmin->year_of_establishment,
+                    'legal_name' => $internshipAdmin->legal_name,
+                    'phone_number' => $internshipAdmin->phone_number,
+                    'address' => $internshipAdmin->address,
+                    'pincode' => $internshipAdmin->pincode,
+                    'city' => $internshipAdmin->city,
+                    'state' => $internshipAdmin->state,
+                    'website_url' => $internshipAdmin->website_url,
+                    'office_address' => $internshipAdmin->office_address,
+                    'description' => $internshipAdmin->description,
+                    'image' => $internshipAdmin->image,
                 ];
+                
+                // Log the response data before returning
+                \Log::info('Response data: ' . json_encode($res));
             }
         }
-        if ($res !== null) {
-            return $this->sendResponse(['school' => $res]);
+        
+        if (!empty($res)) {
+            \Log::info('Sending response with data.');
+            return $this->sendResponse(['internshipAdmin' => $res]);
         } else {
+            \Log::warning('No details found for Internship Admin ID: ' . $internshipAdminId);
             return $this->sendResponse([], 'No Details Found!');
         }
     }
+    
 
     /**
      * Display a details of a school.
@@ -96,12 +122,12 @@ class SchoolController extends BaseController
     public function getSchoolDetails(Request $request)
     {
         $res = [];
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        $schoolId = InternshipAdmin::where('auth_id', $this->getLoggedUserId())->value('id');
         if ($schoolId === null) {
             return $this->sendResponse([], 'Failed to fetch school details');
         } else {
-            $auth = AuthModel::where('id', $this->getLoggedUserId())->where('type', AuthConstants::TYPE_SCHOOL)->first();
-            $school = School::where('auth_id', $this->getLoggedUserId())->first();
+            $auth = AuthModel::where('id', $this->getLoggedUserId())->where('type', AuthConstants::TYPE_INTERNSHIP_ADMIN)->first();
+            $school = InternshipAdmin::where('auth_id', $this->getLoggedUserId())->first();
             if ($auth && $school) {
                 $res = [
                     'id' => $school->id,
@@ -150,7 +176,7 @@ class SchoolController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             $auth = AuthModel::find($schoolId);
-            $school = School::where('auth_id', $schoolId)->first();
+            $school = InternshipAdmin::where('auth_id', $schoolId)->first();
             if ($auth && $school) {
                 $auth->update([
                     'email' =>  $request->email,
@@ -220,7 +246,7 @@ class SchoolController extends BaseController
     {
         $resultService = new ResultService();
 
-        $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        $schoolId = InternshipAdmin::where('auth_id', $this->getLoggedUserId())->value('id');
 
         $results = $resultService->getSchoolResults($schoolId, $request->classId, $request->sectionId, $request->term);
 
@@ -229,7 +255,7 @@ class SchoolController extends BaseController
 
     public function getSchoolTeachersBySchoolId($schoolId, Request $request)
     {
-        $schoolId = School::where('auth_id', $schoolId)->value('id');
+        $schoolId = InternshipAdmin::where('auth_id', $schoolId)->value('id');
 
         $teachers = DB::table('teachers as t')
             ->select('t.id', 't.auth_id', 't.school_id', 't.name', 't.emp_id', 't.profile_image', 't.phone_number', 't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
@@ -256,7 +282,7 @@ class SchoolController extends BaseController
 
     public function getSchoolStudentsBySchoolId($schoolId, Request $request)
     {
-        $schoolId = School::where('auth_id', $schoolId)->value('id');
+        $schoolId = InternshipAdmin::where('auth_id', $schoolId)->value('id');
 
         $students = DB::table('students as s')
             ->select('s.*', 'a.*', 'c.name as class', 'sec.name as section', 's.id as student_id')
@@ -267,9 +293,5 @@ class SchoolController extends BaseController
         return $this->sendResponse(['students' => $students]);
     }
 
-    public function getSchoolApplicationsBySchoolId($schoolId, Request $request)
-    {
-        $applications = Application::with('remarks')->get();
-        return $this->sendResponse(['applications' => $applications]);
-    }
+  
 }

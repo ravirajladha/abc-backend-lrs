@@ -21,14 +21,14 @@ class QnaController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getQnaBySubject($studentId, $trainerId, $courseId = null)
+    public function getQnaByCourse($studentId, $trainerId, $courseId = null)
     {
         if ($courseId) {
             $trainer = DB::table('trainer_courses')
                 ->where('course_id', $courseId)
                 ->first();
-            $sent_messages = QnaLog::where('sender_id', $studentId)->where('receiver_id', $trainerId)->where('subject_id',$courseId)->get();
-            $received_messages = QnaLog::where('sender_id', $trainerId)->where('receiver_id', $studentId)->where('subject_id',$courseId)->get();
+            $sent_messages = QnaLog::where('sender_id', $studentId)->where('receiver_id', $trainerId)->where('course_id',$courseId)->get();
+            $received_messages = QnaLog::where('sender_id', $trainerId)->where('receiver_id', $studentId)->where('course_id',$courseId)->get();
         }else{
             $sent_messages = QnaLog::where('sender_id', $studentId)->where('receiver_id', $trainerId)->get();
             $received_messages = QnaLog::where('sender_id', $trainerId)->where('receiver_id', $studentId)->get();
@@ -50,7 +50,7 @@ class QnaController extends BaseController
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
-     */ public function storeQnaByClass(Request $request)
+     */ public function storeQnaBySubject(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string',
@@ -65,7 +65,7 @@ class QnaController extends BaseController
             if ($qna) {
                 // When the qna exists, send the answer from the trainer + store the answer to qna_log
                 $this->saveQnaLog($request->course_id, $qna->id, $qna->question, $request->student_id,  $request->trainer_id);
-                $this->saveQnaLog($request->subject_id, $qna->id, $qna->answer,  $request->trainer_id, $request->student_id);
+                $this->saveQnaLog($request->course_id, $qna->id, $qna->answer,  $request->trainer_id, $request->student_id);
                 return $this->sendResponse(['message' => $qna->answer], 'Message sent successfully');
             } else {
                 //Id from their table

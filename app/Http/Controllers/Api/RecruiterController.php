@@ -85,7 +85,7 @@ class RecruiterController extends BaseController
             // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
             $recruiters = DB::table('recruiters as t')
-                ->select('t.id', 't.auth_id', 't.name', 't.profile_image', 't.phone_number', 't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
+                ->select('t.id', 't.auth_id', 't.name', 't.profile_image','t.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
                 ->join('auth as a', 't.auth_id', '=', 'a.id')
                 ->get();
 

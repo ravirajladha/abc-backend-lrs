@@ -33,7 +33,7 @@ class TestService
                 ->select(DB::raw('SUM(t.total_score) as total_term_marks'))
                 ->leftJoin('test_results as r', 'r.test_id', 't.id')
                 ->where('r.student_id', $studentId)
-                ->where('t.class_id', $subject->id)
+                ->where('t.subject_id', $subject->id)
                 ->value('total_term_marks');
 
             // Add the class total to the overall total

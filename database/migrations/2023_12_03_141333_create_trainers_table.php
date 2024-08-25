@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
             $table->string('emp_id');
+            $table->string('name')->nullable();
             $table->string('profile_image')->nullable();
             $table->string('alternate_number')->nullable();
             $table->date('doj')->nullable();

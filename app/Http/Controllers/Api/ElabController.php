@@ -35,18 +35,30 @@ class ElabController extends BaseController
     }
 
 
-    public function fetchSelectedActiveElabs($subjectId, $courseId = null)
-{
-    $query = Elab::where('active', 1)->where('subject_id', $subjectId);
-
-    if ($subjectId !== null) {
-        $query->where('course_id', $courseId);
+    public function fetchActiveElabsForSubject($subjectId)
+    {
+        // Start building the query
+        $query = Elab::where('active', 1)
+                     ->where('subject_id', $subjectId);
+    
+        // Log the SQL query for debugging
+        \Log::info('SQL Query: ' . $query->toSql());
+    
+        // Get the query bindings
+        $bindings = $query->getBindings();
+        \Log::info('Bindings: ', $bindings);
+    
+        // Execute the query and get results
+        $elabs = $query->get();
+    
+        // Log the fetched results
+        \Log::info('Fetched Elabs: ', $elabs->toArray());
+    
+        // Return the response
+        return $this->sendResponse(['elabs' => $elabs]);
     }
-
-    $elabs = $query->get();
-
-    return $this->sendResponse(['elabs' => $elabs]);
-}
+    
+    
 
     /**
      * Show the form for creating a new resource.
@@ -81,6 +93,9 @@ class ElabController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+
+            $loggedUserId = $this->getLoggedUserId();
+
             $lab = new Elab;
             $lab->title = $request->elabName;
             // $lab->code = $request->code;
@@ -96,6 +111,7 @@ class ElabController extends BaseController
             $lab->template2 = $request->template2;
             $lab->data_harness_code = $request->dataHarnessCode;
             $lab->code_language = $request->selectedLanguage;
+            $lab->created_by = $loggedUserId;
             // Set any other properties on $lab as needed
             $lab->save(); // Save the new lab to the database
             // Return a response or redirect
@@ -217,6 +233,12 @@ class ElabController extends BaseController
             // Handle file uploads for school_image and logo (if necessary)
             // You may need to adjust this part based on your file handling logic
             // Update eLab details
+
+            $loggedUserId = $this->getLoggedUserId();
+     
+
+
+
             $lab = Elab::find($elabId);
             $lab->title = $request->elabName;
             // $lab->code = $request->code;
@@ -232,6 +254,7 @@ class ElabController extends BaseController
             $lab->template2 = $request->template2;
             $lab->data_harness_code = $request->dataHarnessCode;
             $lab->code_language = $request->selectedLanguage;
+            $lab->updated_by = $loggedUserId;
             $lab->active = $request->active;
             $lab->save();
 
@@ -269,29 +292,8 @@ class ElabController extends BaseController
         $elab->active = $request->input('status');
         $elab->save();
 
-        // $videos = Video::where('elab_id', $elabId)->get();
-
-        // foreach ($videos as $video) {
-        //     $video->elab_status = $request->input('status');
-        //     $video->save();
-        // }
-
         return $this->sendResponse([], 'Elab status updated successfully');
     }
-
-
-
-    // /**
-    //  * Remove the specified resource from storage.
-    //  *
-    //  * @param  \App\Models\Elab  $elab
-    //  * @return \Illuminate\Http\Response
-    //  */
-    // public function destroy(Elab $elab)
-    // {
-    //     //
-    // }
-
 
     /**
      * Display a details of a elab through id for student learning page.

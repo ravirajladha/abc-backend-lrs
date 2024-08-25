@@ -38,7 +38,7 @@ class StudentController extends BaseController
     public function getDashboard(Request $request, DashboardService $dashboardService)
     {
         $userType = $request->attributes->get('type');
-        if ($userType === 'parent' || $userType = 'student') {
+        if ( $userType == 'student') {
             $dashboard =  $dashboardService->getStudentDashboardItems($request->studentId);
             return $this->sendResponse(['dashboard' => $dashboard]);
         } else {

@@ -43,52 +43,51 @@ class DashboardService
 
         $total_watch_time = StudentVideoLog::where('student_id', $studentAuthId)->sum('watch_time');
 
-        $videoStartedCountBySubject = DB::table('student_video_logs as logs')
+        $videoStartedCountByCourse = DB::table('student_video_logs as logs')
             ->select(
-                'sub.name as subject_name',
-                'v.subject_id as subject_id',
+                'cou.name as course_name',
+                'v.course_id as course_id',
                 DB::raw('COUNT(DISTINCT logs.video_id) as started_videos')
             )
             ->leftJoin('videos as v', 'v.id', 'logs.video_id')
-            ->leftJoin('subjects as sub', 'sub.id', 'v.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', 'v.course_id')
             ->where('logs.student_id', $studentAuthId)
-            ->groupBy('v.subject_id')
-            ->groupBy('sub.name')
+            ->groupBy('v.course_id')
+            ->groupBy('cou.name')
             ->get();
 
-        $totalVideosByClass = DB::table('videos as v')
+        $totalVideosByCourse= DB::table('videos as v')
             ->select(
-                'c.subject_id as subject_id',
-                DB::raw('MAX(sub.name) as subject_name'),
+                'c.course_id as course_id',
+                DB::raw('MAX(cou.name) as course_name'),
                 DB::raw('COUNT(DISTINCT v.id) as total_videos')
             )
             ->leftJoin('chapters as c', 'c.id', 'v.chapter_id')
-            ->leftJoin('subjects as sub', 'sub.id', 'c.subject_id')
-            // ->where('c.class_id', $student->class_id)
-            ->groupBy('c.subject_id')
+            ->leftJoin('courses as cou', 'cou.id', 'c.course_id')
+            ->groupBy('c.course_id')
             ->get();
 
         $videoStats = [];
 
         $indexedStartedVideos = [];
 
-        foreach ($videoStartedCountBySubject as $startedVideo) {
-            $indexedStartedVideos[$startedVideo->subject_id] = $startedVideo;
+        foreach ($videoStartedCountByCourse as $startedVideo) {
+            $indexedStartedVideos[$startedVideo->course_id] = $startedVideo;
         }
 
-        foreach ($totalVideosByClass as $totalVideo) {
-            $subjectId = $totalVideo->subject_id;
-            if (isset($indexedStartedVideos[$subjectId])) {
+        foreach ($totalVideosByCourse as $totalVideo) {
+            $courseId = $totalVideo->course_id;
+            if (isset($indexedStartedVideos[$courseId])) {
                 $videoStats[] = (object)[
-                    'subject_id' => $subjectId,
-                    'subject_name' => $indexedStartedVideos[$subjectId]->subject_name,
-                    'started_video_count' => $indexedStartedVideos[$subjectId]->started_videos,
+                    'course_id' => $courseId,
+                    'course_name' => $indexedStartedVideos[$courseId]->course_name,
+                    'started_video_count' => $indexedStartedVideos[$courseId]->started_videos,
                     'total_video_count' => $totalVideo->total_videos,
                 ];
             } else {
                 $videoStats[] = (object)[
-                    'subject_id' => $subjectId,
-                    'subject_name' => $totalVideo->subject_name,
+                    'course_id' => $courseId,
+                    'course_name' => $totalVideo->course_name,
                     'started_video_count' => 0,
                     'total_video_count' => $totalVideo->total_videos,
                 ];
@@ -97,12 +96,12 @@ class DashboardService
 
         $resultService = new ResultService();
 
-        $firstTermResult = $resultService->getTestTotalResult($studentAuthId);
+        $testResult = $resultService->getTestTotalResult($studentAuthId);
         // $secondTermResult = $resultService->getTermTestTotalResult($studentAuthId, TermTestConstants::SECOND_TERM);
         // $thirdTermResult = $resultService->getTermTestTotalResult($studentAuthId, TermTestConstants::THIRD_TERM);
 
         $testService = new TestService();
-        $firstTermTotalMarks = $testService->getTestTotalMarks($studentAuthId);
+        $testTotalMarks = $testService->getTestTotalMarks($studentAuthId);
         // $secondTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::SECOND_TERM);
         // $thirdTermTotalMarks = $termTestService->getTermTestTotalMarks($classId, TermTestConstants::THIRD_TERM);
 
@@ -119,12 +118,8 @@ class DashboardService
             'video_stats' => !empty($videoStats) ? $videoStats : null,
             'total_watch_time' => !empty($total_watch_time) ?  $dateTimeHelper->formatTime($total_watch_time) : null,
             'avg_assessment_score' => $avg_assessment_score !== null ? ($avg_assessment_score !== 0.00 ? number_format(round($avg_assessment_score, 2), 2) : '0.00') : null,
-            'first_term_results' => $firstTermResult !== 0 ? $firstTermResult : 0,
-            'first_term_total_marks' => $firstTermTotalMarks !== 0 ? $firstTermTotalMarks : null,
-            // 'second_term_results' => $secondTermResult !== 0 ? $secondTermResult : 0,
-            // 'second_term_total_marks' => $secondTermTotalMarks !== 0 ? $secondTermTotalMarks : null,
-            // 'third_term_results' => $thirdTermResult !== 0 ? $thirdTermResult : 0,
-            // 'third_term_total_marks' => $thirdTermTotalMarks !== 0 ? $thirdTermTotalMarks : null,
+            'test_results' => $testResult !== 0 ? $testResult : 0,
+            'test_total_marks' => $testTotalMarks !== 0 ? $testTotalMarks : null,
             'zoomCall' => $zoomCall,
         ];
 

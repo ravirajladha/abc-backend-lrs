@@ -221,11 +221,13 @@ public function getInternshipsForStudent(Request $request)
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
             $internship = new Internship();
             $internship->name = $request->name;
             $internship->description = $request->description;
             $internship->subject_id = $request->subject;
             // $internship->subject_id = $request->subject;
+            $internship->created_by = $loggedUserId;
 
             if (!empty($request->file('image'))) {
                 $extension = $request->file('image')->extension();
@@ -260,12 +262,13 @@ public function getInternshipsForStudent(Request $request)
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
             $internship = new InternshipTask();
             $internship->name = $request->name;
             $internship->elab_id = $request->elabId;
             $internship->internship_id = $request->internshipId;
             $internship->description = $request->description;
-
+            $internship->created_by = $loggedUserId;
             if ($internship->save()) {
                 return $this->sendResponse([], 'Internship task created successfully.');
             } else {
@@ -502,7 +505,8 @@ public function getInternshipsForStudent(Request $request)
         $internship->name = $request->name;
         $internship->description = $request->description;
         $internship->is_active = $request->is_active;
-
+        $loggedUserId = $this->getLoggedUserId();
+        $internship->updated_by = $loggedUserId;
         if ($request->hasFile('image')) {
             // Delete the previous image if it exists
             if ($internship->image) {
@@ -568,6 +572,8 @@ public function getInternshipsForStudent(Request $request)
         $internshipTask->elab_id = $request->elabId;
         $internshipTask->description = $request->description;
         $internshipTask->is_active = $request->is_active;
+        $loggedUserId = $this->getLoggedUserId();
+        $internshipTask->updated_by = $loggedUserId;
         $internshipTask->save();
 
         return $this->sendResponse(['internshipTask' => $internshipTask], 'Mini Project updated successfully');

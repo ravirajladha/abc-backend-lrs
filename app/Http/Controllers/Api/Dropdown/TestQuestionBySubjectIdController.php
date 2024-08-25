@@ -19,6 +19,6 @@ class TestQuestionBySubjectIdController extends BaseController
         $subjectIds = explode(',', $request->query('subjectIds'));
         $questions = JobQuestion::whereIn('subject_id', $subjectIds)->get();
         $questionCount = $questions->count();
-        return $this->sendResponse(['questions' => $questions, 'term_question_count' => $questionCount]);
+        return $this->sendResponse(['questions' => $questions, 'question_count' => $questionCount]);
     }
 }

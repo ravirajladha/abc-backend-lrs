@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('internship_admins', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
+            $table->string('name', 255)->nullable();
             $table->string('profile_image', 64)->nullable();
             $table->string('alternate_number')->nullable();
-
             $table->string('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
@@ -27,7 +27,6 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
 
-        
             $table->timestamps();
         });
     }

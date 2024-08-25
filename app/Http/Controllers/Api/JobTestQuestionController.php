@@ -60,6 +60,8 @@ class JobTestQuestionController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
+        $loggedUserId = $this->getLoggedUserId();
+
 
         $test = new JobQuestion();
         // $test->subject_id = $request->selectedSubject;
@@ -73,6 +75,7 @@ class JobTestQuestionController extends BaseController
         $test->option_three = $request->option_three;
         $test->option_four = $request->option_four;
         $test->answer_key = $request->answer_key;
+        $test->created_by = $loggedUserId;
         $test->save();
 
         return $this->sendResponse(['test' => $test], 'Test question created successfully');
@@ -101,6 +104,8 @@ class JobTestQuestionController extends BaseController
         if (!$test) {
             return $this->sendError('Term test question not found');
         }
+        $loggedUserId = $this->getLoggedUserId();
+       
 
         $test->subject_id = $request->selectedSubject;
         $test->question = $request->question;
@@ -112,6 +117,7 @@ class JobTestQuestionController extends BaseController
         $test->option_three = $request->option_three;
         $test->option_four = $request->option_four;
         $test->answer_key = $request->answer_key;
+        $test->updated_by = $loggedUserId;
         $test->save();
 
         return $this->sendResponse($test, 'Job test question updated successfully');

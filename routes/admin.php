@@ -46,67 +46,65 @@ Route::prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'getDashboard']);
 
     //School Routes, is pending currently
-    Route::get('/schools', [AdminController::class, 'getSchoolsList']);
-    Route::get('/public-schools', [AdminController::class, 'getPublicSchoolsList']);
-    Route::get('/private-schools', [AdminController::class, 'getPrivateSchoolsList']);
-    Route::get('/schools/{schoolId}', [SchoolController::class, 'getSchoolDetailsBySchoolId']);
-    Route::get('/schools/{schoolId}/trainers', [SchoolController::class, 'getSchoolTrainersBySchoolId']);
-    Route::get('/schools/{schoolId}/students', [SchoolController::class, 'getSchoolStudentsBySchoolId']);
-    Route::get('/schools/{schoolId}/applications', [SchoolController::class, 'getSchoolApplicationsBySchoolId']);
-    Route::post('/schools/store', [AdminController::class, 'storeSchoolDetails']);
-    Route::put('/schools/{schoolId}/update', [SchoolController::class, 'updateSchoolDetails']);
+    Route::get('/internshipAdmins', [AdminController::class, 'getInternshipAdminsList']);
+    Route::get('/public-internshipAdmins', [AdminController::class, 'getPublicSchoolsList']);
+    Route::get('/private-internshipAdmins', [AdminController::class, 'getPrivateSchoolsList']);
+    Route::get('/internshipAdmins/{internshipAdminId}', [SchoolController::class, 'getInternshipAdminDetailsByInternshipAdminId']);
+    Route::get('/internshipAdmins/{internshipAdminId}/trainers', [SchoolController::class, 'getSchoolTrainersBySchoolId']);
+    Route::get('/internshipAdmins/{internshipAdminId}/students', [SchoolController::class, 'getSchoolStudentsByInternshipAdminId']);
+    Route::post('/internshipAdmins/store', [AdminController::class, 'storeInternshipAdminDetails']);
+    Route::put('/internshipAdmins/{internshipAdminId}/update', [SchoolController::class, 'updateSchoolDetails']);
 
-      // Retrieve a list of subjects
-Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
+    // Retrieve a list of subjects
+    Route::get('/subjects', [SubjectController::class, 'getSubjectsList']);
 
-// Retrieve details of a specific subject
-Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
+    // Retrieve details of a specific subject
+    Route::get('/subjects/{subjectId}', [SubjectController::class, 'getSubjectDetails']);
 
-// Retrieve results associated with a specific subject
-Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
+    // Retrieve results associated with a specific subject
+    Route::get('/subjects/{subjectId}/results', [SubjectController::class, 'getSubjectResults']);
 
-// Create a new subject
-Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
+    // Create a new subject
+    Route::post('/subject/store', [SubjectController::class, 'storeSubjectDetails']);
 
-// Update details of an existing subject
-Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
+    // Update details of an existing subject
+    Route::put('/subject/{subjectId}/update', [SubjectController::class, 'updateSubjectDetails']);
 
-// Delete a subject
-Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
+    // Delete a subject
+    Route::delete('/subject/{subjectId}/delete', [SubjectController::class, 'deleteSubjectDetails']);
 
+    // Retrieve a list of courses associated with a specific subject
+    Route::get('/subjects/{subjectId}/courses', [CourseController::class, 'getCourseListBySubjectId']);
 
-// Retrieve a list of courses associated with a specific subject
-Route::get('/subjects/{subjectId}/courses', [CourseController::class, 'getCourseListBySubjectId']);
+    // Retrieve details of a specific course
+    Route::get('/courses/{courseId}', [CourseController::class, 'getCourseDetails']);
 
-// Retrieve details of a specific course
-Route::get('/courses/{courseId}', [CourseController::class, 'getCourseDetails']);
+    // Create a new course
+    Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
 
-// Create a new course
-Route::post('/courses/store', [CourseController::class, 'storeCourseDetails']);
+    // Update details of an existing course
+    Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
 
-// Update details of an existing course
-Route::put('/courses/{courseId}/update', [CourseController::class, 'updateCourseDetails']);
+    // Delete a course
+    Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
 
-// Delete a course
-Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
+    // Retrieve a list of chapters associated with a specific course (and subject)
+    Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
 
-// Retrieve a list of chapters associated with a specific course (and subject)
-Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
+    // Retrieve a list of chapters associated with a specific subject (without specifying course)
+    Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
 
-// Retrieve a list of chapters associated with a specific subject (without specifying course)
-Route::get('/subjects/{subjectId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
+    // Retrieve details of a specific chapter
+    Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
 
-// Retrieve details of a specific chapter
-Route::get('/chapters/{chapterId}', [ChapterController::class, 'getChapterDetails']);
+    // Create a new chapter
+    Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
 
-// Create a new chapter
-Route::post('/chapters/store', [ChapterController::class, 'storeChapterDetails']);
+    // Update details of an existing chapter
+    Route::put('/chapters/{chapterId}/update', [ChapterController::class, 'updateChapterDetails']);
 
-// Update details of an existing chapter
-Route::put('/chapters/{chapterId}/update', [ChapterController::class, 'updateChapterDetails']);
-
-// Delete a chapter
-Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'deleteChapterDetails']);
+    // Delete a chapter
+    Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'deleteChapterDetails']);
 
 
     //eBook Routes
@@ -217,6 +215,7 @@ Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'delete
         Route::get('/', [ReadableCoursesController::class, 'getAllReadableCourses']);
         Route::post('/store', [ReadableCoursesController::class, 'storeReadableCourse']);
     });
+    
     //eLab Routes
     Route::prefix('elabs')->group(function () {
         Route::get('/get-elab-participant/{elabId}', [ElabController::class, 'getElabParticipants']);
@@ -224,8 +223,9 @@ Route::delete('/chapters/{chapterId}/delete', [ChapterController::class, 'delete
         Route::delete('/delete-elab-participant-codebase/{id}/delete', [ElabController::class, 'deleteElabParticipantCodebase']);
         Route::get('/submission/{userId}/{elabId}', [ElabController::class, 'getElabSubmissionByStudent']);
         Route::get('/get-active-elabs', [ElabController::class, 'getActiveElabs']);
-        Route::get('/get-selected-active-elabs/{subjectId}/{courseId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
-        Route::get('/get-selected-active-elabs-without-course/{subjectId}/{courseId?}', [ElabController::class, 'fetchSelectedActiveElabs']);
+        Route::get('/get-selected-active-elabs/{subjectId}/{courseId?}', [ElabController::class, 'fetchActiveElabsForSubject']);
+        Route::get('/get-active-elabs-for-subject/{subjectId}', [ElabController::class, 'fetchActiveElabsForSubject']);
+
         Route::get('/', [ElabController::class, 'getElabList']);
         Route::post('/store', [ElabController::class, 'storeElabDetails']);
         Route::get('/{elabId}/{studentId?}', [ElabController::class, 'getElabDetailsByElabId']);

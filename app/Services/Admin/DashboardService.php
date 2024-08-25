@@ -8,12 +8,12 @@ class DashboardService
 {
     public function getAdminDashboardItems()
     {
-        $schools = DB::table('schools')->count();
-        $classes = DB::table('classes')->count();
+        $schools = DB::table('internship_admins')->count();
+        $courses = DB::table('courses')->count();
         $subjects = DB::table('subjects')->count();
         $videos = DB::table('videos')->count();
         $assessments = DB::table('assessments')->count();
-        $tests = DB::table('term_tests')->count();
+        $tests = DB::table('tests')->count();
         $elabs = DB::table('elabs')->count();
         $ebooks = DB::table('ebooks')->count();
         $mini_projects = DB::table('mini_projects')->count();
@@ -25,12 +25,12 @@ class DashboardService
         $job_tests = DB::table('job_tests')->count();
         $subscribed_students = DB::table('students')->where('is_paid', true)->count();
         $unsubscribed_students = DB::table('students')->where('is_paid', false)->count();
-        $trainers = DB::table('trainer')->count();
+        $trainers = DB::table('trainers')->count();
 
 
         $res = [
             'schools' => $schools,
-            'class' => $classes,
+            'class' => $courses,
             'subjects' => $subjects,
             'videos' => $videos,
             'assessments' => $assessments,

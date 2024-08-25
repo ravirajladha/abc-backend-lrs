@@ -12,47 +12,13 @@ use App\Http\Constants\TermTestConstants;
 class ResultService
 {
 
-    public function getCourseResults1($studentId, $subjectId)
-    {
-        $results = [];
-
-        $courses = DB::table('courses as c')
-            ->select('c.id', 'c.name', 'c.image')
-            ->get();
-
-        foreach ($courses as $course) {
-
-            $results[$course->name]['marks'] = DB::table('students as s')
-                ->select( 'r.score')
-                ->leftJoin('test_results as r', 'r.student_id', 's.id')
-                ->leftJoin('tests as t', 't.id', 'r.test_id')
-                ->leftJoin('courses as cou', 'cou.id', 't.course_id')
-                ->where('s.id', $studentId)
-                ->where('cou.id', $course->id)
-                ->orderBy('cou.name')
-                ->get();
-
-            $totalScore = DB::table('students as s')
-                ->select(DB::raw('SUM(r.score) as total_score'))
-                ->leftJoin('test_results as r', 'r.student_id', 's.id')
-                ->leftJoin('tests as t', 't.id', 'r.test_id')
-                ->leftJoin('courses as course', 'course.id', 't.course_id')
-                ->where('s.id', $studentId)
-                ->where('course.id', $course->id)
-                ->get();
-
-            $results[$course->name]['total_score'] = $totalScore[0]->total_score ?? 0;
-        }
-
-        return $results;
-    }
     public function getCourseResults($studentId)
     {
         $results = [];
     
         // Fetch all subjects and their corresponding classes
         $courses = DB::table('courses as c')
-            ->join('subjects as s', 'c.class_id', '=', 's.id')
+            ->join('subjects as s', 'c.course_id', '=', 's.id')
             ->select('c.id as course_id', 'c.name as course_name', 's.name as subject_name', 'c.image')
             ->get();
     
@@ -75,10 +41,10 @@ class ResultService
                     ->first();
     
                 // Store the class name, subject name, and the student's score in the results array
-                $results[$course->class_name][$course->course_name] = $score ? $score->score : 0;
+                $results[$course->course_name][$course->course_name] = $score ? $score->score : 0;
             } else {
                 // If no active test is found, set the score to 0
-                $results[$course->class_name][$course->subject_name] = 0;
+                $results[$course->course_name][$course->subject_name] = 0;
             }
         }
     
@@ -248,7 +214,7 @@ class ResultService
     {
         // Fetch all courses and their corresponding classes
         $courses = DB::table('courses as cou')
-            ->join('subjects as sub', 'sub.class_id', '=', 'cou.id')
+            ->join('subjects as sub', 'sub.subject_id', '=', 'cou.id')
             ->select('cou.id as course_id', 'cou.name as course_name', 'sub.name as subject_name')
             ->get();
     

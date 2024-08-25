@@ -71,6 +71,10 @@ class JobTestController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
+        
+
+
             $test = new JobTest;
             $test->title = $request->testTitle;
             $test->subject_id = $request->selectedSubject;
@@ -84,7 +88,7 @@ class JobTestController extends BaseController
             $test->start_date = $request->start_date;
             $test->end_date = $request->end_date;
             $test->instruction = $request->instruction;
-
+            $test->created_by = $loggedUserId;
             if (!empty($request->file('image'))) {
                 $extension1 = $request->file('image')->extension();
                 $filename = Str::random(4) . time() . '.' . $extension1;
@@ -194,7 +198,9 @@ class JobTestController extends BaseController
             if (!$test) {
                 return $this->sendError('Test not found');
             }
-
+            $loggedUserId = $this->getLoggedUserId();
+         
+    
             $test->title = $request->testTitle;
             $test->subject_id = $request->selectedSubject;
 
@@ -210,7 +216,7 @@ class JobTestController extends BaseController
             $test->description = $request->description;
             $test->instruction = $request->instruction;
             // $test->class_id = $request->selectedClass;
-
+            $test->updated_by = $loggedUserId;
             if (!empty($request->file('image'))) {
                 if ($test->image) {
                     Storage::delete($test->image);

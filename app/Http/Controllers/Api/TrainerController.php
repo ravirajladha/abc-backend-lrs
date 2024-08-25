@@ -80,12 +80,11 @@ class TrainerController extends BaseController
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        
 
             $trainers = DB::table('trainers as t')
-                ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image', 't.phone_number', 't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
+                ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image',  't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
                 ->join('auth as a', 't.auth_id', '=', 'a.id')
-                // ->where('t.school_id', $schoolId)
                 ->get();
 
             foreach ($trainers as $trainer) {
@@ -147,6 +146,9 @@ class TrainerController extends BaseController
                     ->where('tc.trainer_id', $trainer->id)
                     ->get();
             }
+            $loggedUserId = $this->getLoggedUserId();
+  
+
 
             if ($trainer && $auth) {
                 $res = [
@@ -165,6 +167,7 @@ class TrainerController extends BaseController
                     'state' => $trainer->state,
                     'pincode' => $trainer->pincode,
                     'description' => $trainer->description,
+                    'created_by' => $loggedUserId,
                     'type' => $trainer->type,
                 ];
                 return $this->sendResponse(['trainer' => $res, 'trainer_subjects' => $trainer_subjects, 'trainer_courses' => $trainer_courses]);
@@ -173,7 +176,6 @@ class TrainerController extends BaseController
             }
         }
     }
-
 
     /**
      * Store trainer
@@ -219,6 +221,7 @@ class TrainerController extends BaseController
                     'description' => $request->description,
                 ]);
             }
+
             if ($auth && $trainer) {
                 return $this->sendResponse([], 'Trainer added successfully');
             }
@@ -282,7 +285,7 @@ class TrainerController extends BaseController
             'trainerId' => 'required',
             'trainer_data' => 'required|array',
             'trainer_data.*.subject_id' => 'required|exists:subjects,id',
-            'trainer_data.*.subject_id' => 'required|exists:subjects,id',
+            'trainer_data.*.course_id' => 'required|exists:courses,id',
         ]);
 
         if ($validator->fails()) {
@@ -371,6 +374,8 @@ class TrainerController extends BaseController
                 'description' => $request->input('description', $trainer->description),
             ];
 
+            $loggedUserId = $this->getLoggedUserId();
+
             if ($request->hasFile('profile_image')) {
                 if ($trainer->profile_image) {
                     File::delete(public_path($trainer->profile_image));
@@ -399,6 +404,7 @@ class TrainerController extends BaseController
                 'pincode' => $trainer->pincode,
                 'description' => $trainer->description,
                 'type' => $trainer->type,
+                'updated_by' => $loggedUserId,
             ];
 
             return $this->sendResponse(['trainer' => $res], 'Trainer updated successfully');

@@ -18,7 +18,6 @@ Route::prefix('recruiter')->group(function () {
         Route::put('/{recruiterId}/update', [RecruiterController::class, 'updateRecruiterPassword']);
 
         Route::prefix('job-tests')->group(function () {
-
             Route::get('/', [JobTestController::class, 'getAllTests']);
             Route::get('/{testId}', [JobTestController::class, 'getTestDetails']);
             Route::post('/store', [JobTestController::class, 'storeTestDetails']);
@@ -27,6 +26,7 @@ Route::prefix('recruiter')->group(function () {
             Route::delete('/{testId}/delete', [JobTestController::class, 'destroyTestDetails']);
             Route::get('/availability/{subjectId}', [JobTestController::class, 'checkAvailability']);
         });
+
         Route::prefix('jobs')->group(function () {
             Route::get('/{recruiterId?}', [JobController::class, 'getJobsByRecruiterId']);
         });

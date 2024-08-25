@@ -24,9 +24,6 @@ use App\Http\Controllers\Api\{
     InternshipController
 };
 
-
-
-
 Route::prefix('student')->group(function () {
     Route::post('/mini-project-tasks/complete-status-for-student', [MiniProjectController::class, 'completeStatusForStudent']);
     Route::post('/internship/generate-certificate', [InternshipController::class, 'generateCertificate']);
@@ -52,8 +49,8 @@ Route::prefix('student')->group(function () {
 
     //Qna Routes
     Route::prefix('qna')->group(function () {
-        Route::get('/{studentId}/{trainerId}/{subjectId}', [QnaController::class, 'getQnaBySubject']);
-        Route::post('/', [QnaController::class, 'storeQnaByClass']);
+        Route::get('/{studentId}/{trainerId}/{courseId}', [QnaController::class, 'getQnaByCourse']);
+        Route::post('/', [QnaController::class, 'storeQnaBySubject']);
         Route::get('/search/{question?}', [QnaController::class, 'searchQuestionByKeyword']);
     });
 
@@ -81,6 +78,7 @@ Route::prefix('student')->group(function () {
         Route::post('/token', [TestController::class, 'storeTestResponseWithToken']);
         Route::post('/start', [TestController::class, 'startTest']);
     });
+
     Route::prefix('job-tests')->group(function () {
         Route::get('/{jobId}', [JobController::class, 'getJobTestDetails']);
         Route::get('/get-details-by-token/{token}/{jobId}', [JobController::class, 'getJobTestDetailsByToken']);
@@ -121,5 +119,5 @@ Route::prefix('student')->group(function () {
     //Content Page Routes, video controller is pending
     Route::get('/subjects/{subjectId}/contents', [VideoController::class, 'getContents']);
 
-    Route::get('/subjects/{subjectId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
+    Route::get('/courses/{courseId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
 });

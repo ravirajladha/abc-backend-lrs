@@ -170,12 +170,16 @@ class MiniProjectController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
+
             $miniProject = new MiniProject();
             $miniProject->name = $request->name;
             $miniProject->description = $request->description;
             $miniProject->subject_id = $request->subject;
             $miniProject->course_id = $request->course;
-
+ 
+            $miniProject->created_by = $loggedUserId;
+    
             if (!empty($request->file('image'))) {
                 $extension = $request->file('image')->extension();
                 $filename = Str::random(4) . time() . '.' . $extension;
@@ -209,11 +213,14 @@ class MiniProjectController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            $loggedUserId = $this->getLoggedUserId();
+
             $miniProject = new MiniProjectTask();
             $miniProject->name = $request->name;
             $miniProject->elab_id = $request->elabId;
             $miniProject->mini_project_id = $request->projectId;
             $miniProject->description = $request->description;
+            $miniProject->created_by = $loggedUserId;
 
             if ($miniProject->save()) {
                 return $this->sendResponse([], 'Mini project task created successfully.');
@@ -223,27 +230,7 @@ class MiniProjectController extends BaseController
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\MiniProject  $miniProject
-     * @return \Illuminate\Http\Response
-     */
-    public function show(MiniProject $miniProject)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -268,9 +255,11 @@ class MiniProjectController extends BaseController
         if (!$request->has('name')) {
             return $this->sendError('Mini Project name is required.');
         }
+        $loggedUserId = $this->getLoggedUserId();
 
         $miniProject->name = $request->name;
         $miniProject->description = $request->description;
+        $miniProject->updated_by = $loggedUserId;
         $miniProject->is_active = $request->is_active;
 
         if ($request->hasFile('image')) {
@@ -290,6 +279,7 @@ class MiniProjectController extends BaseController
 
         return $this->sendResponse(['miniProject' => $miniProject], 'Mini Project updated successfully');
     }
+    
     /**
      * Update the specified resource in storage.
      *
@@ -314,11 +304,14 @@ class MiniProjectController extends BaseController
         if (!$request->has('name')) {
             return $this->sendError('Mini Project name is required.');
         }
+        $loggedUserId = $this->getLoggedUserId();
 
         $miniProjectTask->name = $request->name;
         $miniProjectTask->elab_id = $request->elabId;
         $miniProjectTask->description = $request->description;
         $miniProjectTask->is_active = $request->is_active;
+        $miniProjectTask->updated_by = $loggedUserId;
+
         $miniProjectTask->save();
 
         return $this->sendResponse(['miniProjectTask' => $miniProjectTask], 'Mini Project updated successfully');

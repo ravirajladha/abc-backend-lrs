@@ -217,40 +217,50 @@ class CourseController extends BaseController
 
 
     /**
-     * Display a listing of the subjects with results for students by classId.
+     * Display a listing of the subjects with results for students by subjectId.
      *
-     * @param $classId
+     * @param $subjectId
      * @return \Illuminate\Http\JsonResponse
      */
+ 
+
     public function getStudentCoursesWithResults(Request $request)
     {
         $res = [];
-
+    
         $subjectId = $request->subjectId;
-
         $studentId = $request->studentId;
-
+    
         $validator = Validator::make($request->all(), [
-            'subjectId' => 'required',
-            'studentId' => 'required',
+            // 'subjectId' => 'required',
+            // 'studentId' => 'required',
         ]);
-
+    
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
+            // Log the SQL query before executing
+            DB::enableQueryLog();
+    
             $courses = DB::table('courses as cou')
                 ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
-                ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.subject_id')
+                ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
                 ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
                 ->select('cou.id', 'cou.name', 'cou.image', 'subjects.name as subject_name', 't.name as trainer_name')
                 ->get();
-            if ($courses) {
+    
+            // Log the executed query and result
+            Log::info('Executed Query: ', DB::getQueryLog());
+            Log::info('Query Result: ', ['courses' => $courses]);
+    
+            if ($courses->isNotEmpty()) {
                 return $this->sendResponse(['courses' => $courses]);
             } else {
                 return $this->sendError('Course not found!');
             }
         }
     }
+    
 
     public function storeCourseDetails(Request $request)
     {
@@ -419,7 +429,7 @@ class CourseController extends BaseController
             }
 
             $trainer = DB::table('trainer_courses as tc')
-            ->where('ts.course_id', $courseId)
+            ->where('tc.course_id', $courseId)
             ->leftJoin('trainers as t', 't.id', 'tc.trainer_id')
             ->first();
 

@@ -13,7 +13,7 @@ Route::prefix('minimal')->group(function () {
     Route::get('/ebook-sections', \App\Http\Controllers\Api\Dropdown\EbookSectionController::class);
     Route::get('/test', \App\Http\Controllers\Api\Dropdown\TestController::class);
     Route::get('/test-questions', \App\Http\Controllers\Api\Dropdown\TestQuestionController::class);
-    Route::get('/test-questions-by-class-id', \App\Http\Controllers\Api\Dropdown\TestQuestionBySubjectIdController::class);
+    Route::get('/test-questions-by-subject-id', \App\Http\Controllers\Api\Dropdown\TestQuestionBySubjectIdController::class);
     Route::get('/get-assessment-questions-count', \App\Http\Controllers\Api\Dropdown\AssessmentQuestionController::class);
     Route::get('/project-reports', \App\Http\Controllers\Api\Dropdown\ProjectReportController::class);
     Route::get('/case-studies', \App\Http\Controllers\Api\Dropdown\CaseStudyController::class);
