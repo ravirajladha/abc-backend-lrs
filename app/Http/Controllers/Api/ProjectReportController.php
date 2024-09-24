@@ -20,7 +20,7 @@ class ProjectReportController extends BaseController
     public function getProjectReportList()
     {
         $projectReports = DB::table('project_reports as p')
-            ->select('p.id', 'p.title', 'p.description', 'course.name as course_name', 'p.image', 'p.subject_id', 'p.course_id', 's.name as subject_name', 'p.chapter_id')
+            ->select('p.id', 'p.title', 'p.description', 'c.name as course_name', 'p.image', 'p.subject_id', 'p.course_id', 'subject.name as subject_name', 'p.chapter_id')
             ->leftJoin('courses as c', 'p.course_id', 'c.id')
             ->leftJoin('subjects as subject', 'p.subject_id', 'subject.id')
             ->get();

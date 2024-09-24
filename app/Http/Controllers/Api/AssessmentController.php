@@ -205,6 +205,8 @@ class AssessmentController extends BaseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
+
+    //  selectedAnswersArray
     public function storeAssessmentResponse(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -263,7 +265,7 @@ class AssessmentController extends BaseController
                 $assessment_result->is_passed = 0;
             }
             $selectedAnswersArray = is_array($request->selectedAnswers) ? $request->selectedAnswers : explode(',', $request->selectedAnswers);
-            $assessment_result->response = implode(',', $selectedAnswersArray);
+            $assessment_result->response_answers = implode(',', $selectedAnswersArray);
             $assessment_result->save();
 
             $studentAuthId = $this->getLoggedUserId();

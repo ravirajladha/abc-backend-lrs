@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 // Combine all controller imports
 use App\Http\Controllers\Api\{
-    JobController,
-    JobTestController,
+    PlacementController,
+    PlacementTestController,
     LogController,
     QnaController,
     AuthController,
@@ -37,8 +37,8 @@ Route::prefix('student')->group(function () {
 
     //Job Routes
     Route::prefix('jobs')->group(function () {
-        Route::get('/', [JobController::class, 'getJobList']);
-        Route::post('/', [JobController::class, 'applyJob']);
+        Route::get('/', [PlacementController::class, 'getJobList']);
+        Route::post('/', [PlacementController::class, 'applyJob']);
     });
 
     //Notes Routes
@@ -80,12 +80,12 @@ Route::prefix('student')->group(function () {
     });
 
     Route::prefix('job-tests')->group(function () {
-        Route::get('/{jobId}', [JobController::class, 'getJobTestDetails']);
-        Route::get('/get-details-by-token/{token}/{jobId}', [JobController::class, 'getJobTestDetailsByToken']);
-        Route::post('/', [JobController::class, 'storeJobTestResponse']);
-        Route::post('/token', [JobTestController::class, 'storeJobTestResponseWithToken']);
-        Route::post('/withoutToken', [JobTestController::class, 'storeJobTestResponseWithoutToken']);
-        Route::post('/start', [JobController::class, 'startTest']);
+        Route::get('/{jobId}', [PlacementController::class, 'getJobTestDetails']);
+        Route::get('/get-details-by-token/{token}/{jobId}', [PlacementController::class, 'getJobTestDetailsByToken']);
+        Route::post('/', [PlacementController::class, 'storeJobTestResponse']);
+        Route::post('/token', [PlacementTestController::class, 'storeJobTestResponseWithToken']);
+        Route::post('/withoutToken', [PlacementTestController::class, 'storeJobTestResponseWithoutToken']);
+        Route::post('/start', [PlacementController::class, 'startTest']);
     });
 
     //Assessments Routes

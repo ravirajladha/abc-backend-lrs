@@ -39,7 +39,7 @@ class CaseStudyController extends BaseController
         $validator = Validator::make($request->all(), [
             'title' => 'required',
             'description' => 'required',
-            'courses' => 'required|exists:courses,id',
+            'course' => 'required|exists:courses,id',
             'subject' => 'required|exists:subjects,id',
             'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);

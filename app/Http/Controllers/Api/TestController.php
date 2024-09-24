@@ -175,13 +175,13 @@ class TestController extends BaseController
         $test->instruction = $request->instruction;
         // $test->status = $request->status; // Save the status
 
-        if (!empty($request->file('image'))) {
-            $extension1 = $request->file('image')->extension();
-            $filename = Str::random(4) . time() . '.' . $extension1;
-            $test->image = $request->file('image')->move(('uploads/images/test'), $filename);
-        } else {
-            $test->image = null;
-        }
+        // if (!empty($request->file('image'))) {
+        //     $extension1 = $request->file('image')->extension();
+        //     $filename = Str::random(4) . time() . '.' . $extension1;
+        //     $test->image = $request->file('image')->move(('uploads/images/test'), $filename);
+        // } else {
+        //     $test->image = null;
+        // }
 
         $test->save();
 
@@ -434,7 +434,6 @@ class TestController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'studentId' => 'required',
-            'schoolId' => 'required',
             'testId' => 'required',
         ]);
 
@@ -482,18 +481,6 @@ class TestController extends BaseController
                 $score_percentage = 0;
             }
 
-            // $test_result = new TestResult;
-            // $test_result->test_id = $request->testId;
-            // $test_result->student_id  = $request->studentId;
-            // $test_result->school_id = $request->schoolId;
-            // $test_result->score = $score;
-            // $test_result->percentage = $score_percentage;
-            // $selectedAnswersArray = is_array($request->selectedAnswers) ? $request->selectedAnswers : explode(',', $request->selectedAnswers);
-            // $test_result->response_answers = implode(',', $selectedAnswersArray);
-            // $test_result->response_questions = implode(',', $selectedQuestionIds);
-            // $test_result->save();
-
-
             $testResult->score = $score;
             $testResult->percentage = $score_percentage;
             $testResult->course_id = $request->courseId;
@@ -527,7 +514,6 @@ class TestController extends BaseController
     {
         $data = $request->validate([
             'studentId' => 'required|integer',
-            'schoolId' => 'required|integer',
             'courseId' => 'required|integer',
             'latestTestId' => 'required|integer',
         ]);
@@ -546,7 +532,6 @@ class TestController extends BaseController
         // Create a new test session
         $testSession = TestResult::create([
             'student_id' => $data['studentId'],
-            'school_id' => $data['schoolId'],
             // 'course_id' => $data['courseId'],
             'test_id' => $data['latestTestId'],
             // Set additional fields as necessary

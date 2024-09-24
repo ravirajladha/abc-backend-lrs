@@ -3,8 +3,9 @@
 namespace App\Services\Student;
 
 use Illuminate\Support\Facades\DB;
-use App\Services\Admin\TermTestService;
+use App\Services\Admin\TestService;
 
+use Illuminate\Support\Facades\Log;
 use App\Http\Constants\TermTestConstants;
 
 //changed
@@ -119,8 +120,9 @@ class ResultService
     {
         $marks = [];
 
-        $totalCourseScore = $this->getTermTestTotalResult($studentId);
- 
+        $totalCourseScore = $this->getTestTotalResult($studentId);
+
+     Log::info(['totalCourseScore' => $totalCourseScore]);
 
         // $totalScore =  $firstTermScore + $secondTermScore + $thirdTermScore;
 
@@ -153,16 +155,24 @@ class ResultService
         return $marks;
     }
 
-
     public function getTestTotalResult($studentId)
     {
-        return DB::table('students as s')
+
+        DB::enableQueryLog();
+
+        $result =  DB::table('students as s')
             ->select(DB::raw('SUM(r.score) as total_score'))
-            ->leftJoin('test_results as r', 'r.student_id', 's.id')
+            ->leftJoin('test_results as r', 'r.student_id', 's.auth_id')
             ->leftJoin('tests as t', 't.id', 'r.test_id')
             ->leftJoin('courses as cou', 'cou.id', 't.course_id')
-            ->where('s.id', $studentId)
+            ->where('s.auth_id', $studentId)
             ->value('total_score');
+            $queries = DB::getQueryLog();
+
+            Log::info('executed query', ['query' => $queries]);
+            Log::info('Total Score Result:', ['total_score' => $result]);
+
+            return $result;
     }
 
     public function getCourseMarks($subjectId)
@@ -187,34 +197,12 @@ class ResultService
         return $course_results;
     }
 
-    // public function getSectionMarks($sectionId)
-    // {
-    //     $section_results = DB::table('term_test_results as r')
-    //         ->select(
-    //             'r.student_id',
-    //             DB::raw('SUM(r.score) as total_marks')
-    //         )
-    //         ->leftJoin('students as s', 's.id', 'r.student_id')
-    //         ->leftJoin('term_tests as t', 't.id', 'r.test_id')
-    //         ->leftJoin('classes as c', 'c.id', 't.class_id')
-    //         ->leftJoin('subjects as subj', 'subj.id', 't.subject_id')
-    //         ->leftJoin('sections as sec', 'sec.id', 's.section_id')
-    //         ->where('s.section_id', $sectionId)
-    //         ->groupBy('r.student_id')
-    //         ->get();
-
-    //     $rank = 1;
-    //     foreach ($section_results as $key => $value) {
-    //         $section_results[$key]->rank = $rank++;
-    //     }
-
-    //     return $section_results;
-    // }
+   
     public function getAverageAssessmentScore($studentId)
     {
         // Fetch all courses and their corresponding classes
         $courses = DB::table('courses as cou')
-            ->join('subjects as sub', 'sub.subject_id', '=', 'cou.id')
+            ->join('subjects as sub', 'cou.subject_id', '=', 'cou.id')
             ->select('cou.id as course_id', 'cou.name as course_name', 'sub.name as subject_name')
             ->get();
     
@@ -232,21 +220,12 @@ class ResultService
                 ->first();
     
             // Store the class name, subject name, and the average score in the results array
-            $results[$course->class_name][$course->course_name] = $avgScore ? $avgScore->avg_score : 0;
+            $results[$course->subject_name][$course->subject_name] = $avgScore ? $avgScore->avg_score : 0;
         }
     
         return $results;
     }
  
     
-    // public function getAverageAssessmentScore($studentId){
-    //     $assessementResults = DB::table('assessment_results')
-    //             ->join('assessments', 'assessment_results.assessment_id', '=', 'assessments.id')
-    //             ->join('subjects', 'assessments.subject_id', '=', 'subjects.id')
-    //             ->select('subjects.name as subject_name', DB::raw('AVG(assessment_results.score) as avg_score'))
-    //             ->where('assessment_results.student_id', $studentId)
-    //             ->groupBy('subjects.name')
-    //             ->get();
-    //     return $assessementResults;
-    // }
+
 }

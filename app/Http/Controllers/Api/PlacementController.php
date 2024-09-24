@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Job;
+use App\Models\Placement;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
-use App\Models\{JobApplication};
+use App\Models\{PlacementApplication};
 use App\Http\Helpers\DateTimeHelper;
 
-class JobController extends BaseController
+class PlacementController extends BaseController
 {
     public function getJobList(Request $request)
     {
@@ -23,7 +23,7 @@ class JobController extends BaseController
         if ($userType === 'admin' || $userType === 'recruiter') {
 
                 // Step 1: Get unique job IDs
-                $jobIdsQuery = DB::table('jobs as j')
+                $jobIdsQuery = DB::table('placements as j')
                     ->select('j.id');
             
                 if ($userType === 'recruiter') {
@@ -39,10 +39,10 @@ class JobController extends BaseController
                 }
             
                 // Step 2: Get detailed job information using the unique job IDs
-                $jobsQuery = DB::table('jobs as j')
+                $jobsQuery = DB::table('placements as j')
                     ->select('j.*',  'r.name as recruiter_name', 't.title as test_name', 't.instruction as test_instruction')
                     ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
-                    ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id')
+                    ->leftJoin('placement_tests as t', 't.id', '=', 'j.test_id')
                     ->whereIn('j.id', $jobIds);
             
                 // Log the SQL query for debugging
@@ -56,25 +56,25 @@ class JobController extends BaseController
         if ($userType === 'student') {
 
             $student = DB::table('students as s')
-                ->select('s.auth_id', 's.subject_id')
+                ->select('s.auth_id')
                 ->where('s.auth_id', $this->getLoggedUserId())
                 ->first();
 
             $student_id = $student->auth_id;
             // $student_subject_id = $student->subject_id;
 
-            $jobs = DB::table('jobs as j')
+            $jobs = DB::table('placements as j')
                 ->select('j.*', 'r.name as recruiter_name','t.instruction as test_instruction')
                 ->leftJoin('recruiters as r', 'r.auth_id', '=', 'j.recruiter_id')
-                ->leftJoin('job_tests as t', 't.id', '=', 'j.test_id')
-                ->where('status', true)
+                ->leftJoin('placement_tests as t', 't.id', '=', 'j.test_id')
+                ->where('j.status', true)
                 ->get();
 
                 foreach ($jobs as $job) {
-                    $application = DB::table('job_applications as a')
+                    $application = DB::table('placement_applications as a')
                         ->select('a.test_id','a.percentage')
                         ->where('a.student_id', $student_id)
-                        ->where('a.job_id', $job->id)
+                        ->where('a.placement_id', $job->id)
                         ->first();
             
                     $job->applied = $application ? true : false;
@@ -88,7 +88,7 @@ class JobController extends BaseController
 
     public function getJobDetails($jobId)
     {
-        $job = DB::table('jobs as j')
+        $job = DB::table('placements as j')
             ->select('j.*')
             ->where('j.id', $jobId)
             ->first();
@@ -122,11 +122,10 @@ class JobController extends BaseController
             'selectedSubject' => 'required',
         ]);
 
-
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $job = new Job;
+            $job = new Placement;
             $job->auth_id = $this->getLoggedUserId();
             $job->title = $request->title;
 
@@ -138,7 +137,7 @@ class JobController extends BaseController
                 $job->image = null;
             }
 
-            $job->subject_Id = $request->selectedSubject;
+            $job->subject_id = $request->selectedSubject;
             $job->annual_ctc = $request->annual_ctc;
             $job->location = $request->location;
             $job->criteria = $request->criteria;
@@ -185,16 +184,16 @@ class JobController extends BaseController
                     }
                 },
             ],
-            'selectedClass' => 'required',
+          
         ]);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $job = Job::find($jobId);
+            $job = Placement::find($jobId);
 
             if (!$job) {
-                return $this->sendError('Job not found', [], 404);
+                return $this->sendError('Placement not found', [], 404);
             }
 
             $job->title = $request->title;
@@ -233,19 +232,19 @@ class JobController extends BaseController
     public function deleteJobDetails(Request $request, $jobId)
     {
         // Find the job
-        $job = Job::find($jobId);
+        $job = Placement::find($jobId);
     
         if (!$job) {
             return response()->json(['message' => 'Job not found'], 404);
         }
     
         // Delete job applications associated with this job
-        JobApplication::where('job_id', $jobId)->delete();
+        PlacementApplication::where('placement_id', $jobId)->delete();
     
         // Delete the job
         $job->delete();
     
-        return $this->sendResponse([], 'Job deleted successfully');
+        return $this->sendResponse([], 'Placement deleted successfully');
     }
     
     public function applyJob(Request $request)
@@ -267,8 +266,8 @@ class JobController extends BaseController
         $data = $validator->validated();
 
         // Check if the job application already exists
-        $existingSession = JobApplication::where('student_id', $data['studentId'])
-            ->where('job_id', $data['jobId'])
+        $existingSession = PlacementApplication::where('student_id', $data['studentId'])
+            ->where('placement_id', $data['jobId'])
             ->first();
 
         if ($existingSession) {
@@ -279,12 +278,10 @@ class JobController extends BaseController
             $token = Str::random(32);
 
             // Create a new test session
-            $testSession = JobApplication::create([
+            $testSession = PlacementApplication::create([
                 'student_id' => $data['studentId'],
-               
                 'test_id' => $data['testId'],
-           
-                'job_id' => $data['jobId'],
+                'placement_id' => $data['jobId'],
                 'token' => $token,
             ]);
 
@@ -292,11 +289,11 @@ class JobController extends BaseController
             return $this->sendResponse(['token' => $token, 'status' => 200], 'Job updated successfully.');
         } else {
             // Create a job application without test
-            $jobApplication = JobApplication::create([
+            $jobApplication = PlacementApplication::create([
                 'student_id' => $data['studentId'],
               
             
-                'job_id' => $data['jobId'],
+                'placement_id' => $data['jobId'],
                 'is_completed' => true,
                 'is_pass' => true,
                 'is_test' => false,
@@ -311,12 +308,11 @@ class JobController extends BaseController
     public function getStudentJobApplications(Request $request, $jobId)
     {
         Log::info('Received request parameters', ['params' => $request->all()]);
-        $query = DB::table('job_applications as a')
-            ->select('a.*', 'a.id as application_id','j.*', 's.name as student_name', 'a.student_id', 'sub.name as subject_name', 'a.is_pass')
-            ->leftJoin('jobs as j', 'j.id', '=', 'a.job_id')
+        $query = DB::table('placement_applications as a')
+            ->select('a.*', 'a.id as application_id','j.*', 's.name as student_name', 'a.student_id',  'a.is_pass')
+            ->leftJoin('placements as j', 'j.id', '=', 'a.placement_id')
             ->leftJoin('students as s', 's.auth_id', '=', 'a.student_id')
-            ->leftJoin('subjects as sub', 'sub.id', '=', 's.class_id')
-            ->where('a.job_id', $jobId)
+            ->where('a.placement_id', $jobId)
             ->where('is_completed', true);
     
         // Apply filters
@@ -345,7 +341,7 @@ class JobController extends BaseController
     public function updateJobApplicationStatus(Request $request, $jobApplicationId)
     {
 
-        $job_application = DB::table('job_applications as a')
+        $job_application = DB::table('placement_applications as a')
             ->select('a.*')
             ->where('a.id', $jobApplicationId)
             ->first();
@@ -363,12 +359,12 @@ class JobController extends BaseController
     public function getJobTestDetailsByToken(Request $request, $token, $jobId)
     {
         // Find the test result entry using the token
-        $testResult = DB::table('job_applications')
+        $testResult = DB::table('placement_applications')
             ->where('token', $token)
-            ->where('job_id', $jobId)
+            ->where('placement_id', $jobId)
             ->first();
 
-        $job = DB::table('jobs')
+        $job = DB::table('placements')
             ->where('id', $jobId)
             ->first();
 
@@ -383,19 +379,19 @@ class JobController extends BaseController
         }
 
         // Update the status to 1 to mark as taken
-        DB::table('job_applications')
+        DB::table('placement_applications')
             ->where('id', $testResult->id)
             ->update(['token_status' => 1]);
 
         // Fetch the term test details
-        $job_test = DB::table('job_tests as a')
+        $job_test = DB::table('placement_tests as a')
             ->select('a.id',   'a.title',  'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions',   'a.question_ids', 'a.passing_percentage')
             ->where('a.id', $testResult->test_id)
             ->first();
 
         if ($job_test && $job_test->question_ids) {
             $questionIds = explode(',', $job_test->question_ids);
-            $job_test->questions = DB::table('job_questions')
+            $job_test->questions = DB::table('placement_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
@@ -406,10 +402,10 @@ class JobController extends BaseController
     
     public function getStudentJobTestDetailsByJobApplicationId(Request $request)
     {
-        Log::info(['request for student job details' => $request->all()]);
-        $results = DB::table('job_tests as test')
+        Log::info(['request for student placement details' => $request->all()]);
+        $results = DB::table('placement_tests as test')
             ->select('test.id as test_id', 'test.subject_id as test_subject', 'test.description as test_description', 'test.question_ids as test_question_ids', 'test.total_score as test_total_score', 'test.time_limit as test_time', 'test.title as test_title', 'result.id as result_id', 'result.percentage as result_percentage', 'result.student_id as student_id', 'result.score as result_score', 'result.response_questions as result_response_questions', 'result.response_answers as result_response_answers', 'result.created_at as result_date')
-            ->leftJoin('job_applications as result', 'result.test_id', 'test.id')
+            ->leftJoin('placement_applications as result', 'result.test_id', 'test.id')
             ->where('result.id', $request->applicationId)
             ->get();
 
@@ -417,7 +413,7 @@ class JobController extends BaseController
         foreach ($results as $result) {
             if ($result && $result->test_question_ids) {
                 $questionIds = explode(',', $result->test_question_ids); //All Questions in the test
-                $question_bank = DB::table('job_questions')
+                $question_bank = DB::table('placement_questions')
                     ->select('id', 'question', 'explanation', 'code', 'option_one', 'option_two', 'option_three', 'option_four', 'answer_key')
                     ->whereIn('id', $questionIds)
                     ->get();

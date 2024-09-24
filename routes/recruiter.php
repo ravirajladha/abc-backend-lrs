@@ -4,9 +4,9 @@ use Illuminate\Support\Facades\Route;
 
 // Combine all controller imports
 use App\Http\Controllers\Api\{
-    JobController,
-    JobTestController,
-    JobTestQuestionController,
+    PlacementController,
+    PlacementTestController,
+    PlacementTestQuestionController,
     RecruiterController
 };
 
@@ -18,25 +18,25 @@ Route::prefix('recruiter')->group(function () {
         Route::put('/{recruiterId}/update', [RecruiterController::class, 'updateRecruiterPassword']);
 
         Route::prefix('job-tests')->group(function () {
-            Route::get('/', [JobTestController::class, 'getAllTests']);
-            Route::get('/{testId}', [JobTestController::class, 'getTestDetails']);
-            Route::post('/store', [JobTestController::class, 'storeTestDetails']);
-            Route::get('/{testId}/results', [JobTestController::class, 'showTestResults']);
-            Route::put('/{testId}/update', [JobTestController::class, 'updateTestDetails']);
-            Route::delete('/{testId}/delete', [JobTestController::class, 'destroyTestDetails']);
-            Route::get('/availability/{subjectId}', [JobTestController::class, 'checkAvailability']);
+            Route::get('/', [PlacementTestController::class, 'getAllTests']);
+            Route::get('/{testId}', [PlacementTestController::class, 'getTestDetails']);
+            Route::post('/store', [PlacementTestController::class, 'storeTestDetails']);
+            Route::get('/{testId}/results', [PlacementTestController::class, 'showTestResults']);
+            Route::put('/{testId}/update', [PlacementTestController::class, 'updateTestDetails']);
+            Route::delete('/{testId}/delete', [PlacementTestController::class, 'destroyTestDetails']);
+            Route::get('/availability/{subjectId}', [PlacementTestController::class, 'checkAvailability']);
         });
 
         Route::prefix('jobs')->group(function () {
-            Route::get('/{recruiterId?}', [JobController::class, 'getJobsByRecruiterId']);
+            Route::get('/{recruiterId?}', [PlacementController::class, 'getJobsByRecruiterId']);
         });
 
         //Assessment Questions Routes
         Route::prefix('job-tests-questions')->group(function () {
-            Route::get('/', [JobTestQuestionController::class, 'getAllTestQuestions']);
-            Route::post('/store', [JobTestQuestionController::class, 'store']);
-            Route::get('/{testQuestionId}/show', [JobTestQuestionController::class, 'getTestQuestionDetails']);
-            Route::put('/{testQuestionId}/update', [JobTestQuestionController::class, 'update']);
-            Route::delete('/{testQuestionId}/delete', [JobTestQuestionController::class, 'delete']);
+            Route::get('/', [PlacementTestQuestionController::class, 'getAllTestQuestions']);
+            Route::post('/store', [PlacementTestQuestionController::class, 'store']);
+            Route::get('/{testQuestionId}/show', [PlacementTestQuestionController::class, 'getTestQuestionDetails']);
+            Route::put('/{testQuestionId}/update', [PlacementTestQuestionController::class, 'update']);
+            Route::delete('/{testQuestionId}/delete', [PlacementTestQuestionController::class, 'delete']);
         });
     });

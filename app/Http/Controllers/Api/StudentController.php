@@ -54,17 +54,15 @@ class StudentController extends BaseController
     public function getStudentsList(Request $request)
     {
         $userType = $request->attributes->get('type');
-        if ($userType === 'admin' || $userType = 'school') {
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        if ($userType === 'admin' ) {
+          
             $students = DB::table('students as s')
                 ->select('s.*', 'a.*', 'c.name as class_name')
                 ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
-                ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
-                ->where('school_id', $schoolId)
                 ->get();
             return $this->sendResponse(['students' => $students]);
         } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
+            return $this->sendAuthError("Not authorized fetch students list.");
         }
     }
     /**
@@ -72,35 +70,22 @@ class StudentController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPublicStudentDetailsFromStudent(Request $request)
-    {
-        $userType = $request->attributes->get('type');
-        if ($userType === 'admin') {
-            $classId = $request->query('classId');
-            $sectionId = $request->query('sectionId');
-            // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-            $query = DB::table('students as s')
-                ->select('s.*', 'a.*','s.id as student_id', 'c.name as class_name','sec.name as section_name')
-                ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
-                ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
-                ->leftJoin('sections as sec', 'sec.id', '=', 's.section_id')
-                ->where('s.student_type', true);
-                // ->where('school_id', $schoolId)
+public function getPublicStudentDetailsFromStudent(Request $request)
+{
+    $userType = $request->attributes->get('type');
+    if ($userType === 'admin') {
+        // Fetch only student and related auth details
+        $students = DB::table('students as s')
+            ->select('s.*', 'a.*', 's.id as student_id')
+            ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
+            ->paginate(10);
 
-                if ($classId) {
-                    $query->where('s.class_id', $classId);
-                }
-
-                if ($sectionId) {
-                    $query->where('s.section_id', $sectionId);
-                }
-
-                $students = $query->paginate(10);
-            return $this->sendResponse(['students' => $students]);
-        } else {
-            return $this->sendAuthError("Not authorized fetch schools list.");
-        }
+        return $this->sendResponse(['students' => $students]);
+    } else {
+        return $this->sendAuthError("Not authorized to fetch the students list.");
     }
+}
+
     /**
      * Display a listing of the public students.
      *
@@ -115,22 +100,12 @@ class StudentController extends BaseController
             $sectionId = $request->query('sectionId');
             // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
             $query = DB::table('students as s')
-                ->select('s.*', 'a.*','s.id as student_id', 'c.name as class_name','sec.name as section_name')
+                ->select('s.*', 'a.*','s.id as student_id')
                 ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
-                ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
-                ->leftJoin('sections as sec', 'sec.id', '=', 's.section_id')
-                // ->where('school_id', $schoolId)
-                ->where('s.student_type', false);
-                if ($schoolId) {
-                    $query->where('s.school_id', $schoolId);
-                }
-                if ($classId) {
-                    $query->where('s.class_id', $classId);
-                }
+                ->get();
 
-                if ($sectionId) {
-                    $query->where('s.section_id', $sectionId);
-                }
+    
+             
 
                 $students = $query->paginate(10);
             return $this->sendResponse(['students' => $students]);
@@ -144,24 +119,17 @@ class StudentController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getStudentsByClassAndSection(Request $request, $classId, $sectionId)
+    public function getStudentsByClassAndSection(Request $request)
     {
         $userType = $request->attributes->get('type');
-        if ($userType === 'admin' || $userType = 'school') {
-            $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+        if ($userType === 'admin' || $userType = 'internship_admin') {
+           
             $query = DB::table('students as s')
             ->select('s.id as student_id', 's.*', 'a.*', 'c.name as class_name', 'sections.name as section_name')
-            ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
-            ->leftJoin('classes as c', 'c.id', '=', 's.class_id')
-            ->leftJoin('sections', 'sections.id', '=', 's.section_id');
-            // ->where('school_id', $schoolId);
+            ->leftJoin('auth as a', 'a.id', '=', 's.auth_id');
+          
 
-            if ($classId !== "null") {
-                $query->where('s.class_id', $classId);
-            }
-            if ($sectionId !== "null") {
-                $query->where('s.section_id', $sectionId);
-            }
+        
 
             $students = $query->get();
             return $this->sendResponse(['students' => $students]);
@@ -208,7 +176,7 @@ class StudentController extends BaseController
     {
         $res = [];
         $userType = $request->attributes->get('type');
-        if ($userType === 'admin' || $userType = 'school' || $userType === 'trainer') {
+        if ($userType === 'admin' || $userType = 'internship_admin' || $userType === 'trainer') {
             $validator = Validator::make(['student_id' => $studentId], [
                 'student_id' => 'required',
             ]);
@@ -217,12 +185,9 @@ class StudentController extends BaseController
             } else {
                 // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
                 $student = DB::table('students as s')
-                    ->select('s.*', 'c.name as class', 'sec.name as section', 'p.name as parent', 'p.parent_code')
+                    ->select('s.*')
                     ->where('s.auth_id', $studentId)
                     // ->where('s.school_id', $schoolId)
-                    ->leftJoin('classes as c', 'c.id', 's.class_id')
-                    ->leftJoin('sections as sec', 'sec.id', 's.section_id')
-                    ->leftJoin('parents as p', 'p.id', 's.parent_id')
                     ->first();
 
                 Log::info('Fetched student details: ', ['student' => $student]);
@@ -236,26 +201,21 @@ class StudentController extends BaseController
                     $res = [
                         'id' => $student->id,
                         'auth_id' => $student->auth_id,
-                        'school_id' => $student->school_id,
-                        'class_id' => $student->class_id,
-                        'section_id' => $student->section_id,
-                        'class' => $student->class,
-                        'section' => $student->section,
+                      
                         'name' => $student->name,
                         'email' => $auth->email,
                         'username' => $auth->username,
                         'phone_number' => $auth->phone_number,
-                        'roll_number' => $student->roll_number,
+                 
                         'profile_image' => $student->profile_image,
                         'dob' => $student->dob,
                         'address' => $student->address,
                         'city' => $student->city,
                         'state' => $student->state,
                         'pincode' => $student->pincode,
-                        'remarks' => $student->remarks,
-                        'parent_name' => $student->parent,
-                        'parent_id' => $student->parent_id,
-                        'parent_code' => $student->parent_code,
+ 
+                     
+                  
                         'student_status' => $student->status,
                         // 'parent_name' => $student->parent_name,
                     ];
@@ -271,7 +231,7 @@ class StudentController extends BaseController
     }
     public function getStudentDetailsFromStudent($studentId)
     {
-
+Log::info("Student",['sdfsd',$studentId]    );
         $validator = Validator::make(['student_id' => $studentId], [
             'student_id' => 'required',
         ]);
@@ -281,75 +241,47 @@ class StudentController extends BaseController
 
         // Fetch the student model
         // $schoolId = School::where('auth_id',  $this->getLoggedUserId())->value('id');
-        $student_detail = Student::find($studentId);
+     
 
-        $student = DB::table('students as s')
-        ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-        ->leftJoin('sections as sec', 's.section_id', '=', 'sec.id')
-        ->leftJoin('schools as sch', 's.school_id', '=', 'sch.id')
-        ->leftJoin('parents as par', 's.parent_id', '=', 'par.id')
-        ->select(
-            's.*',
-            'c.name as class_name',
-            'sec.name as section_name',
-            'sch.name as school_name',
-            'par.name as parent_name',
-            'par.parent_code'
-        )
-        ->where('s.auth_id', $student_detail->auth_id)
+        $student = DB::table('students as s')->select( 's.*')
+        ->where('s.auth_id', $studentId)
         ->first();
         Log::info('Fetched student details: ', ['student' => $student]);
         if ($student) {
-            $auth = AuthModel::where('id', $student_detail->auth_id)
+            $auth = AuthModel::where('id', $studentId)
                 ->where('type', AuthConstants::TYPE_STUDENT)
                 ->first();
         }
-
-
 
         if (!$student) {
             return $this->sendResponse([], 'Student not found.', 404);
         }
 
-
-
-        $subjects = DB::table('subjects as s')
-        ->select('s.id', 's.name', 's.image')
-        ->leftJoin('classes as c', 's.class_id', '=', 'c.id')
-        ->where('s.class_id', $student->class_id)
+        $courses = DB::table('courses as cou')
+        ->select('cou.id', 'cou.name', 'cou.image')
+        ->leftJoin('subjects as s', 'cou.subject_id', '=', 's.id')
         ->get();
 
         // Preparing response
         $res = [
             'student_id' => $student->id,
-            'student_auth_id' => $student->auth_id,
+            'student_auth_id' => $studentId,
             'student_name' => $student->name,
-            'parent_id' => $student->parent_id ? $student->parent_id : null,
-            'parent_code' => $student->parent_code ? $student->parent_code : null,
-            'parent_name' => $student->parent_name ? $student->parent_name : null,
-            // 'parent' => $student->parent,
-            'school_id' => $student->school_id,
-            'school_name' => $student->school_name,
-            'class_id' => $student->class_id,
-            'class_name' => $student->class_name ? $student->class_name : null,
-            'section_id' => $student->section_id,
-            'section_name' => $student->section_name ? $student->section_name : null,
-
             // 'class' => $student->class,
             // 'section' => $student->section,
             'name' => $student->name,
             'email' => $auth->email,
             'username' => $auth->username,
             'phone_number' => $auth->phone_number,
-            'roll_number' => $student->roll_number,
+   
             'profile_image' => $student->profile_image,
             'dob' => $student->dob,
             'address' => $student->address,
             'city' => $student->city,
             'state' => $student->state,
             'pincode' => $student->pincode,
-            'remarks' => $student->remarks,
-            'subjects' => $subjects !== null ? $subjects : null,
+            // 'remarks' => $student->remarks,
+            'courses' => $courses !== null ? $courses : null,
         ];
 
         return $this->sendResponse(['student' => $res]);
@@ -369,7 +301,7 @@ class StudentController extends BaseController
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255|unique:auth,email',
             'phone_number' => 'required|string|min:10|max:10',
-            // 'class_id' => 'required|exists:classes,id',
+         
         ]);
 
         $loggedUser = $this->getLoggerUser();
@@ -422,11 +354,11 @@ class StudentController extends BaseController
             if ($auth) {
                 $student = Student::create([
                     'auth_id' => $auth->id,
+                    'name' => $request->name,
                     'school_id' => $schoolId,
                     'parent_id' => $parentId,
                     'student_type' => $studentType,
-                    'class_id' => $request->class_id,
-                    'section_id' => $request->section_id,
+                 
                     'name' => $request->name,
                     'profile_image' => $request->profile_image,
                     'dob' => $request->doj,
@@ -518,8 +450,7 @@ class StudentController extends BaseController
             'password' => 'nullable|min:6',
             'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
-            // 'class_id' => 'required|numeric',
-            // 'section_id' => 'required|numeric',
+      
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'dob' => 'required',
             'pincode' => 'required',
@@ -533,9 +464,7 @@ class StudentController extends BaseController
         }
 
         // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-        $schoolId = 1;
         $student = Student::where('auth_id', $studentId)
-            ->where('school_id', $schoolId)
             ->first();
 
         if ($student) {
@@ -574,8 +503,7 @@ class StudentController extends BaseController
 
             $studentData = [
                 'name' => $request->input('name', $student->name),
-                'class_id' => $request->input('class_id', $student->class_id),
-                'section_id' => $request->input('section_id', $student->section_id),
+               
                 'dob' => $request->input('dob', $student->dob),
                 'phone_number' => $request->input('phone_number', $student->phone_number),
                 'address' => $request->input('address', $student->address),
@@ -583,9 +511,7 @@ class StudentController extends BaseController
                 'state' => $request->input('state', $student->state),
                 'pincode' => $request->input('pincode', $student->pincode),
                 'description' => $request->input('description', $student->description),
-                'dob' => $request->input('dob', $student->dob),
-                'pincode' => $request->input('pincode', $student->pincode),
-                'address' => $request->input('address', $student->address),
+        
                 'status' => $request->input('status', $student->status),
             ];
 
@@ -594,9 +520,7 @@ class StudentController extends BaseController
             $res = [
                 'id' => $student->id,
                 'auth_id' => $student->auth_id,
-                'parent_id' => $student->parent_id,
-                'school_id' => $student->school_id,
-                'class_id' => $student->class_id,
+              
                 'email' => $auth->email,
                 'username' => $auth->username,
                 'phone_number' => $auth->phone_number,
@@ -625,15 +549,15 @@ class StudentController extends BaseController
     public function deleteStudentDetails(Request $request, $studentId)
     {
         $userType = $request->attributes->get('type');
-        if ($userType = 'school') {
+        if ($userType = 'admin') {
             $validator = Validator::make(['studentId' => $studentId], [
                 'studentId' => 'required',
             ]);
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             } else {
-                $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-                $student = Student::where('auth_id', $studentId)->where('school_id', $schoolId)->first();
+         
+                $student = Student::where('auth_id', $studentId)->first();
                 $auth = AuthModel::find($studentId);
                 if ($student) {
                     $student->delete();

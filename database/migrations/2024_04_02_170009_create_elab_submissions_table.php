@@ -33,7 +33,8 @@ return new class extends Migration
             // $table->time('time_taken')->nullable();
             $table->time('start_timestamp')->nullable();
             $table->time('end_timestamp')->nullable();
-            $table->tinyInteger('status')->nullable();
+            // $table->tinyInteger('status')->nullable();
+            $table->string('status', 255)->nullable();
             // $table->tinyInteger('status')->default(0)->comment('0=> Pending; 1=> Started; 2=> Completed;');
             $table->tinyInteger('type')->nullable()->comment('0=> Mini Project Task; 1=> Video Task');
             $table->tinyInteger('type_id')->nullable()->comment('0=> Mini Project Task; 1=> Video Task');

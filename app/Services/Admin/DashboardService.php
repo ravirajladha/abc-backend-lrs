@@ -21,8 +21,8 @@ class DashboardService
         $case_studies = DB::table('case_studies')->count();
         $internships = DB::table('internships')->count();
         $recruiters = DB::table('recruiters')->count();
-        $jobs = DB::table('jobs')->count();
-        $job_tests = DB::table('job_tests')->count();
+        $placements = DB::table('placements')->count();
+        $placement_tests = DB::table('placement_tests')->count();
         $subscribed_students = DB::table('students')->where('is_paid', true)->count();
         $unsubscribed_students = DB::table('students')->where('is_paid', false)->count();
         $trainers = DB::table('trainers')->count();
@@ -42,8 +42,8 @@ class DashboardService
             'case_studies' => $case_studies,
             'internships' => $internships,
             'recruiters' => $recruiters,
-            'jobs' => $jobs,
-            'job_tests' => $job_tests,
+            'placements' => $placements,
+            'placement_tests' => $placement_tests,
             'subscribed_students' => $subscribed_students,
             'unsubscribed_students' => $unsubscribed_students,
             'trainers' => $trainers,

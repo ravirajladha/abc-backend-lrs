@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::create('placements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('auth_id')->nullable()->constrained('auth', 'id');
             $table->foreignId('recruiter_id')->nullable()->constrained('auth', 'id');
-            $table->foreignId('test_id')->nullable()->constrained('job_tests', 'id');
+            $table->foreignId('test_id')->nullable()->constrained('placement_tests', 'id');
             $table->foreignId('company_id')->nullable()->constrained('companies', 'id');
-
-            $table->string('class_id', 255);
             $table->string('title', 255);
+            // $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->string('subject_id', 255);
             $table->string('image', 255)->nullable();
             $table->string('annual_ctc', 150);
             $table->text('instruction')->nullable();
@@ -39,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('placements');
     }
 };

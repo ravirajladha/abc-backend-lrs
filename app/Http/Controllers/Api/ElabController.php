@@ -324,7 +324,7 @@ class ElabController extends BaseController
     }
     public function elabSubmission(Request $request)
     {
-        // Log::info('ElabSubmission',['request' => $request->all()]);
+        Log::info('ElabSubmission',['request' => $request->all()]);
         // Validate the request data
         $validator = Validator::make($request->all(), [
             // 'elab_id' => 'required|exists:elabs,id',

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 // Combine all controller imports
 use App\Http\Controllers\Api\{
-    JobController,
+    PlacementController,
     RecruiterController,
     AuthController,
     AdminController,
@@ -29,7 +29,6 @@ use App\Http\Controllers\Api\{
     CaseStudySectionController,
     TestQuestionController,
     AssessmentQuestionController,
-
     ProjectReportModuleController,
     ProjectReportElementController,
     FeesController,
@@ -338,16 +337,16 @@ Route::prefix('admin')->group(function () {
 
     //Job Routes
     Route::prefix('jobs')->group(function () {
-        Route::get('/', [JobController::class, 'getJobList']);
-        Route::post('/', [JobController::class, 'storeJobDetails']);
-        Route::get('/get-job-test-results', [JobController::class, 'getStudentJobTestDetailsByJobApplicationId']);
-        Route::get('/{jobId}', [JobController::class, 'getJobDetails']);
-        Route::post('/{jobId}/update', [JobController::class, 'updateJobDetails']);
-        Route::delete('/{jobId}', [JobController::class, 'deleteJobDetails']);
-        Route::get('/{jobId}/applications', [JobController::class, 'getStudentJobApplications']);
-        // Route::get('/{jobId}/applications', [JobController::class, 'getStudentJobApplications']);
+        Route::get('/', [PlacementController::class, 'getJobList']);
+        Route::post('/', [PlacementController::class, 'storeJobDetails']);
+        Route::get('/get-job-test-results', [PlacementController::class, 'getStudentJobTestDetailsByJobApplicationId']);
+        Route::get('/{jobId}', [PlacementController::class, 'getJobDetails']);
+        Route::post('/{jobId}/update', [PlacementController::class, 'updateJobDetails']);
+        Route::delete('/{jobId}', [PlacementController::class, 'deleteJobDetails']);
+        Route::get('/{jobId}/applications', [PlacementController::class, 'getStudentJobApplications']);
+        // Route::get('/{jobId}/applications', [PlacementController::class, 'getStudentJobApplications']);
 
-        Route::get('/get-job-test-results', [JobController::class, 'getStudentJobTestDetailsByJobApplicationId']);
+        Route::get('/get-job-test-results', [PlacementController::class, 'getStudentJobTestDetailsByJobApplicationId']);
     });
 
     Route::post('/fee/validate-referral-name', [FeesController::class, 'validateReferralName']);
@@ -384,5 +383,12 @@ Route::prefix('admin')->group(function () {
     Route::get('/transactions', [FeesController::class, 'getTransactions']);
 
     Route::post('students/update-status', [StudentController::class, 'updateStatus']);
+    Route::get('/students/get-public-students', [StudentController::class, 'getPublicStudentDetailsFromStudent']);
 
+
+    Route::prefix('students')->group(function () {
+
+    Route::put('/{studentId}/update', [StudentController::class, 'updateStudentDetails']);
+    Route::get('/get-student-details/{studentId}', [StudentController::class, 'getStudentDetailsFromStudent']);
+    });
 });

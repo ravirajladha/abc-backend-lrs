@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Dropdown;
 
 use App\Http\Controllers\Api\BaseController;
-use App\Models\JobQuestion;
+use App\Models\PlacementQuestion;
 use Illuminate\Http\Request;
 
 class TestQuestionBySubjectIdController extends BaseController
@@ -17,7 +17,7 @@ class TestQuestionBySubjectIdController extends BaseController
     // }
     {
         $subjectIds = explode(',', $request->query('subjectIds'));
-        $questions = JobQuestion::whereIn('subject_id', $subjectIds)->get();
+        $questions = PlacementQuestion::whereIn('subject_id', $subjectIds)->get();
         $questionCount = $questions->count();
         return $this->sendResponse(['questions' => $questions, 'question_count' => $questionCount]);
     }

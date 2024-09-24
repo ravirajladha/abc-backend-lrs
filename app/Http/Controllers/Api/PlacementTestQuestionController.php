@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 
-use App\Models\JobQuestion;
+use App\Models\PlacementQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class JobTestQuestionController extends BaseController
+class PlacementTestQuestionController extends BaseController
 {
     public function getTestQuestionDetails($TestQuestionId)
     {
-        $TestQuestion = JobQuestion::find($TestQuestionId);
+        $TestQuestion = PlacementQuestion::find($TestQuestionId);
 
         if (!$TestQuestion) {
             return $this->sendError('Test question not found');
@@ -25,7 +25,7 @@ class JobTestQuestionController extends BaseController
     public function getAllTestQuestions(Request $request)
     {
 
-        $testQuestions = DB::table('job_questions as q')
+        $testQuestions = DB::table('placement_questions as q')
             ->select('q.*', 's.name as subject')
             ->leftJoin('subjects as s', 's.id', '=', 'q.subject_id');
 
@@ -36,7 +36,7 @@ class JobTestQuestionController extends BaseController
         $test_questions = $testQuestions->get();
 
         if (!$testQuestions) {
-            return $this->sendResponse([], 'Test questions not found');
+            return $this->sendResponse([], 'Placement questions not found');
         }
 
         return $this->sendResponse(['test_questions' => $test_questions], '');
@@ -63,7 +63,7 @@ class JobTestQuestionController extends BaseController
         $loggedUserId = $this->getLoggedUserId();
 
 
-        $test = new JobQuestion();
+        $test = new PlacementQuestion();
         // $test->subject_id = $request->selectedSubject;
         $test->subject_id = $request->selectedSubject;
         $test->question = $request->question;
@@ -99,7 +99,7 @@ class JobTestQuestionController extends BaseController
             return $this->sendValidationError($validator);
         }
 
-        $test = JobQuestion::find($testQuestionId);
+        $test = PlacementQuestion::find($testQuestionId);
 
         if (!$test) {
             return $this->sendError('Term test question not found');
@@ -120,13 +120,13 @@ class JobTestQuestionController extends BaseController
         $test->updated_by = $loggedUserId;
         $test->save();
 
-        return $this->sendResponse($test, 'Job test question updated successfully');
+        return $this->sendResponse($test, 'Placement test question updated successfully');
     }
 
     public function delete($testQuestionId)
     {
 
-        $test = DB::table('job_tests as t')
+        $test = DB::table('placement_tests as t')
             ->select('t.id', 't.question_ids')
             ->whereIn('t.question_ids', [$testQuestionId])
             ->first();
@@ -135,7 +135,7 @@ class JobTestQuestionController extends BaseController
             return $this->sendError('Test question cannot be deleted, since it is used in a test.');
         }
 
-        $testQuestion = JobQuestion::find($testQuestionId);
+        $testQuestion = PlacementQuestion::find($testQuestionId);
 
         if (!$testQuestion) {
             return $this->sendError('Test question not found');

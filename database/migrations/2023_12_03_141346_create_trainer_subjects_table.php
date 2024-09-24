@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('trainer_subjects', function (Blueprint $table) {
             $table->id();
             // $table->foreignId('school_id')->nullable()->constrained('schools', 'id');
-            $table->foreignId('trainer_id')->nullable()->constrained('trainers', 'id');
+            $table->foreignId('trainer_id')->nullable()->constrained('auth', 'id');
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');

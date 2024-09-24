@@ -21,22 +21,13 @@ class ExternalStudentController extends BaseController
     {
         $studentId = DB::table('students')->where('auth_id', $this->getLoggedUserId())->value('id');
         $studentAuthId = $this->getLoggedUserId();
-
+Log::info("student", ['studentAuthId' => $studentAuthId]);
         // Course Details by $subjectId
         $course = DB::table('courses')
             ->select('id', 'name', 'image')
             ->where('id', $courseId)
             ->first();
-        // if($subject->subject_type == 3){
-        //     // get subjects related to the super subject
-        //     $allsubSbujects = DB::table('subjects')->where('super_subject_id', $subject->super_subject_id)->pluck('id');
-        //     // get chapters related to the super subject
-        //     $superSubjectChapters = DB::table('chapters')->whereIn('subject_id', $allsubSbujects)->pluck('id');
 
-        //     $superSubjectChaptersCompleted = $this->areAllChaptersCompleted($studentAuthId, $superSubjectChapters);
-        // }else{
-        //     $superSubjectChaptersCompleted = true;
-        // }
         // Mini projects $subjectId
         $mini_projects = DB::table('mini_projects')
             ->select('id', 'name', 'image')
@@ -45,39 +36,39 @@ class ExternalStudentController extends BaseController
 
         // List of Chapters from the Subject
         $chapters = DB::table('chapters as c')
-            ->select('c.id', 'c.title', 'c.image', 'c.lock_status')
+            ->select('c.id', 'c.title', 'c.image' )
             ->where('c.course_id', $courseId)
             ->get();
 
         // List of Videos from the Subject for each Chapter
         foreach ($chapters as $chapter) {
             // Fetch the chapter completion status
-                $chapterLog = DB::table('chapter_logs')
-                ->where('student_id', $studentAuthId)
-                ->where('chapter_id', $chapter->id)
-                ->first(['video_complete_status', 'assessment_complete_status','updated_at']);
+            $chapterLog = DB::table('chapter_logs')
+            ->where('student_id', $studentAuthId)
+            ->where('chapter_id', $chapter->id)
+            ->first(['video_complete_status', 'assessment_complete_status','updated_at']);
 
-                if ($chapterLog) {
-                    if ($chapterLog->video_complete_status == 1 && $chapterLog->assessment_complete_status == 1) {
-                        $chapter->progress_status = 2; // completed
-                    } else {
-                        $chapter->progress_status = 1; // progress
-                    }
+            if ($chapterLog) {
+                if ($chapterLog->video_complete_status == 1 && $chapterLog->assessment_complete_status == 1) {
+                    $chapter->progress_status = 2; // completed
                 } else {
-                    $chapter->progress_status = 0; // not started
+                    $chapter->progress_status = 1; // progress
                 }
-                // $chapter->superSubjectChaptersCompleted = $superSubjectChaptersCompleted;
-                $chapter->completedBufferTime = false;
-                if ($chapter->progress_status == 2) {
-                    // Check if today's date is greater than the date when the chapter was completed
-                    $completionDate = Carbon::parse($chapterLog->updated_at)->startOfDay();
-                    $today = Carbon::now()->startOfDay();
+            } else {
+                $chapter->progress_status = 0; // not started
+            }
+            // $chapter->superSubjectChaptersCompleted = $superSubjectChaptersCompleted;
+            $chapter->completedBufferTime = false;
+            if ($chapter->progress_status == 2) {
+                // Check if today's date is greater than the date when the chapter was completed
+                $completionDate = Carbon::parse($chapterLog->updated_at)->startOfDay();
+                $today = Carbon::now()->startOfDay();
 
-                    $chapter->completedBufferTime = $today->greaterThan($completionDate);
-                }
+                $chapter->completedBufferTime = $today->greaterThan($completionDate);
+            }
 
             $chapter->videos = DB::table('videos as v')
-                ->select('v.*', 'c.title as chapter', DB::raw('COALESCE(vl.watch_time, 0) as watch_time'),DB::raw('COALESCE(vl.status, 0) as video_complete_status'), 'el.active as elab_status')
+                ->select('v.*', 'c.title as chapter', DB::raw('COALESCE(vl.watch_time, 0) as watch_time'), DB::raw('COALESCE(vl.status, 0) as video_complete_status'), 'el.active as elab_status')
                 ->leftJoin('chapters as c', 'c.id', 'v.chapter_id')
                 ->leftJoin('student_video_logs as vl', function ($join) use ($studentAuthId) {
                     $join->on('vl.video_id', '=', 'v.id')
@@ -148,7 +139,7 @@ class ExternalStudentController extends BaseController
             'trainer' => $trainer,
             'mini_projects' => $mini_projects,
         ];
-
+        Log::info("chapters", ['chapters' => $chapters]);
         return $this->sendResponse(['contents' => $contents]);
     }
 
@@ -162,7 +153,7 @@ class ExternalStudentController extends BaseController
                 ->where('chapter_id', $chapter)
                 ->first(['video_complete_status', 'assessment_complete_status']);
 
-            if ($chapterLog && (!$chapterLog->video_complete_status || !$chapterLog->assessment_complete_status) ) {
+            if ($chapterLog && (!$chapterLog->video_complete_status || !$chapterLog->assessment_complete_status)) {
                 return false; // Return false if any chapter is not completed
             }
         }

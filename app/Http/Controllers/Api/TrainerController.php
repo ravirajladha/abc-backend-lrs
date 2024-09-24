@@ -92,12 +92,12 @@ class TrainerController extends BaseController
                     ->select('tc.course_id', 'cou.name as course_name', 's.name as subject_name')
                     ->leftJoin('courses as cou', 'cou.id', 'tc.course_id')
                     ->leftJoin('subjects as s', 's.id', 'cou.subject_id')
-                    ->where('tc.trainer_id', $trainer->id)
+                    ->where('tc.trainer_id', $trainer->auth_id)
                     ->get();
                 $trainer->trainer_subjects = DB::table('trainer_subjects as ts')
                     ->select('ts.subject_id', 'c.name as subject_name')
                     ->leftJoin('subjects as c', 'c.id', 'ts.subject_id')
-                    ->where('ts.trainer_id', $trainer->id)
+                    ->where('ts.trainer_id', $trainer->auth_id)
                     ->get();
             }
 
@@ -136,14 +136,14 @@ class TrainerController extends BaseController
                 $trainer_subjects = DB::table('trainer_subjects as ts')
                     ->select('ts.subject_id', 's.name as subject_name')
                     ->leftJoin('subjects as s', 's.id', 'ts.subject_id')
-                    ->where('ts.trainer_id', $trainer->id)
+                    ->where('ts.trainer_id', $trainer->auth_id)
                     ->get();
 
                 $trainer_courses = DB::table('trainer_courses as tc')
                     ->select('tc.course_id', 'c.name as course_name', 'c.name as subject_name')
                     ->leftJoin('courses as c', 'c.id', 'tc.course_id')
                     ->leftJoin('subjects as s', 's.id', 'c.subject_id')
-                    ->where('tc.trainer_id', $trainer->id)
+                    ->where('tc.trainer_id', $trainer->auth_id)
                     ->get();
             }
             $loggedUserId = $this->getLoggedUserId();
@@ -252,7 +252,7 @@ class TrainerController extends BaseController
         // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
         $trainerCourses = TrainerCourse::where([
-            'trainer_id' => $trainer->id,
+            'trainer_id' => $trainer->auth_id,
             // 'school_id' => $schoolId,
         ])->get(['course_id']);
 
@@ -281,53 +281,60 @@ class TrainerController extends BaseController
      */
     public function storeOrUpdateTrainerSubjectsAndCourses(Request $request, $trainerId)
     {
+        // Validate the incoming request
         $validator = Validator::make(array_merge($request->all(), ['trainerId' => $trainerId]), [
             'trainerId' => 'required',
             'trainer_data' => 'required|array',
             'trainer_data.*.subject_id' => 'required|exists:subjects,id',
             'trainer_data.*.course_id' => 'required|exists:courses,id',
         ]);
-
+    
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
-
+    
+        // Fetch the trainer based on trainerId
         $trainer = DB::table('trainers')
             ->select('*')
             ->where('auth_id', $trainerId)
             ->first();
-        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-
+    
+        // Capture the logged-in user's ID
+        $loggedUserId = $this->getLoggedUserId();
+    
         foreach ($request->input('trainer_data') as $data) {
+            // Update or create TrainerSubject with created_by and updated_by
             TrainerSubject::updateOrCreate(
                 [
                     'subject_id' => $data['subject_id'],
-                    'trainer_id' => $trainer->id,
-                    // 'school_id' => $schoolId,
+                    'trainer_id' => $trainer->auth_id,
                 ],
                 [
                     'subject_id' => $data['subject_id'],
-                    'trainer_id' => $trainer->id,
-                    // 'school_id' => $schoolId,
+                    'trainer_id' => $trainer->auth_id,
+                    'created_by' => $loggedUserId, // Add created_by
+                    'updated_by' => $loggedUserId, // Add updated_by
                 ]
             );
-
+    
+            // Update or create TrainerCourse with created_by and updated_by
             TrainerCourse::updateOrCreate(
                 [
                     'course_id' => $data['course_id'],
-                    'trainer_id' =>  $trainer->id,
-                    // 'school_id' => $schoolId,
+                    'trainer_id' =>  $trainer->auth_id,
                 ],
                 [
                     'course_id' => $data['course_id'],
-                    'trainer_id' =>  $trainer->id,
-                    // 'school_id' => $schoolId,
+                    'trainer_id' =>  $trainer->auth_id,
+                    'created_by' => $loggedUserId, // Add created_by
+                    'updated_by' => $loggedUserId, // Add updated_by
                 ]
             );
         }
-
-        return $this->sendResponse([], 'Trainer Subjects and courses added or updated successfully');
+    
+        return $this->sendResponse([], 'Trainer subjects and courses added or updated successfully');
     }
+    
 
     /**
      * Update the specified trainer in storage.
@@ -460,11 +467,11 @@ class TrainerController extends BaseController
         if ($trainer) {
 
             $trainerSubjects = TrainerSubject::where([
-                'trainer_id' => $trainer->id,
+                'trainer_id' => $trainer->auth_id,
             ])->get(['subject_id']);
 
             $trainerCourses = TrainerCourse::where([
-                'trainer_id' => $trainer->id,
+                'trainer_id' => $trainer->auth_id,
             ])->get(['course_id']);
 
             $students_query = DB::table('students as s')
@@ -477,8 +484,8 @@ class TrainerController extends BaseController
 
             $students = $students->map(function($student) use ($trainer) {
                 $qna = DB::table('qna as q')
-                    ->where('q.student_id', $student->id)
-                    ->where('q.trainer_id', $trainer->id)
+                    ->where('q.student_id', $student->auth_id)
+                    ->where('q.trainer_id', $trainer->auth_id)
                     ->whereNull('q.answer')
                     ->orderBy('created_at', 'desc')
                     ->first();
@@ -511,7 +518,7 @@ class TrainerController extends BaseController
             ->where('id', $trainerId)
             ->first();
         if($trainer) {
-            $subjectIds = TrainerSubject::where('trainer_id', $trainer->id)->pluck('subject_id')->toArray();
+            $subjectIds = TrainerSubject::where('trainer_id', $trainer->auth_id)->pluck('subject_id')->toArray();
 
             $subjects = DB::table('subjects')
                 ->whereIn('id', $subjectIds)
@@ -531,7 +538,7 @@ class TrainerController extends BaseController
             ->where('id', $trainerId)
             ->first();
         if($trainer) {
-            $courseIds = TrainerCourse::where('trainer_id', $trainer->id)->pluck('course_id')->toArray();
+            $courseIds = TrainerCourse::where('trainer_id', $trainer->auth_id)->pluck('course_id')->toArray();
 
             // Retrieve courses for the given subject taught by the trainer
             $courses = DB::table('courses')

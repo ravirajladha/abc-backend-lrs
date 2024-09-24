@@ -3,21 +3,22 @@
 namespace App\Services\Trainer;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardService
 {
     public function getTrainerDashboardItems($trainerId)
     {
         // $schoolId = DB::table('trainers')->where('id', $trainerId)->pluck('school_id');
-
+Log::info('Trainer',['trainer_id'=>$trainerId]);
         $subjectIds = DB::table('trainer_subjects')->where('trainer_id', $trainerId)->pluck('subject_id');
         $subjectsCount = count($subjectIds);
 
         $totalStudentsCount = 0;
         $studentsCountBySubject = [];
         foreach ($subjectIds as $subjectId) {
-            $studentsCount = DB::table('students')->where('subject_id', $subjectId)->count();
-            $studentsCountBySubject[$subjectId] = $studentsCount;
+            $studentsCount = DB::table('students')->count();
+           
             $totalStudentsCount += $studentsCount;
         }
 
@@ -32,7 +33,7 @@ class DashboardService
             ->leftJoin('assessment_results as r', 'r.student_id', 's.id')
             ->leftJoin('assessments as a', 'a.id', 'r.assessment_id')
             ->whereIn('a.course_id', $courseIds)
-            ->groupBy('s.id', 's.name', 's.section_id')
+            ->groupBy('s.id', 's.name')
             ->orderBy('s.name', 'asc')
             ->get();
 
@@ -44,10 +45,9 @@ class DashboardService
 
         foreach ($courseIds as $courseId) {
             $students = DB::table('courses as cou')
-                ->leftJoin('students as stu', 'stu.subject_id', '=', 'cou.subject_id')
-                // ->where('stu.school_id', $schoolId)
+                // ->leftJoin('students as stu', 'stu.subject_id', '=', 'cou.subject_id')
                 ->where('cou.id', $courseId)
-                ->select('stu.*')
+                // ->select('stu.*')
                 ->get();
 
             $course = DB::table('courses')

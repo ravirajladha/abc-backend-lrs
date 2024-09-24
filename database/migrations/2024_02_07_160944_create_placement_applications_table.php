@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_applications', function (Blueprint $table) {
+        Schema::create('placement_applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_id')->nullable()->constrained('jobs', 'id');
-            $table->foreignId('test_id')->nullable()->constrained('job_tests', 'id');
+            $table->foreignId('placement_id')->nullable()->constrained('placements', 'id');
+            $table->foreignId('test_id')->nullable()->constrained('placement_tests', 'id');
             
         
-            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            // $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
             $table->foreignId('student_id')->nullable()->constrained('auth', 'id');
            
             $table->decimal('score', 10, 2)->nullable();
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->boolean('is_pass')->default(false)->nullable();
             $table->boolean('is_test')->default(true)->nullable();
 
-            $table->text('remarks')->nullable();
+            // $table->text('remarks')->nullable();
             $table->tinyInteger('status')->default(1)->comment('0 => Disabled; 1 => Active');
             $table->timestamps();
         });
@@ -41,6 +41,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_applications');
+        Schema::dropIfExists('placement_applications');
     }
 };

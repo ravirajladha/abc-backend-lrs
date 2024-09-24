@@ -24,7 +24,7 @@ class VideoController extends BaseController
 
         // Subject Details by $subjectId
         $subject = DB::table('subjects')
-            ->select('id', 'name', 'image')
+            ->select('id', 'name')
             ->where('id', $subjectId)
             ->first();
 

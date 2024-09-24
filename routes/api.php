@@ -5,11 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\EbookController;
 //Content Controllers
-use App\Http\Controllers\Api\ChapterController;
 use App\Http\Controllers\Api\SubjectController;
-use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\CaseStudyController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;

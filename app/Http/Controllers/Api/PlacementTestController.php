@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\JobTest;
-use App\Models\JobQuestion;
+use App\Models\PlacementTest;
+use App\Models\PlacementQuestion;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
-use App\Models\JobTestResult;
-use App\Models\JobApplication;
+use App\Models\PlacementTestResult;
+use App\Models\PlacementApplication;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-class JobTestController extends BaseController
+class PlacementTestController extends BaseController
 {
     /**
      * Display a listing of the resource.
@@ -23,7 +23,7 @@ class JobTestController extends BaseController
      */
     public function getAllTests(Request $request)
     {
-        $tests = DB::table('job_tests as t')
+        $tests = DB::table('placement_tests as t')
             ->select('t.*', 's.name as subject_name')
             ->leftJoin('subjects as s', 's.id', '=', DB::raw("substring_index(t.subject_id, ',', 1)")); // Adjust if needed based on how class names are stored or matched
 
@@ -73,9 +73,7 @@ class JobTestController extends BaseController
         } else {
             $loggedUserId = $this->getLoggedUserId();
         
-
-
-            $test = new JobTest;
+            $test = new PlacementTest;
             $test->title = $request->testTitle;
             $test->subject_id = $request->selectedSubject;
             $test->description = $request->description;
@@ -103,14 +101,14 @@ class JobTestController extends BaseController
 
     public function getTestDetails(Request $request, $testId)
     {
-        $test = DB::table('job_tests as a')
+        $test = DB::table('placement_tests as a')
             ->select('a.id', 'a.subject_id', 'a.title', 'a.description', 'a.total_score', 'a.time_limit', 'a.no_of_questions',  'a.question_ids', 'a.instruction')
             ->where('a.id', $testId)
             ->first();
 
         if ($test && $test->question_ids) {
             $questionIds = explode(',', $test->question_ids);
-            $test->questions = DB::table('job_questions')
+            $test->questions = DB::table('placement_questions')
                 ->whereIn('id', $questionIds)
                 ->get();
         }
@@ -166,7 +164,7 @@ class JobTestController extends BaseController
 
     public function getTestResults($test_id)
     {
-        $result = JobTestResult::with('test', 'user')->where('test_id', $test_id)->get();
+        $result = PlacementTestResult::with('test', 'user')->where('test_id', $test_id)->get();
         return $result;
     }
 
@@ -193,7 +191,7 @@ class JobTestController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $test = JobTest::find($testId);
+            $test = PlacementTest::find($testId);
 
             if (!$test) {
                 return $this->sendError('Test not found');
@@ -250,7 +248,7 @@ class JobTestController extends BaseController
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $test = JobTest::find($testId);
+            $test = PlacementTest::find($testId);
 
             $test->delete();
         }
@@ -271,9 +269,9 @@ class JobTestController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             //Get Test and Test Questions Data
-            $test = JobTest::find($request->testId);
+            $test = PlacementTest::find($request->testId);
             $test_questions = explode(',', $test->question_ids);
-            $test_question_answers = JobQuestion::whereIn('id', $test_questions)->get();
+            $test_question_answers = PlacementQuestion::whereIn('id', $test_questions)->get();
 
             //Process Student Answers
             $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
@@ -306,7 +304,7 @@ class JobTestController extends BaseController
                 $score_percentage = 0;
             }
 
-            $test_result = new JobTestResult;
+            $test_result = new PlacementTestResult;
             $test_result->test_id = $request->testId;
             $test_result->student_id  = $request->studentId;
             // $test_result->subject_id  = $request->subject_id;
@@ -332,14 +330,14 @@ class JobTestController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             //Get Test and Test Questions Data
-            $testResult = JobApplication::where('token', $request->token)->first();
+            $testResult = PlacementApplication::where('token', $request->token)->first();
 
             if (!$testResult) {
                 return $this->sendError('Test result not found or token is invalid.', [], 404);
             }
-            $test = JobTest::find($request->testId);
+            $test = PlacementTest::find($request->testId);
             $test_questions = explode(',', $test->question_ids);
-            $test_question_answers = JobQuestion::whereIn('id', $test_questions)->get();
+            $test_question_answers = PlacementQuestion::whereIn('id', $test_questions)->get();
 
             //Process Student Answers
             $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
@@ -400,14 +398,14 @@ class JobTestController extends BaseController
             return $this->sendValidationError($validator);
         } else {
             //Get Test and Test Questions Data
-            $testResult = JobApplication::where('token', $request->token)->first();
+            $testResult = PlacementApplication::where('token', $request->token)->first();
 
             if (!$testResult) {
                 return $this->sendError('Test result not found or token is invalid.', [], 404);
             }
-            $test = JobTest::find($request->testId);
+            $test = PlacementTest::find($request->testId);
             $test_questions = explode(',', $test->question_ids);
-            $test_question_answers = JobQuestion::whereIn('id', $test_questions)->get();
+            $test_question_answers = PlacementQuestion::whereIn('id', $test_questions)->get();
 
             //Process Student Answers
             $selectedQuestionIds = explode(',', $request->selectedQuestionIds);
@@ -475,7 +473,7 @@ class JobTestController extends BaseController
         // Check if the test session already exists to prevent duplicates
 
 
-        $existingSession = JobTestResult::where('student_id', $data['studentId'])
+        $existingSession = PlacementTestResult::where('student_id', $data['studentId'])
             ->where('test_id', $data['latestTestId'])
             ->first();
 
@@ -484,7 +482,7 @@ class JobTestController extends BaseController
         }
         $token = Str::random(32);
         // Create a new test session
-        $testSession = JobTestResult::create([
+        $testSession = PlacementTestResult::create([
             'student_id' => $data['studentId'],
             // 'subject_id' => $data['subjectId'],
             'test_id' => $data['latestTestId'],

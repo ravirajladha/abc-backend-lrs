@@ -19,7 +19,7 @@ class EbookController extends BaseController
     public function getEbookList()
     {
         $ebooks = DB::table('ebooks as e')
-            ->select('e.id', 'e.title', 'e.description', 'course.name as course_name', 'e.image', 'e.class_id', 'e.subject_id', 's.name as subject_name', 'e.chapter_id')
+            ->select('e.id', 'e.title', 'e.description', 'course.name as course_name', 'e.image', 'e.course_id', 'e.subject_id', 's.name as subject_name', 'e.chapter_id')
             ->leftJoin('subjects as s', 'e.subject_id', 's.id')
             ->leftJoin('courses as course', 'e.course_id', 'course.id')
             ->get();

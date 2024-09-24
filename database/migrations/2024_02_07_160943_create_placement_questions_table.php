@@ -13,22 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('job_tests', function (Blueprint $table) {
+        Schema::create('placement_questions', function (Blueprint $table) {
             $table->id();
-          
-            $table->string('subject_id', 255)->nullable();
-           
-            $table->string('title', 255);
+            $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
+            $table->text('question');
+            $table->text('explanation')->nullable();
             $table->string('image')->nullable();
-            $table->text('description')->nullable();
-            $table->text('instruction')->nullable();
-            $table->string('question_ids', 255)->nullable();
-            $table->integer('no_of_questions')->nullable();
-            $table->decimal('total_score', 10, 2)->nullable();
-            $table->decimal('time_limit', 10, 2)->nullable();
-            $table->decimal('passing_percentage', 10, 2)->nullable();
-            $table->date('start_date')->nullable();
-            $table->date('end_date')->nullable();
+            $table->text('code')->nullable();
+            $table->text('option_one')->nullable();
+            $table->text('option_two')->nullable();
+            $table->text('option_three')->nullable();
+            $table->text('option_four')->nullable();
+            $table->string('answer_key')->nullable();
             $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id');
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id');
@@ -43,6 +39,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('job_tests');
+        Schema::dropIfExists('placement_questions');
     }
 };

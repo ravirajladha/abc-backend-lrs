@@ -11,7 +11,7 @@ class AssessmentController extends BaseController
     public function __invoke(Request $request)
     {
         $assessments = Assessment::select('course_id', 'subject_id', 'title', 'id')
-        ->where('subject_id', $request->subjectId)
+        ->where('course_id', $request->courseId)
         ->get()
         ->map(function ($assessment) {
             $assessment->title = ucfirst($assessment->title);
