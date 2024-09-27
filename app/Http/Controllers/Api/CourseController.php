@@ -35,15 +35,13 @@ class CourseController extends BaseController
     public function getMyCourses()
     {
         $studentId = Student::where('auth_id', $this->getLoggedUserId())->value('auth_id');
-        Log::info('Student ID:', ['studentId' => $studentId]);
 
         if (!$studentId) {
-            Log::error('Student ID not found for the logged-in user.');
             return $this->sendResponse(['courses' => []], 'No courses found.');
         }
 
         $courses = Course::join('subjects', 'courses.subject_id', '=', 'subjects.id')
-            ->join('chapters', 'courses.id', '=', 'chapters.subject_id')
+            ->join('chapters', 'courses.id', '=', 'chapters.course_id')
             ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
             ->select('courses.id', 'courses.name', 'courses.image', 'subjects.name as subject_name')
             ->where('chapter_logs.video_complete_status', 1)
@@ -54,7 +52,6 @@ class CourseController extends BaseController
         Log::info('Courses retrieved:', ['courses' => $courses]);
 
         foreach ($courses as $course) {
-            Log::info('Processing course:', ['course' => $course]);
 
             $chapterIds = DB::table('chapters')->where('course_id', $course->id)
                 ->whereExists(function ($query) {
@@ -63,8 +60,6 @@ class CourseController extends BaseController
                         ->whereRaw('videos.chapter_id = chapters.id');
                 })
                 ->pluck('id')->toArray();
-
-            Log::info('Chapter IDs:', ['chapterIds' => $chapterIds]);
 
             $completedChaptersCount = 0;
             if (!empty($chapterIds)) {

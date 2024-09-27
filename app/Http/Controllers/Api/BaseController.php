@@ -90,7 +90,7 @@ class BaseController extends Controller
                 $response['student_data'] = [
                     'student_id' => $student->id,
                     'student_auth_id' => $student->auth_id,
-                    'student_name' => $auth->name,
+                    'student_name' => $student->name,
                     // 'class_id' => null,
                     // 'class_name' => null,
                     'student_unique_code' => $student->student_unique_code,
