@@ -21,7 +21,7 @@ class ExternalStudentController extends BaseController
     {
         $studentId = DB::table('students')->where('auth_id', $this->getLoggedUserId())->value('id');
         $studentAuthId = $this->getLoggedUserId();
-Log::info("student", ['studentAuthId' => $studentAuthId]);
+        Log::info("student", ['studentAuthId' => $studentAuthId]);
         // Course Details by $subjectId
         $course = DB::table('courses')
             ->select('id', 'name', 'image')
@@ -36,7 +36,7 @@ Log::info("student", ['studentAuthId' => $studentAuthId]);
 
         // List of Chapters from the Subject
         $chapters = DB::table('chapters as c')
-            ->select('c.id', 'c.title', 'c.image' )
+            ->select('c.id', 'c.title', 'c.image')
             ->where('c.course_id', $courseId)
             ->get();
 
@@ -85,7 +85,7 @@ Log::info("student", ['studentAuthId' => $studentAuthId]);
                 $video->assessment_results = DB::table('assessment_results as a')
                     ->select('a.*', 'assessment.no_of_questions as total_score')
                     ->join('assessments as assessment', 'a.assessment_id', '=', 'assessment.id')
-                    ->where('a.student_id', $studentId)
+                    ->where('a.student_id', $studentAuthId)
                     ->where('a.video_id', $video->id)
                     ->get();
             }
@@ -108,7 +108,7 @@ Log::info("student", ['studentAuthId' => $studentAuthId]);
             $videoPlayback->assessment_results = DB::table('assessment_results as a')
             ->select('a.*', 'assessment.no_of_questions as total_score')
             ->join('assessments as assessment', 'a.assessment_id', '=', 'assessment.id')
-            ->where('a.student_id', $studentId)
+            ->where('a.student_id', $studentAuthId)
             ->where('a.video_id', $videoPlayback->id)
             ->get();
             $video = $videoPlayback;
@@ -128,7 +128,7 @@ Log::info("student", ['studentAuthId' => $studentAuthId]);
         // Trainer Id by $subjectId
         $trainer = DB::table('trainer_courses as ts')
             ->where('ts.course_id', $courseId)
-            ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
+            ->leftJoin('trainers as t', 't.auth_id', 'ts.trainer_id')
             ->first();
 
         // Final Contents Structure

@@ -36,12 +36,12 @@ class CourseController extends BaseController
     {
         $studentId = Student::where('auth_id', $this->getLoggedUserId())->value('auth_id');
         Log::info('Student ID:', ['studentId' => $studentId]);
-    
+
         if (!$studentId) {
             Log::error('Student ID not found for the logged-in user.');
             return $this->sendResponse(['courses' => []], 'No courses found.');
         }
-    
+
         $courses = Course::join('subjects', 'courses.subject_id', '=', 'subjects.id')
             ->join('chapters', 'courses.id', '=', 'chapters.subject_id')
             ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
@@ -50,12 +50,12 @@ class CourseController extends BaseController
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
             ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name')
             ->get();
-    
+
         Log::info('Courses retrieved:', ['courses' => $courses]);
-    
+
         foreach ($courses as $course) {
             Log::info('Processing course:', ['course' => $course]);
-    
+
             $chapterIds = DB::table('chapters')->where('course_id', $course->id)
                 ->whereExists(function ($query) {
                     $query->select(DB::raw(1))
@@ -63,9 +63,9 @@ class CourseController extends BaseController
                         ->whereRaw('videos.chapter_id = chapters.id');
                 })
                 ->pluck('id')->toArray();
-    
+
             Log::info('Chapter IDs:', ['chapterIds' => $chapterIds]);
-    
+
             $completedChaptersCount = 0;
             if (!empty($chapterIds)) {
                 $completedChaptersCount = ChapterLog::where('student_id', $this->getLoggedUserId())
@@ -73,47 +73,47 @@ class CourseController extends BaseController
                     ->where('video_complete_status', 1)
                     ->where('assessment_complete_status', 1)
                     ->count();
-    
+
                 Log::info('Completed Chapters Count:', ['completedChaptersCount' => $completedChaptersCount]);
-    
+
                 $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
                 $course->chapter_completed = $allChaptersCompleted;
             } else {
                 $course->chapter_completed = false;
             }
-    
+
             $course->completePercentage = !empty($chapterIds) ? ($completedChaptersCount / count($chapterIds)) * 100 : 0;
             Log::info('Completion Percentage:', ['completePercentage' => $course->completePercentage]);
-    
+
             $latestTest = DB::table('tests')
                 ->where('course_id', $course->id)
                 ->where('status', 1)
                 ->select('id', 'description')
                 ->orderBy('created_at', 'desc')
                 ->first();
-    
+
             Log::info('Latest Test:', ['latestTest' => $latestTest]);
-    
+
             if ($latestTest) {
                 $latestTestId = $latestTest->id;
                 $testDescription = $latestTest->description;
-    
+
                 $latestTestResults = DB::table('test_results as results')
                     ->where('results.student_id', $studentId)
                     ->where('results.test_id', $latestTestId)
                     ->exists();
-    
+
                 if (!$latestTestResults) {
                     $course->latest_test_id = $latestTestId;
                     $course->latest_test = $latestTest;
                     $course->testDescription = $testDescription;
                 } else {
-                    $course->latest_test_id = false;
-                    $course->latest_test = false;
-                    $course->testDescription = false;
+                    $course->latest_test_id = null;
+                    $course->latest_test = null;
+                    $course->testDescription = null;
                 }
             }
-    
+
             $studentResult = DB::table('test_results as results')
                 ->select('results.*')
                 ->leftJoin('tests as test', 'test.id', 'results.test_id')
@@ -121,30 +121,30 @@ class CourseController extends BaseController
                 ->where('test.course_id', $course->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
-    
+
             Log::info('Student Results:', ['studentResult' => $studentResult]);
-    
+
             $course->results = $studentResult;
-    
+
             // Trainer by course
             $trainer = DB::table('trainer_courses as ts')
                 ->where('ts.course_id', $course->id)
                 ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
                 ->first();
-    
+
             if ($trainer) {
                 $course->trainer_name = $trainer->name;
             } else {
                 $course->trainer_name = 'No trainer assigned';
             }
-    
+
             Log::info('Trainer Name:', ['trainer_name' => $course->trainer_name]);
         }
-    
+
         Log::info('Final Courses Detail:', ['courses' => $courses]);
         return $this->sendResponse(['courses' => $courses]);
     }
-    
+
     //still in progress
     /**
      * Display the student report card.
@@ -245,37 +245,37 @@ class CourseController extends BaseController
      * @param $subjectId
      * @return \Illuminate\Http\JsonResponse
      */
- 
+
 
     public function getStudentCoursesWithResults(Request $request)
     {
         $res = [];
-    
+
         $subjectId = $request->subjectId;
         $studentId = $request->studentId;
-    
+
         $validator = Validator::make($request->all(), [
             // 'subjectId' => 'required',
             // 'studentId' => 'required',
         ]);
-    
+
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
             // Log the SQL query before executing
             DB::enableQueryLog();
-    
+
             $courses = DB::table('courses as cou')
                 ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
                 ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
                 ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
                 ->select('cou.id', 'cou.name', 'cou.image', 'subjects.name as subject_name', 't.name as trainer_name')
                 ->get();
-    
+
             // Log the executed query and result
             Log::info('Executed Query: ', DB::getQueryLog());
             Log::info('Query Result: ', ['courses' => $courses]);
-    
+
             if ($courses->isNotEmpty()) {
                 return $this->sendResponse(['courses' => $courses]);
             } else {
@@ -283,11 +283,11 @@ class CourseController extends BaseController
             }
         }
     }
-    
+
 
     public function storeCourseDetails(Request $request)
     {
-     
+
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required',
             'course_name' => 'required|max:75|unique:courses,name',
