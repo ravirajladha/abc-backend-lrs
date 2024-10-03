@@ -112,13 +112,13 @@ class RegisterController extends BaseController
                     // Generate a random 8-digit number
                     $code = 'S' . sprintf('%08d', mt_rand(1, 99999999));
                 } while (Student::where('student_unique_code', $code)->exists());
-
                 return $code;
             }
             // $student_unique_code
             if ($auth) {
                 $student = Student::create([
                     'auth_id' => $auth->id,
+                    'name' => $request->name,
                     'student_unique_code' => generateUniqueStudentCode(),
                 ]);
             }

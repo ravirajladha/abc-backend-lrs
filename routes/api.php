@@ -97,9 +97,8 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     //Classes Routes
     Route::get('/classes', [SubjectController::class, 'getClassesList']);
     Route::get('/classes/{classId}', [SubjectController::class, 'getClassDetails']);
-    Route::get('/classes/{classId}/results', [SubjectController::class, 'getClassResults']);
 
 
 
- 
+
 });

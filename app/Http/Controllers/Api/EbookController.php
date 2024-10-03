@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
+use App\Models\ReadableCourse;
 
 class EbookController extends BaseController
 {
@@ -183,7 +184,11 @@ class EbookController extends BaseController
                 ->select('ebooks.id', 'ebooks.title', 'ebooks.image')
                 ->where('ebooks.id',$ebookId)
                 ->first();
-                  // If no readable course found, fetch ebook details directly
+            $readableCourse = ReadableCourse::where('ebook_id', $ebookId)->first();
+            if($readableCourse){
+                $ebook->project_report_id = $readableCourse->project_report_id;
+                $ebook->case_study_id = $readableCourse->case_study_id;
+            }
 
             return $this->sendResponse(['ebook' => $ebook]);
         }

@@ -31,9 +31,7 @@ class TrainerController extends BaseController
      */
     public function getDashboard(Request $request, DashboardService $dashboardService)
     {
-        $trainerId = Trainer::where('auth_id', $this->getLoggedUserId())->value('id');
-
-        $dashboard =  $dashboardService->getTrainerDashboardItems($trainerId);
+        $dashboard =  $dashboardService->getTrainerDashboardItems($this->getLoggedUserId());
         return $this->sendResponse(['dashboard' => $dashboard]);
     }
 
@@ -80,7 +78,7 @@ class TrainerController extends BaseController
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
-        
+
 
             $trainers = DB::table('trainers as t')
                 ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image',  't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
@@ -147,7 +145,7 @@ class TrainerController extends BaseController
                     ->get();
             }
             $loggedUserId = $this->getLoggedUserId();
-  
+
 
 
             if ($trainer && $auth) {
@@ -196,7 +194,7 @@ class TrainerController extends BaseController
         } else {
             $auth = AuthModel::create([
                 'password' => Hash::make('abc123'),
-                'username' => $request->email,
+                'username' => $request->name,
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'type' => AuthConstants::TYPE_TRAINER,
@@ -288,20 +286,20 @@ class TrainerController extends BaseController
             'trainer_data.*.subject_id' => 'required|exists:subjects,id',
             'trainer_data.*.course_id' => 'required|exists:courses,id',
         ]);
-    
+
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
-    
+
         // Fetch the trainer based on trainerId
         $trainer = DB::table('trainers')
             ->select('*')
             ->where('auth_id', $trainerId)
             ->first();
-    
+
         // Capture the logged-in user's ID
         $loggedUserId = $this->getLoggedUserId();
-    
+
         foreach ($request->input('trainer_data') as $data) {
             // Update or create TrainerSubject with created_by and updated_by
             TrainerSubject::updateOrCreate(
@@ -316,7 +314,7 @@ class TrainerController extends BaseController
                     'updated_by' => $loggedUserId, // Add updated_by
                 ]
             );
-    
+
             // Update or create TrainerCourse with created_by and updated_by
             TrainerCourse::updateOrCreate(
                 [
@@ -331,10 +329,10 @@ class TrainerController extends BaseController
                 ]
             );
         }
-    
+
         return $this->sendResponse([], 'Trainer subjects and courses added or updated successfully');
     }
-    
+
 
     /**
      * Update the specified trainer in storage.

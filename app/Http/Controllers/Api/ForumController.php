@@ -263,14 +263,18 @@ class ForumController extends BaseController
     public function getForumQuestionAnswers(Request $request, $forumId)
     {
         $forum = [];
+        // $question = DB::table('forum_questions as f')
+        //     ->select('f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+        //     ->leftJoin('students as s', 's.id', 'f.student_id')
+        //     ->where('f.id', $forumId)
+        //     ->first();
         $question = DB::table('forum_questions as f')
-            ->select('f.question', 'f.student_id', 's.profile_image', 's.name as student_name', 'f.created_at')
+            ->select('f.question', 'f.dislikes_count', 'f.likes_count', 'f.student_id', 's.profile_image', 'a.username as student_name', 'f.created_at')
             ->leftJoin('students as s', 's.id', 'f.student_id')
+            ->leftJoin('auth as a', 'a.id', 'f.student_id')
             ->where('f.id', $forumId)
             ->first();
 
-        $loggedUserId = $this->getLoggedUserId();
-        $student = Student::where('auth_id', $loggedUserId)->first();
         $answers = DB::table('forum_answers as f')
             ->select(
                 'f.id',
@@ -281,10 +285,10 @@ class ForumController extends BaseController
                 's.profile_image',
                 'f.created_at',
                 'f.status',
-                DB::raw('IFNULL(v.vote_type, 0) as vote_type')
+                // DB::raw('IFNULL(v.vote_type, 0) as vote_type')
             )
             ->leftJoin('students as s', 's.id', 'f.student_id')
-            ->leftJoin('forum_answer_votes as v', 'v.answer_id', 'f.id')
+            // ->leftJoin('forum_answer_votes as v', 'v.answer_id', 'f.id')
             // ->where('f.status', ForumConstants::STATUS_ACTIVE)
             ->where('f.question_id', $forumId)
             ->orderBy('f.vote_count', 'desc')

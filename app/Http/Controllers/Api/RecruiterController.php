@@ -32,10 +32,7 @@ class RecruiterController extends BaseController
      */
     public function getDashboard(Request $request, DashboardService $dashboardService)
     {
-        $recruiterId = Recruiter::where('auth_id', $this->getLoggedUserId())->value('id');
-        Log::info("getRecruiterDashboardItems22222");
-
-        $dashboard =  $dashboardService->getRecruiterDashboardItems($recruiterId);
+        $dashboard =  $dashboardService->getRecruiterDashboardItems($this->getLoggedUserId());
         return $this->sendResponse(['dashboard' => $dashboard]);
     }
 
@@ -102,7 +99,7 @@ class RecruiterController extends BaseController
     public function getRecruiterDetails($recruiterId)
     {
         $res = [];
- 
+
 
         $validator = Validator::make(['recruiterId' => $recruiterId], [
             'recruiterId' => 'required',
@@ -177,12 +174,12 @@ class RecruiterController extends BaseController
                 'status' => AuthConstants::STATUS_ACTIVE,
             ]);
 
-         
+
 
             if ($auth) {
                 $trainer = Recruiter::create([
                     'auth_id' => $auth->id,
-                  
+
                     'name' => $request->name,
                     'emp_id' => $request->emp_id,
                     'profile_image' => $request->profile_image,
@@ -224,7 +221,7 @@ class RecruiterController extends BaseController
 
         $trainerCourses = TrainerCourse::where([
             'trainer_id' => $trainer->id,
-         
+
         ])->get(['subject_id']);
 
         foreach ($trainerCourses as $course) {
@@ -270,12 +267,12 @@ class RecruiterController extends BaseController
                 [
                     'subject_id' => $data['subject_id'],
                     'trainer_id' => $trainer->id,
-                  
+
                 ],
                 [
                     'subject_id' => $data['subject_id'],
                     'trainer_id' => $trainer->id,
-                  
+
                 ]
             );
 
@@ -283,12 +280,12 @@ class RecruiterController extends BaseController
                 [
                     'course_id' => $data['course_id'],
                     'trainer_id' =>  $trainer->id,
-                  
+
                 ],
                 [
                     'course_id' => $data['course_id'],
                     'trainer_id' =>  $trainer->id,
-                  
+
                 ]
             );
         }
@@ -317,7 +314,7 @@ class RecruiterController extends BaseController
         }
 
         $auth = AuthModel::find($recruiterId);
-       
+
 
         $recruiter = Recruiter::where('auth_id', $recruiterId)->first();
 

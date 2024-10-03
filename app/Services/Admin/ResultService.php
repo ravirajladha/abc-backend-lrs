@@ -6,25 +6,21 @@ use Illuminate\Support\Facades\DB;
 
 class ResultService
 {
-    public function getClassResults($classId, $term = NULL)
+    public function getCourseResults($courseId)
     {
-        $results =  DB::table('term_test_results as r')
+        $results =  DB::table('test_results as r')
             ->select(
                 'r.student_id',
                 DB::raw('SUM(r.score) as total_score'),
                 's.name as student_name'
             )
-            ->leftJoin('term_tests as t', 't.id', 'r.test_id')
-            ->leftJoin('classes as c', 'c.id', 't.class_id')
+            ->leftJoin('tests as t', 't.id', 'r.test_id')
             ->leftJoin('subjects as subj', 'subj.id', 't.subject_id')
+            ->leftJoin('courses as c', 'c.id', 't.course_id')
             ->leftJoin('students as s', 's.id', 'r.student_id')
-            ->where('c.id', $classId)
+            ->where('c.id', $courseId)
             ->groupBy('r.student_id', 's.name')
             ->orderBy('total_score', 'desc');
-
-        if ($term) {
-            $results->where('t.term_type', $term);
-        }
 
         $results = $results->get();
 
@@ -34,25 +30,21 @@ class ResultService
     }
 
 
-    public function getSubjectResults($subjectId, $term = NULL)
+    public function getSubjectResults($subjectId)
     {
-        $results =  DB::table('term_test_results as r')
+        $results =  DB::table('test_results as r')
             ->select(
                 'r.student_id',
                 DB::raw('SUM(r.score) as total_score'),
                 's.name as student_name'
             )
-            ->leftJoin('term_tests as t', 't.id', 'r.test_id')
-            ->leftJoin('classes as c', 'c.id', 't.class_id')
+            ->leftJoin('tests as t', 't.id', 'r.test_id')
             ->leftJoin('subjects as subj', 'subj.id', 't.subject_id')
+            ->leftJoin('courses as c', 'c.id', 't.course_id')
             ->leftJoin('students as s', 's.id', 'r.student_id')
             ->where('t.subject_id', $subjectId)
             ->groupBy('r.student_id', 's.name')
             ->orderBy('total_score', 'desc');
-
-        if ($term) {
-            $results->where('t.term_type', $term);
-        }
 
         $results = $results->get();
 

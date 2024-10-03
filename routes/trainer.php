@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\{
 Route::prefix('trainer')->group(function () {
 
     Route::prefix('qna')->group(function () {
-        Route::get('/{trainerId}/{studentId}', [QnaController::class, 'getQnaBySubject']);
+        Route::get('/{trainerId}/{studentId}', [QnaController::class, 'getQnaByCourse']);
         Route::post('/', [QnaController::class, 'storeTrainerQnaResponse']);
         Route::get('/get-unreplied-count', [TrainerController::class, 'countUnrepliedQnAsForTrainer']);
     });
@@ -28,7 +28,7 @@ Route::prefix('trainer')->group(function () {
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
     Route::get('/dashboard', [TrainerController::class, 'getDashboard']);
 
-    Route::get('/get-classes', [TrainerController::class, 'getTrainerSubjects']);
+    Route::get('/get-subjects', [TrainerController::class, 'getTrainerSubjects']);
     Route::get('/get-courses/{subjectId}', [TrainerController::class, 'getTrainerCoursesBySubject']);
     // Route::get('/get-chapters', [TrainerController::class, 'getAllTrainerChaptersByCourse']);
     Route::get('/get-students', [TrainerController::class, 'getAllStudentsByCourses']);

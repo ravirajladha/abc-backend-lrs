@@ -87,6 +87,9 @@ Route::prefix('admin')->group(function () {
     // Delete a course
     Route::delete('/courses/{courseId}/delete', [CourseController::class, 'deleteCourseDetails']);
 
+    // Retrieve results associated with a specific course
+    Route::get('/courses/{courseId}/results', [CourseController::class, 'getCourseResults']);
+
     // Retrieve a list of chapters associated with a specific course (and subject)
     Route::get('/subjects/{subjectId}/courses/{courseId}/chapters', [ChapterController::class, 'getChapterListBySubject']);
 
@@ -214,7 +217,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/', [ReadableCoursesController::class, 'getAllReadableCourses']);
         Route::post('/store', [ReadableCoursesController::class, 'storeReadableCourse']);
     });
-    
+
     //eLab Routes
     Route::prefix('elabs')->group(function () {
         Route::get('/get-elab-participant/{elabId}', [ElabController::class, 'getElabParticipants']);

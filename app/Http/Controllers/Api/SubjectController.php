@@ -25,14 +25,14 @@ class SubjectController extends BaseController
     {
 
         $loggedUserId = $this->getLoggedUserId();
-    
+
 
         Log::info('Received subjectId:', ['subjectId' => $loggedUserId]);
 
         $subjects = Subject::orderBy('position')->orderBy('created_at')->get();
         return $this->sendResponse(['subjects' => $subjects]);
     }
-    
+
 
     /**
      * Store a newly created subject in storage.
@@ -104,21 +104,21 @@ class SubjectController extends BaseController
                     'position' => 'required|integer',
                 ]
             );
-    
+
             // If validation fails, return the validation error response
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             }
-    
+
             // Find the subject by ID
             $subject = Subject::find($subjectId);
-    
+
             // If subject is not found, return an error response
             if (!$subject) {
                 return $this->sendError('Subject not found!', 404);
             }
             $loggedUserId = $this->getLoggedUserId();
-   
+
 
             // Update the subject details
             $subject->update([
@@ -127,18 +127,18 @@ class SubjectController extends BaseController
                 'position' => $request->position,
                 'updated_by' => $loggedUserId,
             ]);
-    
+
             // Return the updated subject data in the response
             return $this->sendResponse(['subject' => $subject], 'Subject updated successfully');
         } catch (\Exception $e) {
             // Log the error message for debugging
             \Log::error('Error updating subject: ' . $e->getMessage());
-    
+
             // Return a general error response
             return $this->sendError('An error occurred while updating the subject', 500);
         }
     }
-    
+
 
     /**
      * Remove the specified subject from storage.
@@ -167,7 +167,7 @@ class SubjectController extends BaseController
     {
         $resultService = new ResultService();
 
-        $results = $resultService->getSubjectResults($subjectId, $request->term);
+        $results = $resultService->getSubjectResults($subjectId);
 
         return $this->sendResponse(['results' => $results], '');
     }

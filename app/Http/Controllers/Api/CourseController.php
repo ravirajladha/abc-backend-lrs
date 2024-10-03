@@ -107,6 +107,10 @@ class CourseController extends BaseController
                     $course->latest_test = null;
                     $course->testDescription = null;
                 }
+            }else {
+                $course->latest_test_id = null;
+                $course->latest_test = null;
+                $course->testDescription = null;
             }
 
             $studentResult = DB::table('test_results as results')
@@ -401,14 +405,14 @@ class CourseController extends BaseController
         return $this->sendResponse([], 'Course deleted successfully');
     }
 
-    // public function getCourseResults(Request $request, $courseId)
-    // {
-    //     $resultService = new ResultService();
+    public function getCourseResults(Request $request, $courseId)
+    {
+        $resultService = new ResultService();
 
-    //     $results = $resultService->getCourseResults($courseId, $request->term);
+        $results = $resultService->getCourseResults($courseId);
 
-    //     return $this->sendResponse(['results' => $results], '');
-    // }
+        return $this->sendResponse(['results' => $results], '');
+    }
 
     // public function getSuperSubjects()
     // {

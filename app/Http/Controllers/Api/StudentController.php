@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Constants\AuthConstants;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Student\DashboardService;
+use App\Models\Fee;
 
 class StudentController extends BaseController
 {
@@ -55,7 +56,7 @@ class StudentController extends BaseController
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin' ) {
-          
+
             $students = DB::table('students as s')
                 ->select('s.*', 'a.*', 'c.name as class_name')
                 ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
@@ -104,8 +105,8 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 ->leftJoin('auth as a', 'a.id', '=', 's.auth_id')
                 ->get();
 
-    
-             
+
+
 
                 $students = $query->paginate(10);
             return $this->sendResponse(['students' => $students]);
@@ -123,13 +124,13 @@ public function getPublicStudentDetailsFromStudent(Request $request)
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin' || $userType = 'internship_admin') {
-           
+
             $query = DB::table('students as s')
             ->select('s.id as student_id', 's.*', 'a.*', 'c.name as class_name', 'sections.name as section_name')
             ->leftJoin('auth as a', 'a.id', '=', 's.auth_id');
-          
 
-        
+
+
 
             $students = $query->get();
             return $this->sendResponse(['students' => $students]);
@@ -201,21 +202,21 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                     $res = [
                         'id' => $student->id,
                         'auth_id' => $student->auth_id,
-                      
+
                         'name' => $student->name,
                         'email' => $auth->email,
                         'username' => $auth->username,
                         'phone_number' => $auth->phone_number,
-                 
+
                         'profile_image' => $student->profile_image,
                         'dob' => $student->dob,
                         'address' => $student->address,
                         'city' => $student->city,
                         'state' => $student->state,
                         'pincode' => $student->pincode,
- 
-                     
-                  
+
+
+
                         'student_status' => $student->status,
                         // 'parent_name' => $student->parent_name,
                     ];
@@ -241,7 +242,7 @@ Log::info("Student",['sdfsd',$studentId]    );
 
         // Fetch the student model
         // $schoolId = School::where('auth_id',  $this->getLoggedUserId())->value('id');
-     
+
 
         $student = DB::table('students as s')->select( 's.*')
         ->where('s.auth_id', $studentId)
@@ -273,7 +274,7 @@ Log::info("Student",['sdfsd',$studentId]    );
             'email' => $auth->email,
             'username' => $auth->username,
             'phone_number' => $auth->phone_number,
-   
+
             'profile_image' => $student->profile_image,
             'dob' => $student->dob,
             'address' => $student->address,
@@ -301,51 +302,27 @@ Log::info("Student",['sdfsd',$studentId]    );
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255|unique:auth,email',
             'phone_number' => 'required|string|min:10|max:10',
-         
+
         ]);
 
         $loggedUser = $this->getLoggerUser();
-        // if ($loggedUser->type === AuthConstants::TYPE_SCHOOL) {
-        //     $initials = School::where('auth_id', $this->getLoggedUserId())
-        //         ->selectRaw("CONCAT(LEFT(name, 1), IF(LOCATE(' ', name), LEFT(SUBSTRING_INDEX(name, ' ', -1), 1), '')) as starting_letters")
-        //         ->value('starting_letters');
-        //     $schoolId = School::where('auth_id', $loggedUser->id)->value('id');
-        //     $parentId = null; // assigining parent as null as student added by school
-        //     $studentType = 0;
-        // } elseif ($loggedUser->type === AuthConstants::TYPE_PARENT) {
-        //     $studentName = $request->name;
-        //     $initials = substr($studentName, 0, 1);
-        //     $schoolId = 1; // Assigning schoolId 1 if its parent. a default school added through seeder
-        //     $parentId = ParentModel::where('auth_id', $loggedUser->id)->value('id');
-        //     $studentType = 1;
-        // }
 
         // added by admin
-            $studentName = $request->name;
-            $initials = substr($studentName, 0, 1);
-            $schoolId = 1;
-            $parentId = null;
-            $studentType = 1;
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         } else {
-            $length = 6;
-            $min = pow(10, $length - 1);
-            $max = pow(10, $length) - 1;
-            $rand_number = mt_rand($min, $max);
+            function generateUniqueStudentCode() {
+                do {
+                    // Generate a random 8-digit number
+                    $code = 'S' . sprintf('%08d', mt_rand(1, 99999999));
+                } while (Student::where('student_unique_code', $code)->exists());
+                return $code;
+            }
 
-              // Generate email if not provided
-        $email = $request->email ?: $initials . $rand_number . '@gmail.com';
-
-        // Ensure the generated email is unique
-        while (AuthModel::where('email', $email)->exists()) {
-            $rand_number = mt_rand($min, $max);
-            $email = $initials . $rand_number . '@gmail.com';
-        }
             $auth = AuthModel::create([
-                'username' => $initials . $rand_number,
+                'username' => $request->name,
                 'password' => Hash::make('abc123'),
-                'email' => $email,
+                'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'type' => AuthConstants::TYPE_STUDENT,
                 'status' => AuthConstants::STATUS_ACTIVE,
@@ -355,19 +332,12 @@ Log::info("Student",['sdfsd',$studentId]    );
                 $student = Student::create([
                     'auth_id' => $auth->id,
                     'name' => $request->name,
-                    'school_id' => $schoolId,
-                    'parent_id' => $parentId,
-                    'student_type' => $studentType,
-                 
-                    'name' => $request->name,
-                    'profile_image' => $request->profile_image,
-                    'dob' => $request->doj,
-                    'phone_number' => $request->phone_number,
-                    'address' => $request->address,
-                    'city' => $request->city,
-                    'state' => $request->state,
-                    'pincode' => $request->pincode,
-                    'description' => $request->description,
+                    'student_unique_code' => generateUniqueStudentCode(),
+                ]);
+
+                Wallet::create([
+                    'auth_id' => $auth->id,
+                    'balance' => 0, // Initial balance
                 ]);
             }
             if ($auth && $student) {
@@ -450,7 +420,7 @@ Log::info("Student",['sdfsd',$studentId]    );
             'password' => 'nullable|min:6',
             'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
-      
+
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'dob' => 'required',
             'pincode' => 'required',
@@ -503,7 +473,7 @@ Log::info("Student",['sdfsd',$studentId]    );
 
             $studentData = [
                 'name' => $request->input('name', $student->name),
-               
+
                 'dob' => $request->input('dob', $student->dob),
                 'phone_number' => $request->input('phone_number', $student->phone_number),
                 'address' => $request->input('address', $student->address),
@@ -511,7 +481,7 @@ Log::info("Student",['sdfsd',$studentId]    );
                 'state' => $request->input('state', $student->state),
                 'pincode' => $request->input('pincode', $student->pincode),
                 'description' => $request->input('description', $student->description),
-        
+
                 'status' => $request->input('status', $student->status),
             ];
 
@@ -520,7 +490,7 @@ Log::info("Student",['sdfsd',$studentId]    );
             $res = [
                 'id' => $student->id,
                 'auth_id' => $student->auth_id,
-              
+
                 'email' => $auth->email,
                 'username' => $auth->username,
                 'phone_number' => $auth->phone_number,
@@ -556,7 +526,7 @@ Log::info("Student",['sdfsd',$studentId]    );
             if ($validator->fails()) {
                 return $this->sendValidationError($validator);
             } else {
-         
+
                 $student = Student::where('auth_id', $studentId)->first();
                 $auth = AuthModel::find($studentId);
                 if ($student) {
@@ -735,5 +705,15 @@ Log::info("Student",['sdfsd',$studentId]    );
         $student->status = $request->status;
         $student->save();
         return $this->sendResponse(['student' => $student], 'Student status updated successfully');
+    }
+
+    public function getFeeAndStatus(){
+        $loggedUserId = $this->getLoggedUserId();
+
+        $student = DB::table('students')
+        ->where('auth_id', $loggedUserId)->first();
+        $fee = Fee::first();
+        $fee->is_paid = $student->is_paid;
+        return $this->sendResponse(['fee' => $fee], 'Fees fetched successfully.');
     }
 }

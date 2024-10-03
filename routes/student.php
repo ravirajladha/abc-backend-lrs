@@ -105,6 +105,8 @@ Route::prefix('student')->group(function () {
 
     Route::get('/dashboard', [StudentController::class, 'getDashboard']);
     Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
+    
+    Route::get("/get-fee-and-payment-status", [StudentController::class, 'getFeeAndStatus']);
 
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
     Route::get('/readable-courses', [ReadableCoursesController::class, 'getReadableCoursesByClass']);
@@ -115,6 +117,7 @@ Route::prefix('student')->group(function () {
     Route::post("/connect-parent", [StudentController::class, 'updateParentDetails']);
 
     Route::get("/parent-details/{studentId}", [StudentController::class, 'getParentDetails']);
+
 
     //Content Page Routes, video controller is pending
     Route::get('/subjects/{subjectId}/contents', [VideoController::class, 'getContents']);
