@@ -232,7 +232,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
     }
     public function getStudentDetailsFromStudent($studentId)
     {
-Log::info("Student",['sdfsd',$studentId]    );
         $validator = Validator::make(['student_id' => $studentId], [
             'student_id' => 'required',
         ]);
@@ -566,8 +565,12 @@ Log::info("Student",['sdfsd',$studentId]    );
         }
     }
 
-    public function updatePaymentStatus(Request $request, $studentId)
+    public function updatePaymentStatus(Request $request)
     {
+        $loggedUserId = $this->getLoggedUserId();
+
+        $student = Student::where('auth_id',$loggedUserId)->first();
+        $studentId = $student->id;
         \Log::info('Starting updatePaymentStatus function.', ['request' => $request->all()]);
 
         DB::beginTransaction();

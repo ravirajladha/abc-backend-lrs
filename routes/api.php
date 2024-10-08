@@ -84,7 +84,7 @@ Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function
     Route::post('/refresh-token', [RefreshController::class, 'refreshToken']);
     Route::post('/logout', [LogoutController::class, 'logout']);
 
-    Route::post('/update-payment-status/{studentId}', [StudentController::class, 'updatePaymentStatus']);
+    Route::post('/update-payment-status', [StudentController::class, 'updatePaymentStatus']);
 
     require __DIR__ . '/minimal.php';
     require __DIR__ . '/admin.php';

@@ -16,6 +16,7 @@ use App\Services\Admin\ResultService;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
+use App\Models\RatingReview;
 
 //changed
 //error in $resultsService->getCourseResults
@@ -39,14 +40,23 @@ class CourseController extends BaseController
         if (!$studentId) {
             return $this->sendResponse(['courses' => []], 'No courses found.');
         }
+        // Subquery to get the average rating and total ratings for each course
+        $ratingsSubquery = RatingReview::select('course_id')
+        ->selectRaw('AVG(rating) as average_rating')
+        ->selectRaw('COUNT(rating) as total_ratings')
+        ->groupBy('course_id');
 
         $courses = Course::join('subjects', 'courses.subject_id', '=', 'subjects.id')
             ->join('chapters', 'courses.id', '=', 'chapters.course_id')
             ->join('chapter_logs', 'chapters.id', '=', 'chapter_logs.chapter_id')
-            ->select('courses.id', 'courses.name', 'courses.image', 'subjects.name as subject_name')
+            ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
+                $join->on('courses.id', '=', 'ratings.course_id');
+            })
+            ->select('courses.id', 'courses.name', 'courses.image', 'subjects.name as subject_name', DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
+                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings'))
             ->where('chapter_logs.video_complete_status', 1)
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
-            ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name')
+            ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name', 'average_rating', 'total_ratings')
             ->get();
 
         Log::info('Courses retrieved:', ['courses' => $courses]);
@@ -78,7 +88,6 @@ class CourseController extends BaseController
             }
 
             $course->completePercentage = !empty($chapterIds) ? ($completedChaptersCount / count($chapterIds)) * 100 : 0;
-            Log::info('Completion Percentage:', ['completePercentage' => $course->completePercentage]);
 
             $latestTest = DB::table('tests')
                 ->where('course_id', $course->id)
@@ -107,7 +116,7 @@ class CourseController extends BaseController
                     $course->latest_test = null;
                     $course->testDescription = null;
                 }
-            }else {
+            } else {
                 $course->latest_test_id = null;
                 $course->latest_test = null;
                 $course->testDescription = null;
@@ -137,7 +146,6 @@ class CourseController extends BaseController
                 $course->trainer_name = 'No trainer assigned';
             }
 
-            Log::info('Trainer Name:', ['trainer_name' => $course->trainer_name]);
         }
 
         Log::info('Final Courses Detail:', ['courses' => $courses]);
@@ -164,7 +172,7 @@ class CourseController extends BaseController
         // $sectionId = $request->sectionId;
         $report_card = [];
 
-        if (!($studentId )) {
+        if (!($studentId)) {
             return $this->sendError('Failed to fetch student results.');
         }
 
@@ -248,40 +256,42 @@ class CourseController extends BaseController
 
     public function getStudentCoursesWithResults(Request $request)
     {
-        $res = [];
+        // Enable query log if you need it for debugging (optional)
+        // DB::enableQueryLog();
 
-        $subjectId = $request->subjectId;
-        $studentId = $request->studentId;
+        // Subquery to get the average rating and total ratings for each course
+        $ratingsSubquery = RatingReview::select('course_id')
+            ->selectRaw('AVG(rating) as average_rating')
+            ->selectRaw('COUNT(rating) as total_ratings')
+            ->groupBy('course_id');
 
-        $validator = Validator::make($request->all(), [
-            // 'subjectId' => 'required',
-            // 'studentId' => 'required',
-        ]);
+        // Fetch the courses with their respective ratings
+        $courses = DB::table('courses as cou')
+            ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
+            ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
+            ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
+            ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
+                $join->on('cou.id', '=', 'ratings.course_id');
+            })
+            ->select(
+                'cou.id',
+                'cou.name',
+                'cou.image',
+                'subjects.name as subject_name',
+                't.name as trainer_name',
+                DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
+                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings')
+            )
+            ->get();
 
-        if ($validator->fails()) {
-            return $this->sendValidationError($validator);
+        // Check if courses are found
+        if ($courses->isNotEmpty()) {
+            return $this->sendResponse(['courses' => $courses], 'Courses fetched successfully.');
         } else {
-            // Log the SQL query before executing
-            DB::enableQueryLog();
-
-            $courses = DB::table('courses as cou')
-                ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
-                ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
-                ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
-                ->select('cou.id', 'cou.name', 'cou.image', 'subjects.name as subject_name', 't.name as trainer_name')
-                ->get();
-
-            // Log the executed query and result
-            Log::info('Executed Query: ', DB::getQueryLog());
-            Log::info('Query Result: ', ['courses' => $courses]);
-
-            if ($courses->isNotEmpty()) {
-                return $this->sendResponse(['courses' => $courses]);
-            } else {
-                return $this->sendError('Course not found!');
-            }
+            return $this->sendError('No courses found!', 404);
         }
     }
+
 
 
     public function storeCourseDetails(Request $request)

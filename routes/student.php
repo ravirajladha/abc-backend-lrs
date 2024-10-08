@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\{
     ExternalStudentController,
     ElabController,
     MiniProjectController,
-    InternshipController
+    InternshipController,
+    RatingReviewController
 };
 
 Route::prefix('student')->group(function () {
@@ -105,7 +106,7 @@ Route::prefix('student')->group(function () {
 
     Route::get('/dashboard', [StudentController::class, 'getDashboard']);
     Route::get('/wallet-details/{studentAuthId?}', [StudentController::class, 'getWalletDetailsAndLogs']);
-    
+
     Route::get("/get-fee-and-payment-status", [StudentController::class, 'getFeeAndStatus']);
 
     Route::get('/get-auth-details', [AuthController::class, 'getDetails']);
@@ -123,4 +124,7 @@ Route::prefix('student')->group(function () {
     Route::get('/subjects/{subjectId}/contents', [VideoController::class, 'getContents']);
 
     Route::get('/courses/{courseId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
+
+    Route::post('/courses/rating-review', [RatingReviewController::class, 'storeRatingReview']);
+    Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getCourseRatingsAndReviews']);
 });

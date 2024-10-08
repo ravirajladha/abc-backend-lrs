@@ -8,7 +8,8 @@ use App\Http\Controllers\Api\{
     AuthController,
     ChapterController,
     TrainerController,
-    AssessmentController
+    AssessmentController,
+    RatingReviewController
 };
 
 
@@ -39,4 +40,7 @@ Route::prefix('trainer')->group(function () {
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResultsByStudentId']);
 
     Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updateChapterLockStatus']);
+
+    Route::post('/courses/reply-review', [RatingReviewController::class, 'storeReviewReply']);
+
 });
