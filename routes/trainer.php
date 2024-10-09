@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\{
     ChapterController,
     TrainerController,
     AssessmentController,
-    RatingReviewController
+    RatingReviewController,
+    FaqController
 };
 
 
@@ -43,4 +44,8 @@ Route::prefix('trainer')->group(function () {
 
     Route::post('/courses/reply-review', [RatingReviewController::class, 'storeReviewReply']);
 
+    Route::prefix('faq')->group(function () {
+        Route::get('/{courseId}', [FaqController::class, 'getFaqByCourse']);
+        Route::post('/', [FaqController::class, 'storeFaq']);
+    });
 });
