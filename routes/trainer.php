@@ -43,9 +43,12 @@ Route::prefix('trainer')->group(function () {
     Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updateChapterLockStatus']);
 
     Route::post('/courses/reply-review', [RatingReviewController::class, 'storeReviewReply']);
+    Route::put('/courses/update-review-status', [RatingReviewController::class, 'updateReviewStatus']);
 
-    Route::prefix('faq')->group(function () {
-        Route::get('/{courseId}', [FaqController::class, 'getFaqByCourse']);
-        Route::post('/', [FaqController::class, 'storeFaq']);
-    });
+    Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
+    Route::post('/courses/faq', [FaqController::class, 'storeFaq']);
+    Route::delete('/courses/faq/{faqId}', [FaqController::class, 'deleteFaq']);
+    Route::get('/courses/faq/{faqId}', [FaqController::class, 'getFaqById']);
+    Route::put('/courses/faq/{faqId}', [FaqController::class, 'editFaq']);
+
 });

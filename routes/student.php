@@ -22,7 +22,8 @@ use App\Http\Controllers\Api\{
     ElabController,
     MiniProjectController,
     InternshipController,
-    RatingReviewController
+    RatingReviewController,
+    FaqController
 };
 
 Route::prefix('student')->group(function () {
@@ -127,4 +128,6 @@ Route::prefix('student')->group(function () {
 
     Route::post('/courses/rating-review', [RatingReviewController::class, 'storeRatingReview']);
     Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getCourseRatingsAndReviews']);
+
+    Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
 });

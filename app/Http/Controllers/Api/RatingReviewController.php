@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\RatingReview;
 use App\Models\Auth;
+use App\Models\Student;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +18,16 @@ class RatingReviewController extends BaseController
         $loggedUserId = $this->getLoggedUserId();
         $validator = Validator::make($request->all(), [
             'course_id' => 'required|exists:courses,id',
-            'rating' => 'nullable|integer|min:1|max:5', // Rating is optional but should be between 1-5
+            'rating' => 'required|integer|min:1|max:5', // Rating should be between 1-5
             'review' => 'nullable|string',
         ]);
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
+        }
+
+        $student = Student::where('auth_id', $loggedUserId)->first();
+        if (!$student || $student->is_paid != 1) {
+            return $this->sendError('You need to subscribe to submit a review.', [], 404);
         }
 
         $existingReview = RatingReview::where('course_id', $request->course_id)
@@ -71,6 +77,7 @@ class RatingReviewController extends BaseController
             'ratings_reviews.trainer_reply',
             'ratings_reviews.review',
             'ratings_reviews.rating',
+            'ratings_reviews.status',
             'ratings_reviews.created_at',
             'ratings_reviews.updated_at'
         )
@@ -108,5 +115,12 @@ class RatingReviewController extends BaseController
 
         return $this->sendResponse(["ratingReview" => $ratingReview], 'Rating and Review updated successfully');
     }
-
+    public function updateReviewStatus(Request $request)
+    {
+        $review = RatingReview::find($request->review_id);
+        // Update the status
+        $review->status = $request->status;
+        $review->save();
+        return $this->sendResponse(['review' => $review], 'Review status updated successfully');
+    }
 }
