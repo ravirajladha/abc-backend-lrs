@@ -52,7 +52,8 @@ Route::prefix('internship-admin')->group(function () {
         Route::get('/', [TrainerController::class, 'getTrainersList']);
         Route::get('/{trainerId}', [TrainerController::class, 'getTrainerDetails']);
         Route::post('/store', [TrainerController::class, 'storeTrainerDetails']);
-        Route::get('/{trainerId}/assign', [TrainerController::class, 'getTrainerSubjectsAndCourses']);
+        // Route::get('/{trainerId}/assign', [TrainerController::class, 'getTrainerSubjectsAndCourses']);
+        Route::get('/{trainerId}/subject-courses', [TrainerController::class, 'fetchTrainerSubjectCourse']);
         Route::post('/{trainerId}/assign', [TrainerController::class, 'storeOrUpdateTrainerSubjectsAndCourses']);
         Route::put('/{trainerId}/update', [TrainerController::class, 'updateTrainerDetails']);
         Route::delete('/{trainerId}/delete', [TrainerController::class, 'deleteTrainerDetails']);

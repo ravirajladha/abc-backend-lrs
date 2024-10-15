@@ -8,7 +8,6 @@ use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\TrainerCourse;
 
 class FaqController extends BaseController
 {
@@ -26,7 +25,7 @@ class FaqController extends BaseController
         }
 
         // Ensure the trainer is assigned to the course
-        $trainerCourse = TrainerCourse::where('course_id', $request->course_id)
+        $course = Course::where('id', $request->course_id)
             ->where('trainer_id', $loggedUserId)
             ->firstOrFail();
 
@@ -112,6 +111,7 @@ class FaqController extends BaseController
 
         return $this->sendResponse([], 'FAQ deleted successfully.');
     }
+
     public function getFaqById($faqId)
     {
         $loggedUserId = $this->getLoggedUserId();

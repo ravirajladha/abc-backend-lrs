@@ -9,17 +9,15 @@ use App\Models\Trainer;
 use App\Models\TrainerSubject;
 use App\Models\TrainerCourse;
 use App\Models\Auth as AuthModel;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-
 use App\Http\Constants\AuthConstants;
-
 use App\Services\Trainer\DashboardService;
+use Illuminate\Support\Facades\Log;
 
 class TrainerController extends BaseController
 {
@@ -74,28 +72,54 @@ class TrainerController extends BaseController
      *
      * @return \Illuminate\Http\JsonResponse
      */
+    // public function getTrainersList(Request $request)
+    // {
+    //     $userType = $request->attributes->get('type');
+    //     if ($userType === 'admin') {
+
+
+    //         $trainers = DB::table('trainers as t')
+    //             ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image',  't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
+    //             ->join('auth as a', 't.auth_id', '=', 'a.id')
+    //             ->get();
+
+    //         foreach ($trainers as $trainer) {
+    //             $trainer->trainer_courses = DB::table('trainer_courses as tc')
+    //                 ->select('tc.course_id', 'cou.name as course_name', 's.name as subject_name')
+    //                 ->leftJoin('courses as cou', 'cou.id', 'tc.course_id')
+    //                 ->leftJoin('subjects as s', 's.id', 'cou.subject_id')
+    //                 ->where('tc.trainer_id', $trainer->auth_id)
+    //                 ->get();
+    //             $trainer->trainer_subjects = DB::table('trainer_subjects as ts')
+    //                 ->select('ts.subject_id', 'c.name as subject_name')
+    //                 ->leftJoin('subjects as c', 'c.id', 'ts.subject_id')
+    //                 ->where('ts.trainer_id', $trainer->auth_id)
+    //                 ->get();
+    //         }
+
+    //         return $this->sendResponse(['trainers' => $trainers]);
+    //     } else {
+    //         return $this->sendAuthError("Not authorized to fetch trainers list.");
+    //     }
+    // }
+
     public function getTrainersList(Request $request)
     {
         $userType = $request->attributes->get('type');
         if ($userType === 'admin') {
 
-
+            // Fetch trainers along with basic details from the auth table
             $trainers = DB::table('trainers as t')
-                ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image',  't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
+                ->select('t.id', 't.auth_id', 't.name', 't.emp_id', 't.profile_image', 't.doj', 't.address', 't.city', 't.state', 't.pincode', 't.type', 'a.email', 'a.username', 'a.phone_number', 'a.status')
                 ->join('auth as a', 't.auth_id', '=', 'a.id')
                 ->get();
 
             foreach ($trainers as $trainer) {
-                $trainer->trainer_courses = DB::table('trainer_courses as tc')
-                    ->select('tc.course_id', 'cou.name as course_name', 's.name as subject_name')
-                    ->leftJoin('courses as cou', 'cou.id', 'tc.course_id')
-                    ->leftJoin('subjects as s', 's.id', 'cou.subject_id')
-                    ->where('tc.trainer_id', $trainer->auth_id)
-                    ->get();
-                $trainer->trainer_subjects = DB::table('trainer_subjects as ts')
-                    ->select('ts.subject_id', 'c.name as subject_name')
-                    ->leftJoin('subjects as c', 'c.id', 'ts.subject_id')
-                    ->where('ts.trainer_id', $trainer->auth_id)
+                // Fetch courses and subjects directly from the courses table where the trainer_id is stored
+                $trainer->trainer_courses = DB::table('courses as cou')
+                    ->select('cou.id as course_id', 'cou.name as course_name', 's.name as subject_name')
+                    ->leftJoin('subjects as s', 's.id', '=', 'cou.subject_id')
+                    ->where('cou.trainer_id', $trainer->auth_id)
                     ->get();
             }
 
@@ -130,18 +154,10 @@ class TrainerController extends BaseController
                 $auth = AuthModel::where('id', $trainerId)
                     ->where('type', AuthConstants::TYPE_TRAINER)
                     ->first();
-
-                $trainer_subjects = DB::table('trainer_subjects as ts')
-                    ->select('ts.subject_id', 's.name as subject_name')
-                    ->leftJoin('subjects as s', 's.id', 'ts.subject_id')
-                    ->where('ts.trainer_id', $trainer->auth_id)
-                    ->get();
-
-                $trainer_courses = DB::table('trainer_courses as tc')
-                    ->select('tc.course_id', 'c.name as course_name', 'c.name as subject_name')
-                    ->leftJoin('courses as c', 'c.id', 'tc.course_id')
-                    ->leftJoin('subjects as s', 's.id', 'c.subject_id')
-                    ->where('tc.trainer_id', $trainer->auth_id)
+                $trainer_courses = DB::table('courses as cou')
+                    ->select('cou.id as course_id', 'cou.name as course_name', 's.name as subject_name')
+                    ->leftJoin('subjects as s', 's.id', '=', 'cou.subject_id')
+                    ->where('cou.trainer_id', $trainer->auth_id)
                     ->get();
             }
             $loggedUserId = $this->getLoggedUserId();
@@ -168,7 +184,7 @@ class TrainerController extends BaseController
                     'created_by' => $loggedUserId,
                     'type' => $trainer->type,
                 ];
-                return $this->sendResponse(['trainer' => $res, 'trainer_subjects' => $trainer_subjects, 'trainer_courses' => $trainer_courses]);
+                return $this->sendResponse(['trainer' => $res, 'trainer_courses' => $trainer_courses]);
             } else {
                 return $this->sendResponse([], 'Failed to fetch trainer details.');
             }
@@ -247,11 +263,9 @@ class TrainerController extends BaseController
             return $this->sendError('Trainer not found');
         }
 
-        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
 
         $trainerCourses = TrainerCourse::where([
             'trainer_id' => $trainer->auth_id,
-            // 'school_id' => $schoolId,
         ])->get(['course_id']);
 
         foreach ($trainerCourses as $course) {
@@ -269,6 +283,46 @@ class TrainerController extends BaseController
         return $this->sendResponse(['trainer' => $trainerSubjectCourses], '');
     }
 
+
+    public function fetchTrainerSubjectCourse($trainerId)
+    {
+        // Fetch the trainer details
+        $trainer = DB::table('trainers')
+        ->select('*')
+        ->where('auth_id', $trainerId)
+        ->first();
+
+        if (!$trainer) {
+            return $this->sendError('Trainer not found');
+        }
+
+        // Fetch the courses assigned to the trainer from TrainerCourse
+        $trainerCourses = TrainerCourse::where('trainer_id', $trainer->auth_id)
+            ->pluck('course_id');
+
+        if ($trainerCourses->isEmpty()) {
+            return $this->sendResponse([], 'No courses assigned to this trainer');
+        }
+
+        // Get subjects and their corresponding courses by querying the courses table
+        $trainerSubjectCourses = DB::table('courses as cou')
+            ->select('cou.id as course_id', 'cou.subject_id')
+            ->whereIn('cou.id', $trainerCourses)
+            ->get()
+            ->groupBy('subject_id'); // Group the courses by subject_id
+
+        $response = [];
+
+        // Prepare the response with subject and its courses
+        foreach ($trainerSubjectCourses as $subject_id => $courses) {
+            $response[] = [
+                'subject_id' => $subject_id,
+                'courses' => $courses->pluck('course_id')->toArray(),
+            ];
+        }
+
+        return $this->sendResponse($response, 'Trainer subjects and courses fetched successfully');
+    }
 
     /**
      * Store or update trainer subjects and Courses
@@ -301,7 +355,10 @@ class TrainerController extends BaseController
         $loggedUserId = $this->getLoggedUserId();
 
         foreach ($request->input('trainer_data') as $data) {
-            // Update or create TrainerSubject with created_by and updated_by
+            // Log for debugging
+            Log::info('Updating or Creating TrainerSubject', ['trainer_id' => $trainer->auth_id, 'subject_id' => $data['subject_id']]);
+
+            // Update or create TrainerSubject
             TrainerSubject::updateOrCreate(
                 [
                     'subject_id' => $data['subject_id'],
@@ -315,7 +372,10 @@ class TrainerController extends BaseController
                 ]
             );
 
-            // Update or create TrainerCourse with created_by and updated_by
+            // Log for debugging
+            Log::info('Updating or Creating TrainerCourse', ['trainer_id' => $trainer->auth_id, 'course_id' => $data['course_id']]);
+
+            // Update or create TrainerCourse
             TrainerCourse::updateOrCreate(
                 [
                     'course_id' => $data['course_id'],
@@ -329,6 +389,7 @@ class TrainerController extends BaseController
                 ]
             );
         }
+
 
         return $this->sendResponse([], 'Trainer subjects and courses added or updated successfully');
     }
@@ -480,7 +541,7 @@ class TrainerController extends BaseController
 
             $students =  $students_query;
 
-            $students = $students->map(function($student) use ($trainer) {
+            $students = $students->map(function ($student) use ($trainer) {
                 $qna = DB::table('qna as q')
                     ->where('q.student_id', $student->auth_id)
                     ->where('q.trainer_id', $trainer->auth_id)
@@ -510,49 +571,35 @@ class TrainerController extends BaseController
 
     public function getTrainerSubjects()
     {
-        $trainerId = Trainer::where('auth_id', $this->getLoggedUserId())->value('id');
-        $trainer = DB::table('trainers')
-            ->select('*')
-            ->where('id', $trainerId)
-            ->first();
-        if($trainer) {
-            $subjectIds = TrainerSubject::where('trainer_id', $trainer->auth_id)->pluck('subject_id')->toArray();
-
-            $subjects = DB::table('subjects')
-                ->whereIn('id', $subjectIds)
-                ->select('id','name')
-                ->get();
-
-            return $this->sendResponse(['subjects' => $subjects], '');
-        } else {
-            return $trainerId;
+        $loggedUserId = $this->getLoggedUserId();
+        $subjectIds = Course::where('trainer_id', $loggedUserId)
+        ->pluck('subject_id')->toArray();
+        if (!$subjectIds) {
+            return $this->sendResponse([], 'No Subjects Found.');
         }
+        $subjects = DB::table('subjects')
+                ->whereIn('id', $subjectIds)
+                ->select('id', 'name')
+                ->get();
+        return $this->sendResponse(['subjects' => $subjects], '');
     }
+
     public function getTrainerCoursesBySubject($subjectId)
     {
-        $trainerId = Trainer::where('auth_id', $this->getLoggedUserId())->value('id');
-        $trainer = DB::table('trainers')
-            ->select('*')
-            ->where('id', $trainerId)
-            ->first();
-        if($trainer) {
-            $courseIds = TrainerCourse::where('trainer_id', $trainer->auth_id)->pluck('course_id')->toArray();
-
-            // Retrieve courses for the given subject taught by the trainer
-            $courses = DB::table('courses')
-                ->whereIn('id', $courseIds)
-                ->where('subject_id', $subjectId)
-                ->select('id','name','image')
+        $loggedUserId = $this->getLoggedUserId();
+        $courses = Course::where('trainer_id', $loggedUserId)
+        ->where('subject_id', $subjectId)
+                ->select('id', 'name', 'image')
                 ->get();
-
-            return $this->sendResponse(['courses' => $courses], '');
-        } else {
-            return $trainerId;
+        if (!$courses) {
+            return $this->sendResponse([], 'No Courses Found.');
         }
+        return $this->sendResponse(['courses' => $courses], '');
     }
 
     // Define the function
-    public function countUnrepliedQnAsForTrainer() {
+    public function countUnrepliedQnAsForTrainer()
+    {
         $trainerId = Trainer::where('auth_id', $this->getLoggedUserId())->value('id');
         $qnaCount =  DB::table('qna')
             ->where('trainer_id', $trainerId)

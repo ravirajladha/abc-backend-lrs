@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
 use App\Models\RatingReview;
+use App\Models\Trainer;
 
 //changed
 //error in $resultsService->getCourseResults
@@ -299,8 +300,11 @@ class CourseController extends BaseController
 
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required',
+            'trainer_id' => 'required|exists:auth,id',
             'course_name' => 'required|max:75|unique:courses,name',
             'course_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'course_video' => 'required|mimes:mp4,mov,avi|max:10000',
+            'access_validity' => 'required',
             'benefits' => 'required|string',
             'description' => 'required|string',
         ]);
@@ -312,6 +316,7 @@ class CourseController extends BaseController
             $course = new Course();
             $course->name = $request->course_name;
             $course->subject_id = $request->subject_id;
+            $course->trainer_id = $request->trainer_id;
             $course->access_validity = $request->access_validity;
 
             // if ($request->course_type == 3) {
@@ -324,6 +329,15 @@ class CourseController extends BaseController
             } else {
                 $course->image = null;
             }
+
+            if (!empty($request->file('course_video'))) {
+                $videoExtension = $request->file('course_video')->extension();
+                $videoFilename = Str::random(4) . time() . '.' . $videoExtension;
+                $course->video = $request->file('course_video')->move(('uploads/videos/course'), $videoFilename);
+            } else {
+                $course->video = null;
+            }
+
             $course->benefits = $request->benefits;
             $course->description = $request->description;
             $course->created_by = $loggedUserId;
@@ -361,6 +375,11 @@ class CourseController extends BaseController
                 Rule::unique('courses', 'name')->ignore($courseId),
             ],
             'course_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'trainer_id' => 'required|exists:auth,id',
+            'course_video' => 'video|mimes:mp4,mov,avi|max:10000',
+            'access_validity' => 'required',
+            'benefits' => 'required|string',
+            'description' => 'required|string',
         ]);
 
 
@@ -375,26 +394,40 @@ class CourseController extends BaseController
         }
         $loggedUserId = $this->getLoggedUserId();
         $course->updated_by = $loggedUserId;
+        // Update course details
         $course->name = $request->course_name;
+        $course->subject_id = $request->subject_id;
+        $course->trainer_id = $request->trainer_id;
+        $course->access_validity = $request->access_validity;
+        $course->benefits = $request->benefits;
+        $course->description = $request->description;
 
+        // Handle course image update
         if ($request->hasFile('course_image')) {
-            $formData = $request->all();
-
-            if ($request->hasFile('course_image')) {
-                if ($course->logo) {
-                    File::delete(public_path($course->logo));
-                }
-                $extension = $request->file('course_image')->extension();
-                $filename = Str::random(4) . time() . '.' . $extension;
-                $course->image = $request->file('course_image')->move(('uploads/images/course'), $filename);
+            if ($course->image) {
+                File::delete(public_path($course->image));
             }
-
-
+            $extension = $request->file('course_image')->extension();
+            $filename = Str::random(4) . time() . '.' . $extension;
+            $course->image = $request->file('course_image')->move(('uploads/images/course'), $filename);
         }
 
-        $course->save();
+        // Handle course video update
+        if ($request->hasFile('course_video')) {
+            if ($course->video) {
+                File::delete(public_path($course->video)); // Delete old video if exists
+            }
+            $videoExtension = $request->file('course_video')->extension();
+            $videoFilename = Str::random(4) . time() . '.' . $videoExtension;
+            $course->video = $request->file('course_video')->move(('uploads/videos/course'), $videoFilename);
+        }
 
-        return $this->sendResponse(['course' => $course], 'Course updated successfully');
+        // Save updated course details
+        if ($course->save()) {
+            return $this->sendResponse(['course' => $course], 'Course updated successfully');
+        } else {
+            return $this->sendResponse([], 'Failed to update course.');
+        }
     }
 
 
@@ -460,10 +493,7 @@ class CourseController extends BaseController
                     ->get();
             }
 
-            $trainer = DB::table('trainer_courses as tc')
-            ->where('tc.course_id', $courseId)
-            ->leftJoin('trainers as t', 't.id', 'tc.trainer_id')
-            ->first();
+            $trainer = Trainer::where('auth_id', $course->trainer_id)->first();
 
             return $this->sendResponse(['course' => $course,'chapters' => $chapters,'trainer' => $trainer]);
         }

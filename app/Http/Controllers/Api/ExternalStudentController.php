@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Models\Trainer;
+
 
 class ExternalStudentController extends BaseController
 {
@@ -21,10 +23,9 @@ class ExternalStudentController extends BaseController
     {
         $studentId = DB::table('students')->where('auth_id', $this->getLoggedUserId())->value('id');
         $studentAuthId = $this->getLoggedUserId();
-        Log::info("student", ['studentAuthId' => $studentAuthId]);
         // Course Details by $subjectId
         $course = DB::table('courses')
-            ->select('id', 'name', 'image')
+            ->select('id', 'name', 'image', 'trainer_id')
             ->where('id', $courseId)
             ->first();
 
@@ -125,11 +126,8 @@ class ExternalStudentController extends BaseController
             }
         }
 
-        // Trainer Id by $subjectId
-        $trainer = DB::table('trainer_courses as ts')
-            ->where('ts.course_id', $courseId)
-            ->leftJoin('trainers as t', 't.auth_id', 'ts.trainer_id')
-            ->first();
+
+        $trainer = Trainer::where('auth_id', $course->trainer_id)->first();
 
         // Final Contents Structure
         $contents = [
@@ -139,7 +137,6 @@ class ExternalStudentController extends BaseController
             'trainer' => $trainer,
             'mini_projects' => $mini_projects,
         ];
-        Log::info("chapters", ['chapters' => $chapters]);
         return $this->sendResponse(['contents' => $contents]);
     }
 

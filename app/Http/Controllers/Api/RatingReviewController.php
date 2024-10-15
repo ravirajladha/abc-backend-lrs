@@ -47,6 +47,49 @@ class RatingReviewController extends BaseController
         return $this->sendResponse(["ratingReview" => $ratingReview], 'Rating and Review updated successfully');
     }
 
+    public function getStudentCourseRatingsAndReviews($courseId)
+    {
+        // Validate if the course exists
+        $course = Course::findOrFail($courseId);
+
+        // Fetch average rating and count of ratings
+        $ratingsSummary = RatingReview::where('course_id', $courseId)
+            ->selectRaw('AVG(rating) as average_rating')
+            ->selectRaw('COUNT(rating) as total_ratings')
+            ->selectRaw('SUM(rating = 5) as five_star_count')
+            ->selectRaw('SUM(rating = 4) as four_star_count')
+            ->selectRaw('SUM(rating = 3) as three_star_count')
+            ->selectRaw('SUM(rating = 2) as two_star_count')
+            ->selectRaw('SUM(rating = 1) as one_star_count')
+            ->first();
+
+        $reviews = RatingReview::where('ratings_reviews.course_id', $courseId)
+        ->whereNotNull('review')  // Only fetch reviews with text
+        ->where('ratings_reviews.status', 1)  // Only fetch reviews with status 1
+        ->join('auth as students', 'ratings_reviews.student_id', '=', 'students.id')  // Join with the auth table for student
+        ->leftJoin('auth as trainers', 'ratings_reviews.trainer_id', '=', 'trainers.id')  // Join with auth for trainer
+        ->orderBy('ratings_reviews.created_at', 'desc')
+        ->select(
+            'ratings_reviews.id',
+            'ratings_reviews.student_id',
+            'students.username as student_name',  // Alias for student's username
+            'ratings_reviews.trainer_id',
+            'trainers.username as trainer_name',  // Alias for trainer's username
+            'ratings_reviews.trainer_reply',
+            'ratings_reviews.review',
+            'ratings_reviews.rating',
+            'ratings_reviews.status',
+            'ratings_reviews.created_at',
+            'ratings_reviews.updated_at'
+        )
+        ->get();
+
+        return $this->sendResponse([
+            'ratings' => $ratingsSummary,
+            'reviews' => $reviews
+        ], 'Rating and Review fetched successfully.');
+
+    }
     public function getCourseRatingsAndReviews($courseId)
     {
         // Validate if the course exists
@@ -117,7 +160,7 @@ class RatingReviewController extends BaseController
     }
     public function updateReviewStatus(Request $request)
     {
-        $review = RatingReview::find($request->review_id);
+        $review = RatingReview::findOrFail($request->review_id);
         // Update the status
         $review->status = $request->status;
         $review->save();

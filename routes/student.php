@@ -127,7 +127,7 @@ Route::prefix('student')->group(function () {
     Route::get('/courses/{courseId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
 
     Route::post('/courses/rating-review', [RatingReviewController::class, 'storeRatingReview']);
-    Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getCourseRatingsAndReviews']);
+    Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getStudentCourseRatingsAndReviews']);
 
     Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
 });
