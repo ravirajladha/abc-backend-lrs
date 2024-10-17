@@ -191,7 +191,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                     // ->where('s.school_id', $schoolId)
                     ->first();
 
-                Log::info('Fetched student details: ', ['student' => $student]);
                 if ($student) {
                     $auth = AuthModel::where('id', $studentId)
                         ->where('type', AuthConstants::TYPE_STUDENT)
@@ -214,9 +213,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                         'city' => $student->city,
                         'state' => $student->state,
                         'pincode' => $student->pincode,
-
-
-
                         'student_status' => $student->status,
                         // 'parent_name' => $student->parent_name,
                     ];
@@ -238,10 +234,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
         if (isset($validator) && $validator->fails()) {
             return $this->sendValidationError($validator->errors());
         }
-
-        // Fetch the student model
-        // $schoolId = School::where('auth_id',  $this->getLoggedUserId())->value('id');
-
 
         $student = DB::table('students as s')->select( 's.*')
         ->where('s.auth_id', $studentId)
@@ -413,24 +405,29 @@ public function getPublicStudentDetailsFromStudent(Request $request)
     {
         Log::info("studentd ata", $request->all());
         $res = [];
-        $validator = Validator::make(array_merge($request->all(), ['studentId' => $studentId]), [
+        $rules = [
             'name' => 'required|string|max:255',
             'studentId' => 'required',
             'password' => 'nullable|min:6',
             'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
+            'dob' => 'nullable',
+            'pincode' => 'nullable',
+            'address' => 'nullable|string',
+            'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
+        ];
 
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'dob' => 'required',
-            'pincode' => 'required',
-            'address' => 'required|string',
-            'status' => 'required',
-           'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
-        ]);
+        // Conditionally apply file validation for profile_image if it's a file
+        if ($request->hasFile('profile_image')) {
+            $rules['profile_image'] = 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048';
+        }
+
+        $validator = Validator::make(array_merge($request->all(), ['studentId' => $studentId]), $rules);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
+
 
         // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
         $student = Student::where('auth_id', $studentId)
@@ -442,17 +439,11 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 ->first();
         }
         if ($auth && $student) {
-                    // If no email is provided, generate one using the username
-        $email = $request->input('email') ?: $auth->username . '@gmail.com';
 
-         // Ensure the generated email is unique
-        //  while (AuthModel::where('email', $email)->exists()) {
-        //     $rand_number = mt_rand(1000, 9999);
-        //     $email = $auth->username . $rand_number . '@gmail.com';
-        // }
             $authData = [
                 // 'email' => $request->input('email', $auth->email),
-                'email' => $email,
+                'name' => $request->input('name', $auth->name),
+                'email' => $request->input('email'),
                 'password' => $request->input('password') ? Hash::make($request->password) : $auth->password,
                 'phone_number' => $request->input('phone_number', $auth->phone_number),
                 'status' => $request->input('status', $auth->status),

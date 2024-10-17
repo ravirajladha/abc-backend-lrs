@@ -130,4 +130,8 @@ Route::prefix('student')->group(function () {
     Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getStudentCourseRatingsAndReviews']);
 
     Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
+
+    Route::get('/{studentId}/details', [StudentController::class, 'getStudentDetailsFromStudent']);
+    Route::post('/{studentId}/update-profile', [StudentController::class, 'updateStudentDetails']);
+
 });

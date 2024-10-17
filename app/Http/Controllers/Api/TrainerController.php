@@ -525,13 +525,13 @@ class TrainerController extends BaseController
 
         if ($trainer) {
 
-            $trainerSubjects = TrainerSubject::where([
-                'trainer_id' => $trainer->auth_id,
-            ])->get(['subject_id']);
+            // $trainerSubjects = TrainerSubject::where([
+            //     'trainer_id' => $trainer->auth_id,
+            // ])->get(['subject_id']);
 
-            $trainerCourses = TrainerCourse::where([
-                'trainer_id' => $trainer->auth_id,
-            ])->get(['course_id']);
+            // $trainerCourses = TrainerCourse::where([
+            //     'trainer_id' => $trainer->auth_id,
+            // ])->get(['course_id']);
 
             $students_query = DB::table('students as s')
                 // ->select('s.*', 'c.name as class_name')

@@ -36,7 +36,8 @@ use App\Http\Controllers\Api\{
     ProjectReportSectionController,
     ElabController,
     MiniProjectController,
-    InternshipController
+    InternshipController,
+    CollegeController
 };
 
 Route::prefix('admin')->group(function () {
@@ -393,5 +394,13 @@ Route::prefix('admin')->group(function () {
 
     Route::put('/{studentId}/update', [StudentController::class, 'updateStudentDetails']);
     Route::get('/get-student-details/{studentId}', [StudentController::class, 'getStudentDetailsFromStudent']);
+    });
+
+    Route::prefix('colleges')->group(function () {
+        Route::get('/', [CollegeController::class, 'getColleges']);
+        Route::get('/{collegeId}', [CollegeController::class, 'getCollegeDetails']);
+        Route::put('/{collegeId}/update-status', [CollegeController::class, 'updateStatus']);
+        Route::post('/', [CollegeController::class, 'storeCollege']);
+        Route::put('/{collegeId}', [CollegeController::class, 'updateCollege']);
     });
 });
