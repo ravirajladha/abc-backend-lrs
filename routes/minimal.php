@@ -18,4 +18,5 @@ Route::prefix('minimal')->group(function () {
     Route::get('/project-reports', \App\Http\Controllers\Api\Dropdown\ProjectReportController::class);
     Route::get('/case-studies', \App\Http\Controllers\Api\Dropdown\CaseStudyController::class);
     Route::get('/trainers', \App\Http\Controllers\Api\Dropdown\TrainerController::class);
+    Route::get('/colleges', \App\Http\Controllers\Api\Dropdown\CollegeController::class);
 });

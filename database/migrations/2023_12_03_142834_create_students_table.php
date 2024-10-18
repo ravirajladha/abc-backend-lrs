@@ -25,6 +25,26 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->integer('pincode')->nullable();
 
+            // $table->string('gender')->nullable();
+
+            // $table->string('father_name')->nullable();
+            // $table->string('father_email')->nullable();
+            // $table->string('father_number')->nullable();
+
+            // $table->string('mother_name')->nullable();
+            // $table->string('mother_email')->nullable();
+            // $table->string('mother_number')->nullable();
+
+            // $table->string('college')->nullable();
+            // $table->string('college_sem')->nullable();
+            // $table->date('college_start_date')->nullable();
+            // $table->date('college_end_date')->nullable();
+
+            // $table->json('hobbies')->nullable();
+            // $table->json('achievements')->nullable();
+            // $table->json('languages')->nullable();
+            // $table->string('about')->nullable();
+
             // $table->string('first_name');
             // $table->string('last_name');
             // $table->date('dob');
@@ -34,28 +54,21 @@ return new class extends Migration
             // $table->string('mother_tongue');
             // $table->string('last_school_name');
             // $table->string('class');
-            // $table->string('gender');
             // $table->string('caste');
             // $table->string('blood_group');
             // $table->text('medical_issues');
-            // $table->string('father_name');
             // $table->string('father_qualification');
             // $table->string('father_designation');
             // $table->string('father_company_name');
             // $table->string('father_salary');
             // $table->string('father_aadhaar');
-            // $table->string('father_contact');
             // $table->string('father_blood_group');
-            // $table->string('father_email');
-            // $table->string('mother_name');
             // $table->string('mother_qualification');
             // $table->string('mother_designation');
             // $table->string('mother_company_name');
             // $table->string('mother_salary');
             // $table->string('mother_aadhaar');
-            // $table->string('mother_contact');
             // $table->string('mother_blood_group');
-            // $table->string('mother_email');
             // $table->string('residential_address');
             // $table->string('residential_contact');
             // $table->string('disability');
