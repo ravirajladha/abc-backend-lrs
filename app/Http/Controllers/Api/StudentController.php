@@ -235,7 +235,8 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             return $this->sendValidationError($validator->errors());
         }
 
-        $student = DB::table('students as s')->select( 's.*')
+        $student = DB::table('students as s')->select( 's.*', 'c.name as college_name')
+        ->join('colleges as c', 's.college_id', '=', 'c.id')
         ->where('s.auth_id', $studentId)
         ->first();
         if ($student) {
@@ -248,10 +249,10 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             return $this->sendResponse([], 'Student not found.', 404);
         }
 
-        $courses = DB::table('courses as cou')
-        ->select('cou.id', 'cou.name', 'cou.image')
-        ->leftJoin('subjects as s', 'cou.subject_id', '=', 's.id')
-        ->get();
+        // $courses = DB::table('courses as cou')
+        // ->select('cou.id', 'cou.name', 'cou.image')
+        // ->leftJoin('subjects as s', 'cou.subject_id', '=', 's.id')
+        // ->get();
 
         // Preparing response
         $res = [
@@ -278,11 +279,17 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'mother_number' => $student->mother_number,
 
             'college_id' => $student->college_id,
+            'college_name' => $student->college_name,
             'college_sem' => $student->college_sem,
             'college_start_date' => $student->college_start_date,
             'college_end_date' => $student->college_end_date,
 
-            'courses' => $courses !== null ? $courses : null,
+            'hobbies' => json_decode($student->hobbies),
+            'achievements' => json_decode($student->achievements),
+            'languages' => json_decode($student->languages),
+            'about' => $student->about,
+
+            // 'courses' => $courses !== null ? $courses : null,
         ];
 
         return $this->sendResponse(['student' => $res]);
@@ -418,7 +425,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 $data[$key] = '';
             }
         }
-        Log::info("studentd ata", $request->all());
         $res = [];
         $rules = [
             'name' => 'required|string|max:255',
@@ -443,6 +449,11 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'mother_name' => 'nullable|string',
             'mother_email' => 'nullable|email',
             'mother_number' => 'nullable|string|min:10|max:10',
+
+            'hobbies' => 'nullable|array',
+            'achievements' => 'nullable|array',
+            'languages' => 'nullable|array',
+            'about' => 'nullable|string',
 
             'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
         ];
@@ -470,7 +481,7 @@ public function getPublicStudentDetailsFromStudent(Request $request)
         if ($auth && $student) {
 
             $authData = [
-                'name' => $request->input('name', $auth->name),
+                'username' => $request->input('name', $auth->username),
                 'email' => $request->input('email'),
                 'password' => $request->input('password') ? Hash::make($request->password) : $auth->password,
                 'phone_number' => $request->input('phone_number', $auth->phone_number),
@@ -511,6 +522,10 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 'mother_email' => $request->input('mother_email', $student->mother_email),
                 'mother_number' => $request->input('mother_number', $student->mother_number),
 
+                'hobbies' => json_encode($request->input('hobbies')),
+                'achievements' => json_encode($request->input('achievements', $student->achievements)),
+                'languages' => json_encode($request->input('languages', $student->languages)),
+                'about' => $request->input('about', $student->about),
 
                 'status' => $request->input('status', $student->status),
             ];
