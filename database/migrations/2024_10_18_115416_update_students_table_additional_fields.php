@@ -27,10 +27,18 @@ return new class extends Migration
             $table->date('college_start_date')->nullable();
             $table->date('college_end_date')->nullable();
 
-            $table->json('hobbies')->nullable();
-            $table->json('achievements')->nullable();
-            $table->json('languages')->nullable();
-            $table->string('about')->nullable();
+            $table->string('percentage_12th')->nullable();
+            $table->date('end_date_12th')->nullable();
+            $table->string('percentage_10th')->nullable();
+            $table->date('end_date_10th')->nullable();
+
+            // $table->json('hobbies')->nullable();
+            // $table->json('achievements')->nullable();
+            // $table->json('languages')->nullable();
+            $table->string('hobbies')->nullable();
+            $table->string('achievements')->nullable();
+            $table->string('languages')->nullable();
+            $table->text('about')->nullable();
         });
     }
 

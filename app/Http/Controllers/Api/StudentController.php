@@ -236,7 +236,7 @@ public function getPublicStudentDetailsFromStudent(Request $request)
         }
 
         $student = DB::table('students as s')->select( 's.*', 'c.name as college_name')
-        ->join('colleges as c', 's.college_id', '=', 'c.id')
+        ->leftJoin('colleges as c', 's.college_id', '=', 'c.id')
         ->where('s.auth_id', $studentId)
         ->first();
         if ($student) {
@@ -284,9 +284,17 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'college_start_date' => $student->college_start_date,
             'college_end_date' => $student->college_end_date,
 
-            'hobbies' => json_decode($student->hobbies),
-            'achievements' => json_decode($student->achievements),
-            'languages' => json_decode($student->languages),
+            'percentage_12th' => $student->percentage_12th,
+            'end_date_12th' => $student->end_date_12th,
+            'percentage_10th' => $student->percentage_10th,
+            'end_date_10th' => $student->end_date_10th,
+
+            // 'hobbies' => json_decode($student->hobbies),
+            // 'achievements' => json_decode($student->achievements),
+            // 'languages' => json_decode($student->languages),
+            'hobbies' => $student->hobbies,
+            'achievements' => $student->achievements,
+            'languages' => $student->languages,
             'about' => $student->about,
 
             // 'courses' => $courses !== null ? $courses : null,
@@ -442,6 +450,11 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'college_start_date' => 'nullable',
             'college_end_date' => 'nullable',
 
+            'percentage_12th' => 'nullable|string',
+            'end_date_12th' => 'nullable',
+            'percentage_10th' => 'nullable|string',
+            'end_date_10th' => 'nullable',
+
             'father_name' => 'nullable|string',
             'father_email' => 'nullable|email',
             'father_number' => 'nullable|string|min:10|max:10',
@@ -450,9 +463,12 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'mother_email' => 'nullable|email',
             'mother_number' => 'nullable|string|min:10|max:10',
 
-            'hobbies' => 'nullable|array',
-            'achievements' => 'nullable|array',
-            'languages' => 'nullable|array',
+            // 'hobbies' => 'nullable|array',
+            // 'achievements' => 'nullable|array',
+            // 'languages' => 'nullable|array',
+            'hobbies' => 'nullable|string',
+            'achievements' => 'nullable|string',
+            'languages' => 'nullable|string',
             'about' => 'nullable|string',
 
             'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
@@ -503,11 +519,12 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             $studentData = [
                 'name' => $request->input('name', $student->name),
                 'dob' => $request->input('dob') === "null" ? $student->dob : $request->input('dob'),
-                'gender' => $request->input('gender', $student->gender),
+                'gender' => $data['gender'],
                 'phone_number' => $request->input('phone_number', $student->phone_number),
-                'address' => $request->input('address', $student->address),
-                'city' => $request->input('city', $student->city),
-                'state' => $request->input('state', $student->state),
+                'address' => $data['address'],
+                'city' => $data['city'],
+                'state' => $data['state'],
+
                 'pincode' => $request->input('pincode') === "null" ? $student->pincode : $request->input('pincode'),
 
                 'college_id' => $request->input('college_id') === "null" ? $student->college_id : $request->input('college_id'),
@@ -515,17 +532,25 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 'college_start_date' => $request->input('college_start_date') === "null" ? $student->college_start_date : $request->input('college_start_date'),
                 'college_end_date' => $request->input('college_end_date') === "null" ? $student->college_end_date : $request->input('college_end_date'),
 
-                'father_name' => $request->input('father_name', $student->father_name),
-                'father_email' => $request->input('father_email', $student->father_email),
-                'father_number' => $request->input('father_number', $student->father_number),
-                'mother_name' => $request->input('mother_name', $student->mother_name),
-                'mother_email' => $request->input('mother_email', $student->mother_email),
-                'mother_number' => $request->input('mother_number', $student->mother_number),
+                'percentage_12th' => $data['percentage_12th'],
+                'end_date_12th' => $request->input('end_date_12th') === "null" ? $student->end_date_12th : $request->input('end_date_12th'),
+                'percentage_10th' => $data['percentage_10th'],
+                'end_date_10th' => $request->input('end_date_10th') === "null" ? $student->end_date_10th : $request->input('end_date_10th'),
 
-                'hobbies' => json_encode($request->input('hobbies')),
-                'achievements' => json_encode($request->input('achievements', $student->achievements)),
-                'languages' => json_encode($request->input('languages', $student->languages)),
-                'about' => $request->input('about', $student->about),
+                'father_name' => $data['father_name'],
+                'father_email' => $data['father_email'],
+                'father_number' => $data['father_number'],
+                'mother_name' => $data['mother_name'],
+                'mother_email' => $data['mother_email'],
+                'mother_number' => $data['mother_number'],
+
+                // 'hobbies' => json_encode($request->input('hobbies')),
+                // 'achievements' => json_encode($request->input('achievements', $student->achievements)),
+                // 'languages' => json_encode($request->input('languages', $student->languages)),
+                'hobbies' => $data['hobbies'],
+                'achievements' => $data['achievements'],
+                'languages' => $data['languages'],
+                'about' => $data['about'],
 
                 'status' => $request->input('status', $student->status),
             ];

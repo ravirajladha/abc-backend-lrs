@@ -53,11 +53,14 @@ class CourseController extends BaseController
             ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
                 $join->on('courses.id', '=', 'ratings.course_id');
             })
-            ->select('courses.id', 'courses.name', 'courses.image', 'subjects.name as subject_name', DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
-                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings'))
+            ->leftJoin('auth', 'auth.id', '=', 'courses.trainer_id')
+            ->select('courses.id', 'courses.name', 'courses.image','courses.access_validity', 'subjects.name as subject_name', DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
+                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings'),
+                'auth.username as trainer_name',
+                DB::raw('MIN(chapter_logs.created_at) as start_date'))
             ->where('chapter_logs.video_complete_status', 1)
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
-            ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name', 'average_rating', 'total_ratings')
+            ->groupBy('courses.id', 'courses.name','trainer_name', 'courses.image','courses.access_validity', 'subjects.name', 'average_rating', 'total_ratings')
             ->get();
 
         Log::info('Courses retrieved:', ['courses' => $courses]);
@@ -79,8 +82,6 @@ class CourseController extends BaseController
                     ->where('video_complete_status', 1)
                     ->where('assessment_complete_status', 1)
                     ->count();
-
-                Log::info('Completed Chapters Count:', ['completedChaptersCount' => $completedChaptersCount]);
 
                 $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
                 $course->chapter_completed = $allChaptersCompleted;
@@ -136,17 +137,16 @@ class CourseController extends BaseController
             $course->results = $studentResult;
 
             // Trainer by course
-            $trainer = DB::table('trainer_courses as ts')
-                ->where('ts.course_id', $course->id)
-                ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
-                ->first();
+            // $trainer = DB::table('trainer_courses as ts')
+            //     ->where('ts.course_id', $course->id)
+            //     ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
+            //     ->first();
 
-            if ($trainer) {
-                $course->trainer_name = $trainer->name;
-            } else {
-                $course->trainer_name = 'No trainer assigned';
-            }
-
+            // if ($trainer) {
+            //     $course->trainer_name = $trainer->name;
+            // } else {
+            //     $course->trainer_name = 'No trainer assigned';
+            // }
         }
 
         Log::info('Final Courses Detail:', ['courses' => $courses]);
@@ -269,8 +269,7 @@ class CourseController extends BaseController
         // Fetch the courses with their respective ratings
         $courses = DB::table('courses as cou')
             ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
-            ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
-            ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
+            ->leftJoin('auth as trainer', 'cou.trainer_id', '=', 'trainer.id')
             ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
                 $join->on('cou.id', '=', 'ratings.course_id');
             })
@@ -279,7 +278,7 @@ class CourseController extends BaseController
                 'cou.name',
                 'cou.image',
                 'subjects.name as subject_name',
-                't.name as trainer_name',
+                'trainer.username as trainer_name',
                 DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
                 DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings')
             )
