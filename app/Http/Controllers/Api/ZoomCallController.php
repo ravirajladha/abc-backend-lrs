@@ -33,21 +33,24 @@ class ZoomCallController extends BaseController
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
             'time' => 'required|date_format:H:i',
+            'course' => 'required|exists:courses,id',
+            'subject' => 'required|exists:subjects,id',
             'url' => 'required|url',
             'passcode' => 'required|string', // Assuming passcode is a required field
         ]);
-    
+
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
-    
+
         if (ZoomCallUrl::where('date', $request->date)
                        ->where('time', $request->time)
+                       ->where('course_id', $request->course_id)
                        ->exists()) {
             $validator = Validator::make($request->all(), [
-                'date' => ['date' => 'Zoom call already exists for this date and time.']
+                'date' => ['date' => 'Zoom call already exists for this course, date and time.']
             ]);
-    
+
             return $this->sendValidationError($validator);
         }
         $loggedUserId = $this->getLoggedUserId();
@@ -56,9 +59,11 @@ class ZoomCallController extends BaseController
         $zoomCallUrl->date = $request->input('date');
         $zoomCallUrl->time = $request->input('time'); // Store the time
         $zoomCallUrl->url = $request->input('url');
+        $zoomCallUrl->subject_id = $request->input('subject_id');
+        $zoomCallUrl->course_id = $request->input('course_id');
         $zoomCallUrl->passcode = $request->input('passcode'); // Store the passcode
         $zoomCallUrl->created_by = $loggedUserId;
-    
+
         if ($zoomCallUrl->save()) {
             return $this->sendResponse(['zoomCallUrl' => $zoomCallUrl], 'Zoom call created successfully.');
         } else {
@@ -84,35 +89,40 @@ class ZoomCallController extends BaseController
             'date' => 'required|date',
             'time' => 'required|date_format:H:i',
             'url' => 'required|url',
+            'course' => 'required|exists:courses,id',
+            'subject' => 'required|exists:subjects,id',
             'password' => 'required|string',
         ]);
-    
+
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
-    
+
         // Check if a Zoom call with the same date and time exists, excluding the current record
         if (ZoomCallUrl::where('date', $request->date)
                        ->where('time', $request->time)
+                       ->where('course_id', $request->course_id)
                        ->where('id', '!=', $id)
                        ->exists()) {
             $validator = Validator::make($request->all(), [
                 'date' => ['Zoom call already exists for this date and time.']
             ]);
-    
+
             return $this->sendValidationError($validator);
         }
-    
+
         $zoomCallUrl = ZoomCallUrl::find($id);
         if (!$zoomCallUrl) {
             return $this->sendError('Zoom Call not found.', [], 404);
         }
         $loggedUserId = $this->getLoggedUserId();
-     
+
 
         $zoomCallUrl->date = $request->input('date');
         $zoomCallUrl->time = $request->input('time');
         $zoomCallUrl->url = $request->input('url');
+        $zoomCallUrl->subject_id = $request->input('subject_id');
+        $zoomCallUrl->course_id = $request->input('course_id');
         $zoomCallUrl->passcode = $request->input('password'); // Updated to passcode
         $zoomCallUrl->updated_by = $loggedUserId;
         if ($zoomCallUrl->save()) {
@@ -121,5 +131,5 @@ class ZoomCallController extends BaseController
             return $this->sendError('Failed to update Zoom Call.', [], 500);
         }
     }
-    
+
 }

@@ -63,8 +63,6 @@ class CourseController extends BaseController
             ->groupBy('courses.id', 'courses.name','trainer_name', 'courses.image','courses.access_validity', 'subjects.name', 'average_rating', 'total_ratings')
             ->get();
 
-        Log::info('Courses retrieved:', ['courses' => $courses]);
-
         foreach ($courses as $course) {
 
             $chapterIds = DB::table('chapters')->where('course_id', $course->id)
@@ -98,8 +96,6 @@ class CourseController extends BaseController
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            Log::info('Latest Test:', ['latestTest' => $latestTest]);
-
             if ($latestTest) {
                 $latestTestId = $latestTest->id;
                 $testDescription = $latestTest->description;
@@ -132,7 +128,6 @@ class CourseController extends BaseController
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            Log::info('Student Results:', ['studentResult' => $studentResult]);
 
             $course->results = $studentResult;
 
@@ -149,7 +144,6 @@ class CourseController extends BaseController
             // }
         }
 
-        Log::info('Final Courses Detail:', ['courses' => $courses]);
         return $this->sendResponse(['courses' => $courses]);
     }
 
@@ -497,4 +491,122 @@ class CourseController extends BaseController
             return $this->sendResponse(['course' => $course,'chapters' => $chapters,'trainer' => $trainer]);
         }
     }
+
+    // public function generateCertificate(){
+    //     $userId = $this->getLoggedUserId();
+
+    //     // Unique date and time for file naming
+    //     $unqdate = date("Ymd");
+    //     $unqtime = time();
+    //     $courseId = 1;
+    //     $new_file_name = $userId . "-" . $courseId . "-" . $unqdate . "" . $unqtime . ".jpg";
+
+    //     // Prepare the text content
+    //     // $name = $student->name;
+    //     $name = 'Ashutosh';
+
+    //     $today = date("Y-m-d");
+    //     $formattedDate = date("d-m-y", strtotime($today));
+
+    //     $data_and_place = $formattedDate;
+    //     $courseName = "asdf fas";
+
+    //     // Load the base image
+    //     $file_name = 'pass/certificate.jpg';
+    //     $img_source = imagecreatefromjpeg($file_name);
+
+    //     // Font and color settings
+    //     $font = 'fonts/ARIBL0.ttf';
+    //     $text_color = imagecolorallocate($img_source, 0, 0, 0);
+
+    //     // Place the student name onto the image
+    //     // Calculate the width of the text
+    //     $nameBoundingBox = imagettfbbox(30, 0, $font, $name);
+    //     $nameWidth = $nameBoundingBox[4] - $nameBoundingBox[0];
+    //     // Adjust the x-coordinate to center horizontally
+    //     $nameX = (2000 - $nameWidth) / 2;
+    //     // Place the text
+    //     imagettftext($img_source,42, 0, $nameX, 635, $text_color, $font, $name);
+
+    //     // Place the course name onto the image
+    //     // Calculate the width of the text
+    //     $courseNameBoundingBox = imagettfbbox(30, 0, $font, $courseName);
+    //     $courseNameWidth = $courseNameBoundingBox[4] - $courseNameBoundingBox[0];
+    //     // Adjust the x-coordinate to center horizontally
+    //     $courseNameX = (2000 - $courseNameWidth) / 2;
+    //     // Place the text
+    //     imagettftext($img_source, 30, 0, $courseNameX, 920, $text_color, $font, $courseName);
+    //     // Place the date and place onto the image
+    //     imagettftext($img_source, 20, 0, 1295, 1067, $text_color, $font, $data_and_place);
+
+    //     // Save the new image
+    //     ImageJpeg($img_source, 'uploads/pass/' . $new_file_name);
+    //     // imagedestroy($img_source); // Free up memory
+
+    //     $filePath = 'uploads/pass/' . $new_file_name;
+
+    //     return $this->sendResponse(['filePath'=>$filePath], 'Certificate created successfully.');
+
+    // }
+    public function generateCertificate($courseId){
+        $userId = $this->getLoggedUserId();
+
+        // Check if certificate already exists in the certificates table
+        $certificate = DB::table('course_certificates')
+            ->where('student_id', $userId)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if ($certificate) {
+            // Return existing certificate URL
+            return $this->sendResponse(['filePath' => $certificate->certificate_url], 'Certificate already exists.');
+        }
+        $student = Student::where('auth_id',$userId)->first();
+        $course = Course::find($courseId);
+
+        // Proceed to generate certificate if it doesn't exist
+        // Unique date and time for file naming
+        $unqdate = date("Ymd");
+        $unqtime = time();
+        $new_file_name = $userId . "-" . $courseId . "-" . $unqdate . "" . $unqtime . ".jpg";
+
+        // Prepare the text content
+        $name = $student->name;
+        $today = date("Y-m-d");
+        $formattedDate = date("d-m-y", strtotime($today));
+        $data_and_place = $formattedDate;
+        $courseName = $course->name;
+
+        // Load and modify the certificate image
+        $file_name = 'pass/certificate.jpg';
+        $img_source = imagecreatefromjpeg($file_name);
+        $font = 'fonts/ARIBL0.ttf';
+        $text_color = imagecolorallocate($img_source, 0, 0, 0);
+        $nameBoundingBox = imagettfbbox(30, 0, $font, $name);
+        $nameWidth = $nameBoundingBox[4] - $nameBoundingBox[0];
+        $nameX = (2000 - $nameWidth) / 2;
+
+        $courseNameBoundingBox = imagettfbbox(30, 0, $font, $courseName);
+        $courseNameWidth = $courseNameBoundingBox[4] - $courseNameBoundingBox[0];
+        $courseNameX = (2000 - $courseNameWidth) / 2;
+
+        imagettftext($img_source, 42, 0, $nameX, 635, $text_color, $font, $name);
+        imagettftext($img_source, 30, 0, (2000 - $courseNameWidth) / 2, 920, $text_color, $font, $courseName);
+        imagettftext($img_source, 20, 0, 1295, 1067, $text_color, $font, $data_and_place);
+
+        // Save the new image
+        $filePath = 'uploads/certificates/courses/' . $new_file_name;
+        ImageJpeg($img_source, $filePath);
+
+        // Store certificate in the database
+        DB::table('course_certificates')->insert([
+            'student_id' => $userId,
+            'course_id' => $courseId,
+            'certificate_url' => $filePath,
+            'generated_at' => now(),
+        ]);
+
+        return $this->sendResponse(['filePath' => $filePath], 'Certificate created successfully.');
+    }
+
 }

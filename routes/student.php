@@ -131,6 +131,8 @@ Route::prefix('student')->group(function () {
 
     Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
 
+    Route::get('/courses/{courseId}/generate-certificate', [CourseController::class, 'generateCertificate']);
+
     Route::get('/{studentId}/details', [StudentController::class, 'getStudentDetailsFromStudent']);
     Route::post('/{studentId}/update-profile', [StudentController::class, 'updateStudentDetails']);
 
