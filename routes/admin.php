@@ -376,6 +376,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/{zoomCallId}', [ZoomCallController::class, 'getZoomCallById']);
         Route::post('/store', [ZoomCallController::class, 'storeZoomCall']);
         Route::post('/{zoomCallId}/edit', [ZoomCallController::class, 'updateZoomCall']);
+        Route::get('/{sessionId}/students', [ZoomCallController::class, 'getStudentsBySessionId']);
     });
 
     Route::prefix('forums')->group(function () {

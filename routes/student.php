@@ -23,7 +23,8 @@ use App\Http\Controllers\Api\{
     MiniProjectController,
     InternshipController,
     RatingReviewController,
-    FaqController
+    FaqController,
+    ZoomCallController
 };
 
 Route::prefix('student')->group(function () {
@@ -135,5 +136,7 @@ Route::prefix('student')->group(function () {
 
     Route::get('/{studentId}/details', [StudentController::class, 'getStudentDetailsFromStudent']);
     Route::post('/{studentId}/update-profile', [StudentController::class, 'updateStudentDetails']);
+
+    Route::get('/track-live-session-click/{sessionId}', [ZoomCallController::class, 'trackLiveSessionClick']);
 
 });

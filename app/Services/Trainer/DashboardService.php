@@ -14,7 +14,6 @@ class DashboardService
         $subjectIds = Course::where('trainer_id', $trainerId)
         ->distinct()
         ->pluck('subject_id')->toArray();
-        Log::info('subject id:', $subjectIds);
 
         $subjectsCount = count($subjectIds);
 

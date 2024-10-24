@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
 use App\Models\RatingReview;
 use App\Models\Trainer;
+use App\Models\ZoomCallUrl;
 
 //changed
 //error in $resultsService->getCourseResults
@@ -130,6 +131,13 @@ class CourseController extends BaseController
 
 
             $course->results = $studentResult;
+            $today = date('Y-m-d');
+            $currentTime = date('H:i');
+            $liveSessions = ZoomCallUrl::where('date', $today)
+            // ->where('time', '>=', $currentTime)
+            ->where('course_id', $course->id)
+            ->get();
+            $course->liveSessions = $liveSessions;
 
             // Trainer by course
             // $trainer = DB::table('trainer_courses as ts')

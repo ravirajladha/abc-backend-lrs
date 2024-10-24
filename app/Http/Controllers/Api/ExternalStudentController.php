@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\Trainer;
+use App\Models\ZoomCallUrl;
 
 
 class ExternalStudentController extends BaseController
@@ -129,6 +130,13 @@ class ExternalStudentController extends BaseController
 
         $trainer = Trainer::where('auth_id', $course->trainer_id)->first();
 
+        $today = date('Y-m-d');
+        $currentTime = date('H:i');
+        $liveSessions = ZoomCallUrl::where('date', $today)
+        // ->where('time', '>=', $currentTime)
+        ->where('course_id', $course->id)
+        ->get();
+        // $course->liveSessions = $liveSessions;
         // Final Contents Structure
         $contents = [
             'course' => $course,
@@ -136,6 +144,7 @@ class ExternalStudentController extends BaseController
             'video' => $video,
             'trainer' => $trainer,
             'mini_projects' => $mini_projects,
+            'liveSessions' => $liveSessions,
         ];
         return $this->sendResponse(['contents' => $contents]);
     }

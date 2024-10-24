@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
             $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
             $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
+            $table->tinyInteger('session_type')->default(1)->comment('1=>Qna Session; 2=>Live Session');
             $table->foreignId('created_by')->nullable()->constrained('auth', 'id'); // Ensure this matches your actual user table
             $table->foreignId('updated_by')->nullable()->constrained('auth', 'id'); // Ensure this matches your actual user table
             $table->timestamps();
