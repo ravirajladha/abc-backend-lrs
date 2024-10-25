@@ -38,6 +38,8 @@ Route::prefix('trainer')->group(function () {
     Route::get('/{trainerId}', [TrainerController::class, 'getTrainerDetails']);
     Route::put('/{trainerId}/update', [TrainerController::class, 'updateTrainerPassword']);
 
+    Route::post('/{trainerId}/update-profile', [TrainerController::class, 'updateTrainerDetails']);
+
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResultsByStudentId']);
 
     Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updateChapterLockStatus']);

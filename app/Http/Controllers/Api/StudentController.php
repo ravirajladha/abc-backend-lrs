@@ -438,7 +438,7 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             'name' => 'required|string|max:255',
             'studentId' => 'required',
             'password' => 'nullable|min:6',
-            'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
+            'email' => 'required|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
             'dob' => 'nullable',
             'gender' => 'nullable',

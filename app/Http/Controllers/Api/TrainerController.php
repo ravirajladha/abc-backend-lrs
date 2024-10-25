@@ -136,7 +136,6 @@ class TrainerController extends BaseController
     public function getTrainerDetails($trainerId)
     {
         $res = [];
-        $trainer_subjects = [];
         $trainer_courses = [];
 
         $validator = Validator::make(['trainerId' => $trainerId], [
@@ -175,13 +174,15 @@ class TrainerController extends BaseController
                     'phone_number' => $auth->phone_number,
                     'emp_id' => $trainer->emp_id,
                     'profile_image' => $trainer->profile_image,
-                    'doj' => $trainer->doj,
-                    'address' => $trainer->address,
-                    'city' => $trainer->city,
-                    'state' => $trainer->state,
-                    'pincode' => $trainer->pincode,
+                    // 'doj' => $trainer->doj,
+                    // 'address' => $trainer->address,
+                    // 'city' => $trainer->city,
+                    // 'state' => $trainer->state,
+                    // 'pincode' => $trainer->pincode,
                     'description' => $trainer->description,
-                    'created_by' => $loggedUserId,
+                    'experience' => $trainer->experience,
+                    'expertise' => $trainer->expertise,
+                    // 'created_by' => $loggedUserId,
                     'type' => $trainer->type,
                 ];
                 return $this->sendResponse(['trainer' => $res, 'trainer_courses' => $trainer_courses]);
@@ -401,14 +402,24 @@ class TrainerController extends BaseController
      */
     public function updateTrainerDetails(Request $request, $trainerId)
     {
+        $data = $request->all();
+        foreach ($data as $key => $value) {
+            if ($value === 'null') {
+                $data[$key] = '';
+            }
+        }
         $res = [];
-        $validator = Validator::make(array_merge($request->all(), ['trainer_id' => $trainerId]), [
+        $validator = Validator::make(array_merge($data, ['trainer_id' => $trainerId]), [
             'name' => 'required|string|max:255',
             'trainer_id' => 'required|exists:auth,id',
             'password' => 'nullable|min:6',
             'email' => 'required|string|email|max:255',
             'phone_number' => 'numeric|min:10',
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Adjust file type and size as needed
+            // 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'emp_id' => 'nullable|string',
+            'description' => 'nullable|string',
+            'experience' => 'nullable',
+            'expertise' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -416,9 +427,6 @@ class TrainerController extends BaseController
         }
 
         $auth = AuthModel::find($trainerId);
-        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
-
-        // $trainer = Trainer::where('auth_id', $trainerId)->where('school_id', $schoolId)->first();
         $trainer = Trainer::where('auth_id', $trainerId)->first();
 
         if ($auth && $trainer) {
@@ -433,11 +441,14 @@ class TrainerController extends BaseController
             $trainerData = [
                 'name' => $request->input('name', $trainer->name),
                 'phone_number' => $request->input('phone_number', $trainer->phone_number),
-                'address' => $request->input('address', $trainer->address),
-                'city' => $request->input('city', $trainer->city),
-                'state' => $request->input('state', $trainer->state),
-                'pincode' => $request->input('pincode', $trainer->pincode),
-                'description' => $request->input('description', $trainer->description),
+                // 'address' => $request->input('address', $trainer->address),
+                // 'city' => $request->input('city', $trainer->city),
+                // 'state' => $request->input('state', $trainer->state),
+                // 'pincode' => $request->input('pincode', $trainer->pincode),
+                'emp_id' => $data['emp_id'],
+                'description' => $data['description'],
+                'experience' => $request->input('experience') === "null" ? $trainer->experience : $request->input('experience'),
+                'expertise' => $data['expertise'],
             ];
 
             $loggedUserId = $this->getLoggedUserId();
@@ -455,25 +466,7 @@ class TrainerController extends BaseController
 
             $trainer->update($trainerData);
 
-            $res = [
-                'id' => $trainer->id,
-                'auth_id' => $trainer->auth_id,
-                'school_id' => $trainer->school_id,
-                'email' => $auth->email,
-                'phone_number' => $auth->phone_number,
-                'emp_id' => $trainer->emp_id,
-                'profile_image' => $trainer->profile_image,
-                'doj' => $trainer->doj,
-                'address' => $trainer->address,
-                'city' => $trainer->city,
-                'state' => $trainer->state,
-                'pincode' => $trainer->pincode,
-                'description' => $trainer->description,
-                'type' => $trainer->type,
-                'updated_by' => $loggedUserId,
-            ];
-
-            return $this->sendResponse(['trainer' => $res], 'Trainer updated successfully');
+            return $this->sendResponse([], 'Trainer updated successfully');
         }
 
         return $this->sendError('Failed to update trainer details.');
