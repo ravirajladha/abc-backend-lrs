@@ -6,9 +6,10 @@ use App\Models\Faq;
 use App\Models\Auth;
 use App\Models\Course;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use App\Models\TrainerCourse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class FaqController extends BaseController
 {
@@ -40,6 +41,28 @@ class FaqController extends BaseController
         return $this->sendResponse(['faq' => $faq], 'FAQ created successfully.');
     }
 
-
+    public function fetchFaqByCourseId(Request $request)
+    {
+        // $validator = Validator::make($request->all(), [
+        //     'course_id' => 'required|exists:courses,id',
+        // ]);
+        Log::info("dssd",['couser_id', $request->course_id]);
+    
+        // if ($validator->fails()) {
+        //     return $this->sendError('Validation Error', $validator->errors()->toArray(), 422);
+        // }
+        // Fetch FAQs related to the course
+        $faqs = Faq::where('course_id', $request->course_id)
+                    ->select('question', 'answer')
+                    ->get();
+    
+        if ($faqs->isEmpty()) {
+            return $this->sendError('No FAQs found for the provided course.', [], 404);
+        }
+    
+        return $this->sendResponse(['faqs' => $faqs], 'FAQs fetched successfully.');
+    }
+    
+    
 
 }

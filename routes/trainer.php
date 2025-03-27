@@ -44,8 +44,8 @@ Route::prefix('trainer')->group(function () {
 
     Route::post('/courses/reply-review', [RatingReviewController::class, 'storeReviewReply']);
 
-    Route::prefix('faq')->group(function () {
-        Route::get('/{courseId}', [FaqController::class, 'getFaqByCourse']);
+    Route::prefix(prefix: 'faq')->group(function () {
+        Route::get('/{course_id}', [FaqController::class, 'fetchFaqByCourseId']);
         Route::post('/', [FaqController::class, 'storeFaq']);
     });
 });
