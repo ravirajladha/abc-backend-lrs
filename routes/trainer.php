@@ -38,14 +38,19 @@ Route::prefix('trainer')->group(function () {
     Route::get('/{trainerId}', [TrainerController::class, 'getTrainerDetails']);
     Route::put('/{trainerId}/update', [TrainerController::class, 'updateTrainerPassword']);
 
+    Route::post('/{trainerId}/update-profile', [TrainerController::class, 'updateTrainerDetails']);
+
     Route::get('chapter/assessment-results', [AssessmentController::class, 'getAssessmentResultsByStudentId']);
 
     Route::get('/chapter/{chapterId}/update-lock-status', [ChapterController::class, 'updateChapterLockStatus']);
 
     Route::post('/courses/reply-review', [RatingReviewController::class, 'storeReviewReply']);
+    Route::put('/courses/update-review-status', [RatingReviewController::class, 'updateReviewStatus']);
 
-    Route::prefix(prefix: 'faq')->group(function () {
-        Route::get('/{course_id}', [FaqController::class, 'fetchFaqByCourseId']);
-        Route::post('/', [FaqController::class, 'storeFaq']);
-    });
+    Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
+    Route::post('/courses/faq', [FaqController::class, 'storeFaq']);
+    Route::delete('/courses/faq/{faqId}', [FaqController::class, 'deleteFaq']);
+    Route::get('/courses/faq/{faqId}', [FaqController::class, 'getFaqById']);
+    Route::put('/courses/faq/{faqId}', [FaqController::class, 'editFaq']);
+
 });

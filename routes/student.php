@@ -22,7 +22,9 @@ use App\Http\Controllers\Api\{
     ElabController,
     MiniProjectController,
     InternshipController,
-    RatingReviewController
+    RatingReviewController,
+    FaqController,
+    ZoomCallController
 };
 
 Route::prefix('student')->group(function () {
@@ -126,5 +128,15 @@ Route::prefix('student')->group(function () {
     Route::get('/courses/{courseId}/external-student-contents', [ExternalStudentController::class, 'getContents']);
 
     Route::post('/courses/rating-review', [RatingReviewController::class, 'storeRatingReview']);
-    Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getCourseRatingsAndReviews']);
+    Route::get('/courses/{courseId}/ratings-reviews', [RatingReviewController::class, 'getStudentCourseRatingsAndReviews']);
+
+    Route::get('/courses/{courseId}/faq', [FaqController::class, 'getCourseFaqs']);
+
+    Route::get('/courses/{courseId}/generate-certificate', [CourseController::class, 'generateCertificate']);
+
+    Route::get('/{studentId}/details', [StudentController::class, 'getStudentDetailsFromStudent']);
+    Route::post('/{studentId}/update-profile', [StudentController::class, 'updateStudentDetails']);
+
+    Route::get('/track-live-session-click/{sessionId}', [ZoomCallController::class, 'trackLiveSessionClick']);
+
 });

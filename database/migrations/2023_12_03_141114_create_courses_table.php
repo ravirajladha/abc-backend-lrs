@@ -16,11 +16,13 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('subject_id')->nullable()->constrained('subjects', 'id');
-         
+            $table->foreignId('trainer_id')->nullable()->constrained('auth', 'id');
+
             $table->string('name');
             $table->string('image')->nullable();
+            $table->string('video')->nullable();
             $table->text('description');
-         
+
             $table->text('benefits');
             $table->integer('position')->default(999);
             $table->integer('access_validity');

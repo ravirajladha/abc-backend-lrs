@@ -15,7 +15,7 @@ use App\Http\Controllers\Api\Auth\RefreshController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\ProjectReportController;
 use Illuminate\Support\Facades\Response;
-
+use Illuminate\Http\Request;
 /*
 |
 |------------------------------------------------------------------------
@@ -68,14 +68,16 @@ Route::get('/download-zip', function () {
 
     return Response::download($filePath, 'resources.zip');
 });
-Route::get('/download-certificate', function () {
-    $filePath = public_path('uploads/zip/pass.zip');
 
-    if (!file_exists($filePath)) {
-        abort(404, 'File not found');
+Route::get('/download-certificate', function (Request $request) {
+    $filePath = $request->input('filePath');
+
+    $fullPath = public_path($filePath);
+    if (!file_exists($fullPath)) {
+        return response()->json(['error' => 'File not found'], 404);
     }
 
-    return Response::download($filePath, 'resources.zip');
+    return Response::download($fullPath, basename($fullPath)); // Use basename to extract the file name
 });
 
 Route::group(['middleware' => ['check-auth-token', 'check-auth-type']], function () {

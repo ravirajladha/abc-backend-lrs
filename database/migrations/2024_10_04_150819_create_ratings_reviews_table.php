@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('review')->nullable();
             $table->text('trainer_reply')->nullable();
             $table->foreignId('trainer_id')->nullable()->constrained('auth')->onDelete('cascade');
+            $table->tinyInteger('status')->default(1)->comment('0=>Inactive; 1=>Active');
             $table->timestamps();
         });
     }

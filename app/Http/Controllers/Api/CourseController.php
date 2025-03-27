@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Api\BaseController;
 use App\Services\Student\ResultService as StudentResultService;
 use App\Models\RatingReview;
+use App\Models\Trainer;
+use App\Models\ZoomCallUrl;
 
 //changed
 //error in $resultsService->getCourseResults
@@ -52,14 +54,15 @@ class CourseController extends BaseController
             ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
                 $join->on('courses.id', '=', 'ratings.course_id');
             })
-            ->select('courses.id', 'courses.name', 'courses.image', 'subjects.name as subject_name', DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
-                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings'))
+            ->leftJoin('auth', 'auth.id', '=', 'courses.trainer_id')
+            ->select('courses.id', 'courses.name', 'courses.image','courses.access_validity', 'subjects.name as subject_name', DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
+                DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings'),
+                'auth.username as trainer_name',
+                DB::raw('MIN(chapter_logs.created_at) as start_date'))
             ->where('chapter_logs.video_complete_status', 1)
             ->where('chapter_logs.student_id', $this->getLoggedUserId())
-            ->groupBy('courses.id', 'courses.name', 'courses.image', 'subjects.name', 'average_rating', 'total_ratings')
+            ->groupBy('courses.id', 'courses.name','trainer_name', 'courses.image','courses.access_validity', 'subjects.name', 'average_rating', 'total_ratings')
             ->get();
-
-        Log::info('Courses retrieved:', ['courses' => $courses]);
 
         foreach ($courses as $course) {
 
@@ -79,8 +82,6 @@ class CourseController extends BaseController
                     ->where('assessment_complete_status', 1)
                     ->count();
 
-                Log::info('Completed Chapters Count:', ['completedChaptersCount' => $completedChaptersCount]);
-
                 $allChaptersCompleted = $completedChaptersCount == count($chapterIds);
                 $course->chapter_completed = $allChaptersCompleted;
             } else {
@@ -95,8 +96,6 @@ class CourseController extends BaseController
                 ->select('id', 'description')
                 ->orderBy('created_at', 'desc')
                 ->first();
-
-            Log::info('Latest Test:', ['latestTest' => $latestTest]);
 
             if ($latestTest) {
                 $latestTestId = $latestTest->id;
@@ -130,25 +129,29 @@ class CourseController extends BaseController
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            Log::info('Student Results:', ['studentResult' => $studentResult]);
 
             $course->results = $studentResult;
+            $today = date('Y-m-d');
+            $currentTime = date('H:i');
+            $liveSessions = ZoomCallUrl::where('date', $today)
+            // ->where('time', '>=', $currentTime)
+            ->where('course_id', $course->id)
+            ->get();
+            $course->liveSessions = $liveSessions;
 
             // Trainer by course
-            $trainer = DB::table('trainer_courses as ts')
-                ->where('ts.course_id', $course->id)
-                ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
-                ->first();
+            // $trainer = DB::table('trainer_courses as ts')
+            //     ->where('ts.course_id', $course->id)
+            //     ->leftJoin('trainers as t', 't.id', 'ts.trainer_id')
+            //     ->first();
 
-            if ($trainer) {
-                $course->trainer_name = $trainer->name;
-            } else {
-                $course->trainer_name = 'No trainer assigned';
-            }
-
+            // if ($trainer) {
+            //     $course->trainer_name = $trainer->name;
+            // } else {
+            //     $course->trainer_name = 'No trainer assigned';
+            // }
         }
 
-        Log::info('Final Courses Detail:', ['courses' => $courses]);
         return $this->sendResponse(['courses' => $courses]);
     }
 
@@ -268,8 +271,7 @@ class CourseController extends BaseController
         // Fetch the courses with their respective ratings
         $courses = DB::table('courses as cou')
             ->join('subjects', 'cou.subject_id', '=', 'subjects.id')
-            ->leftJoin('trainer_courses as tc', 'cou.id', '=', 'tc.course_id')
-            ->leftJoin('trainers as t', 'tc.trainer_id', '=', 't.id')
+            ->leftJoin('auth as trainer', 'cou.trainer_id', '=', 'trainer.id')
             ->leftJoinSub($ratingsSubquery, 'ratings', function ($join) {
                 $join->on('cou.id', '=', 'ratings.course_id');
             })
@@ -278,7 +280,7 @@ class CourseController extends BaseController
                 'cou.name',
                 'cou.image',
                 'subjects.name as subject_name',
-                't.name as trainer_name',
+                'trainer.username as trainer_name',
                 DB::raw('IFNULL(ratings.average_rating, 0) as average_rating'), // Handle null ratings
                 DB::raw('IFNULL(ratings.total_ratings, 0) as total_ratings')
             )
@@ -299,8 +301,11 @@ class CourseController extends BaseController
 
         $validator = Validator::make($request->all(), [
             'subject_id' => 'required',
+            'trainer_id' => 'required|exists:auth,id',
             'course_name' => 'required|max:75|unique:courses,name',
             'course_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'course_video' => 'required|mimes:mp4,mov,avi|max:10000',
+            'access_validity' => 'required',
             'benefits' => 'required|string',
             'description' => 'required|string',
         ]);
@@ -312,6 +317,7 @@ class CourseController extends BaseController
             $course = new Course();
             $course->name = $request->course_name;
             $course->subject_id = $request->subject_id;
+            $course->trainer_id = $request->trainer_id;
             $course->access_validity = $request->access_validity;
 
             // if ($request->course_type == 3) {
@@ -324,6 +330,15 @@ class CourseController extends BaseController
             } else {
                 $course->image = null;
             }
+
+            if (!empty($request->file('course_video'))) {
+                $videoExtension = $request->file('course_video')->extension();
+                $videoFilename = Str::random(4) . time() . '.' . $videoExtension;
+                $course->video = $request->file('course_video')->move(('uploads/videos/course'), $videoFilename);
+            } else {
+                $course->video = null;
+            }
+
             $course->benefits = $request->benefits;
             $course->description = $request->description;
             $course->created_by = $loggedUserId;
@@ -361,6 +376,11 @@ class CourseController extends BaseController
                 Rule::unique('courses', 'name')->ignore($courseId),
             ],
             'course_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'trainer_id' => 'required|exists:auth,id',
+            'course_video' => 'video|mimes:mp4,mov,avi|max:10000',
+            'access_validity' => 'required',
+            'benefits' => 'required|string',
+            'description' => 'required|string',
         ]);
 
 
@@ -375,26 +395,40 @@ class CourseController extends BaseController
         }
         $loggedUserId = $this->getLoggedUserId();
         $course->updated_by = $loggedUserId;
+        // Update course details
         $course->name = $request->course_name;
+        $course->subject_id = $request->subject_id;
+        $course->trainer_id = $request->trainer_id;
+        $course->access_validity = $request->access_validity;
+        $course->benefits = $request->benefits;
+        $course->description = $request->description;
 
+        // Handle course image update
         if ($request->hasFile('course_image')) {
-            $formData = $request->all();
-
-            if ($request->hasFile('course_image')) {
-                if ($course->logo) {
-                    File::delete(public_path($course->logo));
-                }
-                $extension = $request->file('course_image')->extension();
-                $filename = Str::random(4) . time() . '.' . $extension;
-                $course->image = $request->file('course_image')->move(('uploads/images/course'), $filename);
+            if ($course->image) {
+                File::delete(public_path($course->image));
             }
-
-
+            $extension = $request->file('course_image')->extension();
+            $filename = Str::random(4) . time() . '.' . $extension;
+            $course->image = $request->file('course_image')->move(('uploads/images/course'), $filename);
         }
 
-        $course->save();
+        // Handle course video update
+        if ($request->hasFile('course_video')) {
+            if ($course->video) {
+                File::delete(public_path($course->video)); // Delete old video if exists
+            }
+            $videoExtension = $request->file('course_video')->extension();
+            $videoFilename = Str::random(4) . time() . '.' . $videoExtension;
+            $course->video = $request->file('course_video')->move(('uploads/videos/course'), $videoFilename);
+        }
 
-        return $this->sendResponse(['course' => $course], 'Course updated successfully');
+        // Save updated course details
+        if ($course->save()) {
+            return $this->sendResponse(['course' => $course], 'Course updated successfully');
+        } else {
+            return $this->sendResponse([], 'Failed to update course.');
+        }
     }
 
 
@@ -460,12 +494,127 @@ class CourseController extends BaseController
                     ->get();
             }
 
-            $trainer = DB::table('trainer_courses as tc')
-            ->where('tc.course_id', $courseId)
-            ->leftJoin('trainers as t', 't.id', 'tc.trainer_id')
-            ->first();
+            $trainer = Trainer::where('auth_id', $course->trainer_id)->first();
 
             return $this->sendResponse(['course' => $course,'chapters' => $chapters,'trainer' => $trainer]);
         }
     }
+
+    // public function generateCertificate(){
+    //     $userId = $this->getLoggedUserId();
+
+    //     // Unique date and time for file naming
+    //     $unqdate = date("Ymd");
+    //     $unqtime = time();
+    //     $courseId = 1;
+    //     $new_file_name = $userId . "-" . $courseId . "-" . $unqdate . "" . $unqtime . ".jpg";
+
+    //     // Prepare the text content
+    //     // $name = $student->name;
+    //     $name = 'Ashutosh';
+
+    //     $today = date("Y-m-d");
+    //     $formattedDate = date("d-m-y", strtotime($today));
+
+    //     $data_and_place = $formattedDate;
+    //     $courseName = "asdf fas";
+
+    //     // Load the base image
+    //     $file_name = 'pass/certificate.jpg';
+    //     $img_source = imagecreatefromjpeg($file_name);
+
+    //     // Font and color settings
+    //     $font = 'fonts/ARIBL0.ttf';
+    //     $text_color = imagecolorallocate($img_source, 0, 0, 0);
+
+    //     // Place the student name onto the image
+    //     // Calculate the width of the text
+    //     $nameBoundingBox = imagettfbbox(30, 0, $font, $name);
+    //     $nameWidth = $nameBoundingBox[4] - $nameBoundingBox[0];
+    //     // Adjust the x-coordinate to center horizontally
+    //     $nameX = (2000 - $nameWidth) / 2;
+    //     // Place the text
+    //     imagettftext($img_source,42, 0, $nameX, 635, $text_color, $font, $name);
+
+    //     // Place the course name onto the image
+    //     // Calculate the width of the text
+    //     $courseNameBoundingBox = imagettfbbox(30, 0, $font, $courseName);
+    //     $courseNameWidth = $courseNameBoundingBox[4] - $courseNameBoundingBox[0];
+    //     // Adjust the x-coordinate to center horizontally
+    //     $courseNameX = (2000 - $courseNameWidth) / 2;
+    //     // Place the text
+    //     imagettftext($img_source, 30, 0, $courseNameX, 920, $text_color, $font, $courseName);
+    //     // Place the date and place onto the image
+    //     imagettftext($img_source, 20, 0, 1295, 1067, $text_color, $font, $data_and_place);
+
+    //     // Save the new image
+    //     ImageJpeg($img_source, 'uploads/pass/' . $new_file_name);
+    //     // imagedestroy($img_source); // Free up memory
+
+    //     $filePath = 'uploads/pass/' . $new_file_name;
+
+    //     return $this->sendResponse(['filePath'=>$filePath], 'Certificate created successfully.');
+
+    // }
+    public function generateCertificate($courseId){
+        $userId = $this->getLoggedUserId();
+
+        // Check if certificate already exists in the certificates table
+        $certificate = DB::table('course_certificates')
+            ->where('student_id', $userId)
+            ->where('course_id', $courseId)
+            ->first();
+
+        if ($certificate) {
+            // Return existing certificate URL
+            return $this->sendResponse(['filePath' => $certificate->certificate_url], 'Certificate already exists.');
+        }
+        $student = Student::where('auth_id',$userId)->first();
+        $course = Course::find($courseId);
+
+        // Proceed to generate certificate if it doesn't exist
+        // Unique date and time for file naming
+        $unqdate = date("Ymd");
+        $unqtime = time();
+        $new_file_name = $userId . "-" . $courseId . "-" . $unqdate . "" . $unqtime . ".jpg";
+
+        // Prepare the text content
+        $name = $student->name;
+        $today = date("Y-m-d");
+        $formattedDate = date("d-m-y", strtotime($today));
+        $data_and_place = $formattedDate;
+        $courseName = $course->name;
+
+        // Load and modify the certificate image
+        $file_name = 'pass/certificate.jpg';
+        $img_source = imagecreatefromjpeg($file_name);
+        $font = 'fonts/ARIBL0.ttf';
+        $text_color = imagecolorallocate($img_source, 0, 0, 0);
+        $nameBoundingBox = imagettfbbox(30, 0, $font, $name);
+        $nameWidth = $nameBoundingBox[4] - $nameBoundingBox[0];
+        $nameX = (2000 - $nameWidth) / 2;
+
+        $courseNameBoundingBox = imagettfbbox(30, 0, $font, $courseName);
+        $courseNameWidth = $courseNameBoundingBox[4] - $courseNameBoundingBox[0];
+        $courseNameX = (2000 - $courseNameWidth) / 2;
+
+        imagettftext($img_source, 42, 0, $nameX, 635, $text_color, $font, $name);
+        imagettftext($img_source, 30, 0, (2000 - $courseNameWidth) / 2, 920, $text_color, $font, $courseName);
+        imagettftext($img_source, 20, 0, 1295, 1067, $text_color, $font, $data_and_place);
+
+        // Save the new image
+        $filePath = 'uploads/certificates/courses/' . $new_file_name;
+        ImageJpeg($img_source, $filePath);
+
+        // Store certificate in the database
+        DB::table('course_certificates')->insert([
+            'student_id' => $userId,
+            'course_id' => $courseId,
+            'certificate_url' => $filePath,
+            'generated_at' => now(),
+        ]);
+
+        return $this->sendResponse(['filePath' => $filePath], 'Certificate created successfully.');
+    }
+
 }

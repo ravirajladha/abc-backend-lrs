@@ -191,7 +191,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                     // ->where('s.school_id', $schoolId)
                     ->first();
 
-                Log::info('Fetched student details: ', ['student' => $student]);
                 if ($student) {
                     $auth = AuthModel::where('id', $studentId)
                         ->where('type', AuthConstants::TYPE_STUDENT)
@@ -214,9 +213,6 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                         'city' => $student->city,
                         'state' => $student->state,
                         'pincode' => $student->pincode,
-
-
-
                         'student_status' => $student->status,
                         // 'parent_name' => $student->parent_name,
                     ];
@@ -239,14 +235,10 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             return $this->sendValidationError($validator->errors());
         }
 
-        // Fetch the student model
-        // $schoolId = School::where('auth_id',  $this->getLoggedUserId())->value('id');
-
-
-        $student = DB::table('students as s')->select( 's.*')
+        $student = DB::table('students as s')->select( 's.*', 'c.name as college_name')
+        ->leftJoin('colleges as c', 's.college_id', '=', 'c.id')
         ->where('s.auth_id', $studentId)
         ->first();
-        Log::info('Fetched student details: ', ['student' => $student]);
         if ($student) {
             $auth = AuthModel::where('id', $studentId)
                 ->where('type', AuthConstants::TYPE_STUDENT)
@@ -257,31 +249,55 @@ public function getPublicStudentDetailsFromStudent(Request $request)
             return $this->sendResponse([], 'Student not found.', 404);
         }
 
-        $courses = DB::table('courses as cou')
-        ->select('cou.id', 'cou.name', 'cou.image')
-        ->leftJoin('subjects as s', 'cou.subject_id', '=', 's.id')
-        ->get();
+        // $courses = DB::table('courses as cou')
+        // ->select('cou.id', 'cou.name', 'cou.image')
+        // ->leftJoin('subjects as s', 'cou.subject_id', '=', 's.id')
+        // ->get();
 
         // Preparing response
         $res = [
             'student_id' => $student->id,
             'student_auth_id' => $studentId,
-            'student_name' => $student->name,
-            // 'class' => $student->class,
-            // 'section' => $student->section,
             'name' => $student->name,
             'email' => $auth->email,
-            'username' => $auth->username,
             'phone_number' => $auth->phone_number,
 
             'profile_image' => $student->profile_image,
             'dob' => $student->dob,
+            'gender' => $student->gender,
             'address' => $student->address,
             'city' => $student->city,
             'state' => $student->state,
             'pincode' => $student->pincode,
-            // 'remarks' => $student->remarks,
-            'courses' => $courses !== null ? $courses : null,
+
+            'father_name' => $student->father_name,
+            'father_email' => $student->father_email,
+            'father_number' => $student->father_number,
+
+            'mother_name' => $student->mother_name,
+            'mother_email' => $student->mother_email,
+            'mother_number' => $student->mother_number,
+
+            'college_id' => $student->college_id,
+            'college_name' => $student->college_name,
+            'college_sem' => $student->college_sem,
+            'college_start_date' => $student->college_start_date,
+            'college_end_date' => $student->college_end_date,
+
+            'percentage_12th' => $student->percentage_12th,
+            'end_date_12th' => $student->end_date_12th,
+            'percentage_10th' => $student->percentage_10th,
+            'end_date_10th' => $student->end_date_10th,
+
+            // 'hobbies' => json_decode($student->hobbies),
+            // 'achievements' => json_decode($student->achievements),
+            // 'languages' => json_decode($student->languages),
+            'hobbies' => $student->hobbies,
+            'achievements' => $student->achievements,
+            'languages' => $student->languages,
+            'about' => $student->about,
+
+            // 'courses' => $courses !== null ? $courses : null,
         ];
 
         return $this->sendResponse(['student' => $res]);
@@ -411,28 +427,65 @@ public function getPublicStudentDetailsFromStudent(Request $request)
      */
     public function updateStudentDetails(Request $request, $studentId)
     {
-        Log::info("studentd ata", $request->all());
+        $data = $request->all();
+        foreach ($data as $key => $value) {
+            if ($value === 'null') {
+                $data[$key] = '';
+            }
+        }
         $res = [];
-        $validator = Validator::make(array_merge($request->all(), ['studentId' => $studentId]), [
+        $rules = [
             'name' => 'required|string|max:255',
             'studentId' => 'required',
             'password' => 'nullable|min:6',
-            'email' => 'nullable|string|email|max:255|unique:auth,email,' . $studentId,
+            'email' => 'required|string|email|max:255|unique:auth,email,' . $studentId,
             'phone_number' => 'required|string|min:10|max:10',
+            'dob' => 'nullable',
+            'gender' => 'nullable',
+            'pincode' => 'nullable',
+            'address' => 'nullable|string',
 
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'dob' => 'required',
-            'pincode' => 'required',
-            'address' => 'required|string',
-            'status' => 'required',
-           'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
-        ]);
+            'college_id' => 'nullable|exists:colleges,id',
+            'college_sem' => 'nullable|string',
+            'college_start_date' => 'nullable',
+            'college_end_date' => 'nullable',
+
+            'percentage_12th' => 'nullable|string',
+            'end_date_12th' => 'nullable',
+            'percentage_10th' => 'nullable|string',
+            'end_date_10th' => 'nullable',
+
+            'father_name' => 'nullable|string',
+            'father_email' => 'nullable|email',
+            'father_number' => 'nullable|string|min:10|max:10',
+
+            'mother_name' => 'nullable|string',
+            'mother_email' => 'nullable|email',
+            'mother_number' => 'nullable|string|min:10|max:10',
+
+            // 'hobbies' => 'nullable|array',
+            // 'achievements' => 'nullable|array',
+            // 'languages' => 'nullable|array',
+            'hobbies' => 'nullable|string',
+            'achievements' => 'nullable|string',
+            'languages' => 'nullable|string',
+            'about' => 'nullable|string',
+
+            'confirmPassword' => 'nullable|required_with:password|string|min:6|same:password',
+        ];
+
+        // Conditionally apply file validation for profile_image if it's a file
+        if ($request->hasFile('profile_image')) {
+            $rules['profile_image'] = 'nullable|file|image|mimes:jpeg,png,jpg,gif|max:2048';
+        }
+
+        $validator = Validator::make(array_merge($data, ['studentId' => $studentId]), $rules);
 
         if ($validator->fails()) {
             return $this->sendValidationError($validator);
         }
 
-        // $schoolId = School::where('auth_id', $this->getLoggedUserId())->value('id');
+
         $student = Student::where('auth_id', $studentId)
             ->first();
 
@@ -442,17 +495,10 @@ public function getPublicStudentDetailsFromStudent(Request $request)
                 ->first();
         }
         if ($auth && $student) {
-                    // If no email is provided, generate one using the username
-        $email = $request->input('email') ?: $auth->username . '@gmail.com';
 
-         // Ensure the generated email is unique
-        //  while (AuthModel::where('email', $email)->exists()) {
-        //     $rand_number = mt_rand(1000, 9999);
-        //     $email = $auth->username . $rand_number . '@gmail.com';
-        // }
             $authData = [
-                // 'email' => $request->input('email', $auth->email),
-                'email' => $email,
+                'username' => $request->input('name', $auth->username),
+                'email' => $request->input('email'),
                 'password' => $request->input('password') ? Hash::make($request->password) : $auth->password,
                 'phone_number' => $request->input('phone_number', $auth->phone_number),
                 'status' => $request->input('status', $auth->status),
@@ -472,40 +518,47 @@ public function getPublicStudentDetailsFromStudent(Request $request)
 
             $studentData = [
                 'name' => $request->input('name', $student->name),
-
-                'dob' => $request->input('dob', $student->dob),
+                'dob' => $request->input('dob') === "null" ? $student->dob : $request->input('dob'),
+                'gender' => $data['gender'],
                 'phone_number' => $request->input('phone_number', $student->phone_number),
-                'address' => $request->input('address', $student->address),
-                'city' => $request->input('city', $student->city),
-                'state' => $request->input('state', $student->state),
-                'pincode' => $request->input('pincode', $student->pincode),
-                'description' => $request->input('description', $student->description),
+                'address' => $data['address'],
+                'city' => $data['city'],
+                'state' => $data['state'],
+
+                'pincode' => $request->input('pincode') === "null" ? $student->pincode : $request->input('pincode'),
+
+                'college_id' => $request->input('college_id') === "null" ? $student->college_id : $request->input('college_id'),
+                'college_sem' => $request->input('college_sem', $student->college_sem),
+                'college_start_date' => $request->input('college_start_date') === "null" ? $student->college_start_date : $request->input('college_start_date'),
+                'college_end_date' => $request->input('college_end_date') === "null" ? $student->college_end_date : $request->input('college_end_date'),
+
+                'percentage_12th' => $data['percentage_12th'],
+                'end_date_12th' => $request->input('end_date_12th') === "null" ? $student->end_date_12th : $request->input('end_date_12th'),
+                'percentage_10th' => $data['percentage_10th'],
+                'end_date_10th' => $request->input('end_date_10th') === "null" ? $student->end_date_10th : $request->input('end_date_10th'),
+
+                'father_name' => $data['father_name'],
+                'father_email' => $data['father_email'],
+                'father_number' => $data['father_number'],
+                'mother_name' => $data['mother_name'],
+                'mother_email' => $data['mother_email'],
+                'mother_number' => $data['mother_number'],
+
+                // 'hobbies' => json_encode($request->input('hobbies')),
+                // 'achievements' => json_encode($request->input('achievements', $student->achievements)),
+                // 'languages' => json_encode($request->input('languages', $student->languages)),
+                'hobbies' => $data['hobbies'],
+                'achievements' => $data['achievements'],
+                'languages' => $data['languages'],
+                'about' => $data['about'],
 
                 'status' => $request->input('status', $student->status),
             ];
 
             $student->update($studentData);
-
-            $res = [
-                'id' => $student->id,
-                'auth_id' => $student->auth_id,
-
-                'email' => $auth->email,
-                'username' => $auth->username,
-                'phone_number' => $auth->phone_number,
-                'roll_number' => $student->roll_number,
-                'profile_image' => $student->profile_image,
-                'dob' => $student->dob,
-                'address' => $student->address,
-                'city' => $student->city,
-                'state' => $student->state,
-                'pincode' => $student->pincode,
-                'remarks' => $student->remarks,
-                'student_status' => $student->status,
-            ];
         }
 
-        return $this->sendResponse($res, 'Student updated successfully');
+        return $this->sendResponse([], 'Student updated successfully');
     }
 
 
